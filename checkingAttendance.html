@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Checking</title>
+</head>
+<body>
+    <h1>Attendance Checking</h1>
+    <form id="attendanceForm" action="/detect" method="post" enctype="multipart/form-data">
+        <label for="image">Upload an image:</label><br>
+        <input type="file" id="imageInput" name="image" accept="image/*" required><br>
+        <input type="submit" value="Submit">
+    </form>
+
+    <div id="results"></div> <!-- Display results here -->
+
+    <script>
+        document.getElementById("attendanceForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            var formData = new FormData(this);
+            
+            // Send form data to server using fetch API
+            fetch("/detect", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json()) // Parse response as JSON
+            .then(data => {
+                if (data.detected_people && data.detected_people.length > 0) {
+                    // Display detected people
+                    document.getElementById("results").innerHTML = "<h2>Detected People:</h2>";
+                    data.detected_people.forEach(person => {
+                        document.getElementById("results").innerHTML += `<p>${person}</p>`;
+                    });
+                } else {
+                    document.getElementById("results").innerHTML = "<p>No faces found in the image</p>";
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error checking attendance!");
+            });
+        });
+    </script>
+</body>
+</html>

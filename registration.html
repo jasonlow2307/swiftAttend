@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration</title>
+</head>
+<body>
+    <h2>Registration</h2>
+    <form id="registrationForm" enctype="multipart/form-data">
+        <input type="file" name="image" id="imageInput" accept="image/*" required><br>
+        <input type="text" name="name" placeholder="Enter Your Name" required><br>
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        document.getElementById("registrationForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            var formData = new FormData(this);
+            
+            // Send form data to server using fetch API
+            fetch("/save", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Registration successful!");
+                } else {
+                    alert("Error registering!");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error registering!");
+            });
+        });
+    </script>
+</body>
+</html>
