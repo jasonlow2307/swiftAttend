@@ -1,30 +1,8 @@
 from flask import Flask, request, jsonify, send_from_directory
 import boto3
 import io
-from PIL import Image
-import os
 
 app = Flask(__name__)
-
-# Function to set up AWS credentials
-def configure_aws():
-    access_key = 'AKIA47CR23SEEGAXOXOS'
-    secret_key = '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'
-    region = 'ap-southeast-1'
-
-    try:
-        # Configure AWS credentials
-        boto3.setup_default_session(
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-            region_name=region
-        )
-        print("AWS credentials configured successfully.")
-    except NoCredentialsError:
-        print("AWS credentials not found. Please provide valid access key and secret key.")
-
-# Call the function to configure AWS credentials
-configure_aws()
 
 # Initialize Boto3 S3 client
 s3 = boto3.client('s3')
