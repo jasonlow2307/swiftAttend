@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Records</title>
+</head>
+<body>
+    <h1>Attendance Records</h1>
+    {% if attendance_records %}
+        <div id="attendance">
+            <h2>Attendance Records:</h2>
+            <ul>
+                {% for record in attendance_records %}
+                    <li>{{ record.FullName }}: {{ record.Attendance }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% else %}
+        <p>No attendance records found</p>
+    {% endif %}
+
+    <!-- Link to go back to checking attendance -->
+    <a href="/check">Go back to check attendance</a>
+</body>
+</html>

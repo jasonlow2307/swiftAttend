@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, redirect, url_for
+from flask import Flask, request, jsonify, send_from_directory, Response, render_template
 import boto3
 import io
 from datetime import datetime
@@ -169,18 +169,17 @@ def detect_faces():
     # Fetch student records based on date and course
     student_records = fetch_student_in_class()
 
-    # Initialize a list to store attendance records
+     # Initialize a list to store attendance records
     attendance_records = []
 
     # Iterate through student records and update attendance
     for student in student_records:
         attendance_status = 'PRESENT' if student['StudentId'] in detected_student_id else 'ABSENT'
-        attendance_records.append({'FullName': student['FullName'], 'StudentId': student['StudentId'], 'Attendance': attendance_status})
+        attendance_records.append({'FullName': student['FullName'], 'Attendance': attendance_status})
         # Update attendance in the database
         update_attendance(student['StudentId'], attendance_status, initialized_date)
 
-    return jsonify({'attendance_records': attendance_records}), 200
-
+    return render_template('attendance.html', attendance_records=attendance_records)
 
 def fetch_student_in_class():
     dynamodb = boto3.client('dynamodb', region_name='ap-southeast-1')

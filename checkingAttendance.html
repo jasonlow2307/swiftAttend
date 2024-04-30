@@ -25,23 +25,18 @@
                 method: "POST",
                 body: formData
             })
-            .then(response => response.json()) // Parse response as JSON
+            .then(response => response.text()) // Parse response as text (HTML)
             .then(data => {
-                if (data.detected_people && data.detected_people.length > 0) {
-                    // Display detected people
-                    document.getElementById("results").innerHTML = "<h2>Detected People:</h2>";
-                    data.detected_people.forEach(person => {
-                        document.getElementById("results").innerHTML += `<p>${person}</p>`;
-                    });
-                } else {
-                    document.getElementById("results").innerHTML = "<p>No faces found in the image</p>";
-                }
+                // Replace the entire document body with the received HTML
+                document.body.innerHTML = data;
             })
             .catch(error => {
                 console.error("Error:", error);
-                alert("Error checking attendance!");
+                alert("Error fetching attendance records!");
             });
         });
     </script>
+    
+    
 </body>
 </html>
