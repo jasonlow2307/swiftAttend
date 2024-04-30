@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Checking</title>
+</head>
+<body>
+    <h1>Attendance Checking</h1>
+    <form id="attendanceForm" action="/initialize_class" method="post" enctype="multipart/form-data">
+        <label for="date">Date:</label><br>
+        <input type="date" id="dateInput" name="date" required><br>
+        <label for="course">Course:</label><br>
+        <input type="text" id="courseInput" name="course" required><br>
+        <label for="time">Class Start Time:</label><br>
+        <input type="time" id="timeInput" name="time" required><br>
+        <input type="hidden" id="classDateTime" name="classDateTime" value="">
+        <input type="submit" value="Submit">
+    </form>
+
+    <div id="results"></div> <!-- Display results here -->
+
+    <script>
+        document.getElementById("attendanceForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+    
+            // Capture current date and time
+            var currentDate = new Date();
+            var classDateTime = currentDate.toISOString(); // Convert to ISO string format
+    
+            // Set the value of the hidden input field
+            document.getElementById("classDateTime").value = classDateTime;
+    
+            var formData = new FormData(this);
+            
+            // Send form data to server using fetch API
+            fetch("/initialize_class", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json()) // Parse response as JSON
+            .then(data => {
+                // Handle success response
+                if (data.success) {
+                   // Display success message to the user
+                    alert(data.message);
+                    // Redirect to the '/check' route
+                    window.location.href = "/check";
+                } else {
+                    // Display error message to the user
+                    alert("Class initialization failed: " + data.message);
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error initializing class!");
+            });
+        });
+    </script>
+    
+</body>
+</html>
