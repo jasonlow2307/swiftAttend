@@ -7,7 +7,7 @@
 </head>
 <body>
     <h1>Retrieve Attendance Records</h1>
-    <form id="retrieveForm" action="/retrieve" method="post">
+    <form id="retrieveForm" action="/retrieve" method="post" onsubmit="return validateForm()">
         <label for="course">Course:</label>
         <input type="text" id="course" name="course"><br>
 
@@ -16,9 +16,6 @@
 
         <label for="time">Time (HH:MM):</label>
         <input type="time" id="time" name="time"><br>
-
-        <label for="studentId">Student ID:</label>
-        <input type="text" id="studentId" name="studentId"><br>
 
         <input type="submit" value="Retrieve">
     </form>
@@ -45,6 +42,18 @@
                 alert("Error retrieving attendance records!");
             });
         });
+
+        function validateForm() {
+            var date = document.getElementById('date').value;
+            var time = document.getElementById('time').value;
+            
+            // Check if date is filled and time is empty
+            if (date && !time) {
+                alert("Time is required when date is provided.");
+                return false; // Prevent form submission
+            }
+            return true; // Allow form submission
+        }
     </script>
 </body>
 </html>

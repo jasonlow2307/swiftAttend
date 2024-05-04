@@ -228,11 +228,15 @@ def retrieve_attendance():
     # Get form data from the request
     course = request.form.get('course')
     date = request.form.get('date')
-    student_id = request.form.get('studentId')
     time = request.form.get('time')
-    
-    # Combine date and time into a single datetime object
-    date_and_time = datetime.strptime(date + ' ' + time, '%Y-%m-%d %H:%M')
+
+    # Check if date is filled and time is empty
+    if date and not time:
+        return render_template('error.html', message="Time is required when date is provided.")
+
+    print(course)
+    print(date)
+    print(time)
 
     # Define expression attribute values
     expression_attribute_values = {}
@@ -244,28 +248,38 @@ def retrieve_attendance():
         # Add course as a filter criterion
         filter_expression = Attr('Course').eq(course)
 
-    if date_and_time:
-        # Add date and time as a filter criterion
+    if date:
+        # Add date as a filter criterion
         if filter_expression:
-            filter_expression &= Attr('Date').eq(date_and_time.strftime('%Y-%m-%d %H:%M:%S'))
+            filter_expression &= Attr('Date').begins_with(date)
         else:
-            filter_expression = Attr('Date').eq(date_and_time.strftime('%Y-%m-%d %H:%M:%S'))
+            filter_expression = Attr('Date').begins_with(date)
 
-    if student_id:
-        # Add student ID as a filter criterion
+    if time:
+        # Add time as a filter criterion
         if filter_expression:
-            filter_expression &= Key('StudentId').eq(student_id)
+            filter_expression &= Attr('Time').begins_with(time)
         else:
-            filter_expression = Key('StudentId').eq(student_id)
+            filter_expression = Attr('Time').begins_with(time)
 
-    # Fetch student records based on date, time, and course using the ret_student_in_class() method
-    student_records = ret_student_in_class(course, date_and_time.strftime('%Y-%m-%d %H:%M:%S'), student_id)
+    # Combine date and time into a single string
+    if date and time:
+        date_and_time = datetime.strptime(date + ' ' + time, '%Y-%m-%d %H:%M')
+    else:
+        date_and_time = None
+
+    # Fetch student records based on the filter criteria using the ret_student_in_class() method
+    student_records = ret_student_in_class(course, date_and_time)
+
+    # Check if no records are found
+    if not student_records:
+        return render_template('error.html', message="No records found.")
 
     # Render the attendance records template with the retrieved records
     return render_template('attendance_records.html', attendance_records=student_records)
 
 
-def ret_student_in_class(course=None, date=None, time=None, student_id=None):
+def ret_student_in_class(course=None, date=None, time=None):
     dynamodb = boto3.client('dynamodb', region_name='ap-southeast-1')
     
     # Initialize expression attribute names and values
@@ -273,36 +287,26 @@ def ret_student_in_class(course=None, date=None, time=None, student_id=None):
     expression_attribute_values = {}
 
     # Construct filter expression based on provided parameters
-    filter_expression = None
+    filter_expression_parts = []
 
     if course:
         expression_attribute_names['#C'] = 'Course'
         expression_attribute_values[':c'] = {'S': course}
-        filter_expression = '#C = :c'
+        filter_expression_parts.append('#C = :c')
 
     if date:
         expression_attribute_names['#D'] = 'Date'
-        expression_attribute_values[':d'] = {'S': date}
-        if filter_expression:
-            filter_expression += ' AND begins_with(#D, :d)'
-        else:
-            filter_expression = 'begins_with(#D, :d)'
+        date_str = str(date)  # Convert datetime to string
+        expression_attribute_values[':d'] = {'S': date_str}
+        filter_expression_parts.append('begins_with(#D, :d)')
 
     if time:
-        if filter_expression:
-            filter_expression += ' AND begins_with(#T, :t)'
-        else:
-            filter_expression = 'begins_with(#T, :t)'
-        expression_attribute_names['#T'] = 'Date'
+        expression_attribute_names['#T'] = 'Time'
         expression_attribute_values[':t'] = {'S': time}
+        filter_expression_parts.append('begins_with(#T, :t)')
 
-    if student_id:
-        expression_attribute_names['#S'] = 'StudentId'
-        expression_attribute_values[':s'] = {'S': student_id}
-        if filter_expression:
-            filter_expression += ' AND #S = :s'
-        else:
-            filter_expression = '#S = :s'
+    # Combine filter expression parts with 'AND'
+    filter_expression = ' AND '.join(filter_expression_parts)
 
     # Query DynamoDB table based on the constructed filter expression
     response = dynamodb.scan(
@@ -326,6 +330,11 @@ def ret_student_in_class(course=None, date=None, time=None, student_id=None):
         students.append(student)
 
     return students
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
