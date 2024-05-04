@@ -229,10 +229,10 @@ def retrieve_attendance():
     course = request.form.get('course')
     date = request.form.get('date')
     student_id = request.form.get('studentId')
-
-    print(course)
-    print(date)
-    print(student_id)
+    time = request.form.get('time')
+    
+    # Combine date and time into a single datetime object
+    date_and_time = datetime.strptime(date + ' ' + time, '%Y-%m-%d %H:%M')
 
     # Define expression attribute values
     expression_attribute_values = {}
@@ -244,22 +244,22 @@ def retrieve_attendance():
         # Add course as a filter criterion
         filter_expression = Attr('Course').eq(course)
 
-    if date:
-        # Add date as a filter criterion
+    if date_and_time:
+        # Add date and time as a filter criterion
         if filter_expression:
-            filter_expression = filter_expression & Attr('Date').eq(date)
+            filter_expression &= Attr('Date').eq(date_and_time.strftime('%Y-%m-%d %H:%M:%S'))
         else:
-            filter_expression = Attr('Date').eq(date)
+            filter_expression = Attr('Date').eq(date_and_time.strftime('%Y-%m-%d %H:%M:%S'))
 
     if student_id:
         # Add student ID as a filter criterion
         if filter_expression:
-            filter_expression = filter_expression & Key('StudentId').eq(student_id)
+            filter_expression &= Key('StudentId').eq(student_id)
         else:
             filter_expression = Key('StudentId').eq(student_id)
 
-    # Fetch student records based on date and course using the fetch_student_in_class() method
-    student_records = ret_student_in_class(course, date, student_id)
+    # Fetch student records based on date, time, and course using the ret_student_in_class() method
+    student_records = ret_student_in_class(course, date_and_time.strftime('%Y-%m-%d %H:%M:%S'), student_id)
 
     # Render the attendance records template with the retrieved records
     return render_template('attendance_records.html', attendance_records=student_records)
@@ -326,11 +326,6 @@ def ret_student_in_class(course=None, date=None, time=None, student_id=None):
         students.append(student)
 
     return students
-
-
-
-
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
