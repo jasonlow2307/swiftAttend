@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory, Response, render
 import boto3
 import io
 from datetime import datetime
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 
 app = Flask(__name__)
 
@@ -27,6 +27,9 @@ def init():
 def check():
     return send_from_directory('.', 'checkingAttendance.html')
 
+@app.route('/ret')
+def ret():
+    return send_from_directory('.', 'retrieveAttendance.html')
 
 @app.route('/initialize_class', methods=['POST'])
 def initialize_class():
@@ -219,6 +222,114 @@ def update_attendance(student_id, attendance, date):
     )
     
     print(f"Attendance updated for student ID {student_id} on date {date} to {attendance}.")
+
+@app.route('/retrieve', methods=['POST'])
+def retrieve_attendance():
+    # Get form data from the request
+    course = request.form.get('course')
+    date = request.form.get('date')
+    student_id = request.form.get('studentId')
+
+    print(course)
+    print(date)
+    print(student_id)
+
+    # Define expression attribute values
+    expression_attribute_values = {}
+
+    # Define filter expression
+    filter_expression = None
+
+    if course:
+        # Add course as a filter criterion
+        filter_expression = Attr('Course').eq(course)
+
+    if date:
+        # Add date as a filter criterion
+        if filter_expression:
+            filter_expression = filter_expression & Attr('Date').eq(date)
+        else:
+            filter_expression = Attr('Date').eq(date)
+
+    if student_id:
+        # Add student ID as a filter criterion
+        if filter_expression:
+            filter_expression = filter_expression & Key('StudentId').eq(student_id)
+        else:
+            filter_expression = Key('StudentId').eq(student_id)
+
+    # Fetch student records based on date and course using the fetch_student_in_class() method
+    student_records = ret_student_in_class(course, date, student_id)
+
+    # Render the attendance records template with the retrieved records
+    return render_template('attendance_records.html', attendance_records=student_records)
+
+
+def ret_student_in_class(course=None, date=None, time=None, student_id=None):
+    dynamodb = boto3.client('dynamodb', region_name='ap-southeast-1')
+    
+    # Initialize expression attribute names and values
+    expression_attribute_names = {}
+    expression_attribute_values = {}
+
+    # Construct filter expression based on provided parameters
+    filter_expression = None
+
+    if course:
+        expression_attribute_names['#C'] = 'Course'
+        expression_attribute_values[':c'] = {'S': course}
+        filter_expression = '#C = :c'
+
+    if date:
+        expression_attribute_names['#D'] = 'Date'
+        expression_attribute_values[':d'] = {'S': date}
+        if filter_expression:
+            filter_expression += ' AND begins_with(#D, :d)'
+        else:
+            filter_expression = 'begins_with(#D, :d)'
+
+    if time:
+        if filter_expression:
+            filter_expression += ' AND begins_with(#T, :t)'
+        else:
+            filter_expression = 'begins_with(#T, :t)'
+        expression_attribute_names['#T'] = 'Date'
+        expression_attribute_values[':t'] = {'S': time}
+
+    if student_id:
+        expression_attribute_names['#S'] = 'StudentId'
+        expression_attribute_values[':s'] = {'S': student_id}
+        if filter_expression:
+            filter_expression += ' AND #S = :s'
+        else:
+            filter_expression = '#S = :s'
+
+    # Query DynamoDB table based on the constructed filter expression
+    response = dynamodb.scan(
+        TableName='swiftAttendance',
+        FilterExpression=filter_expression,
+        ExpressionAttributeNames=expression_attribute_names,
+        ExpressionAttributeValues=expression_attribute_values
+    )
+
+    # Extract attendance records from the response
+    items = response.get('Items', [])
+    students = []
+    for item in items:
+        student = {
+            'FullName': item.get('FullName', {}).get('S'),
+            'StudentId': item.get('StudentId', {}).get('S'),
+            'Date': item.get('Date', {}).get('S'),
+            'Attendance': item.get('Attendance', {}).get('S'),
+            'Course': item.get('Course', {}).get('S')  # Include Course attribute
+        }
+        students.append(student)
+
+    return students
+
+
+
+
 
 
 if __name__ == '__main__':
