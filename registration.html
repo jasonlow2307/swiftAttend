@@ -4,15 +4,101 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registration</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #003572;
+            font-weight: bold;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        form {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 10px;
+            display: inline-block;
+            cursor: pointer;
+            background-color: #003572;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            font-size: 100px;
+            opacity: 0;
+            right: 0;
+            top: 0;
+        }
+
+        .file-upload:hover {
+            background-color: #001d44;
+        }
+
+        input[type="text"],
+        input[type="submit"] {
+            width: calc(100% - 16px); /* Adjusted width */
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="submit"] {
+            background-color: #003572;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #001d44;
+        }
+    </style>
 </head>
 <body>
-    <h2>Registration</h2>
-    <form id="registrationForm" enctype="multipart/form-data">
-        <input type="file" name="image" id="imageInput" accept="image/*" required><br>
-        <input type="text" name="name" placeholder="Enter Your Name" required><br>
-        <input type="text" name="studentid" placeholder="Enter Your Student ID" required><br>
-        <input type="submit" value="Submit">
-    </form>
+    <div class="container">
+        <h2>Registration</h2>
+        <form id="registrationForm" enctype="multipart/form-data">
+            <label class="file-upload">
+                Choose File
+                <input type="file" name="image" id="imageInput" accept="image/*" required>
+            </label><br>
+            <input type="text" name="name" placeholder="Enter Your Name" required><br>
+            <input type="text" name="studentid" placeholder="Enter Your Student ID" required><br>
+            <input type="submit" value="Submit">
+        </form>
+    </div>
 
     <script>
         document.getElementById("registrationForm").addEventListener("submit", function(event) {

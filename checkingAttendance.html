@@ -4,18 +4,117 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance Checking</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #003572;
+            font-weight: bold;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        form {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Custom file upload button */
+        .custom-file-upload {
+            display: inline-block;
+            background-color: #003572;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .custom-file-upload:hover {
+            background-color: #001d44;
+        }
+
+        input[type="file"] {
+            display: none; /* Hide the default file input */
+        }
+
+        /* Custom submit button */
+        input[type="submit"] {
+            display: inline-block;
+            width: calc(100% - 40px); /* Adjusted width */
+            background-color: #003572;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold; /* Bold text */
+            transition: background-color 0.3s;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #001d44;
+        }
+
+        #loadingMessage {
+            display: none;
+            color: #333;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        #results {
+            margin-top: 20px;
+        }
+
+        .error-message {
+            color: #f00;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Attendance Checking</h1>
-    <form id="attendanceForm" action="/detect" method="post" enctype="multipart/form-data">
-        <label for="image">Upload an image:</label><br>
-        <input type="file" id="imageInput" name="image" accept="image/*" required><br>
-        <input type="submit" value="Submit">
-    </form>
+    <div class="container">
+        <h1>Attendance Checking</h1>
+        <form id="attendanceForm" action="/detect" method="post" enctype="multipart/form-data">
+            <!-- Custom file upload button -->
+            <label for="imageInput" class="custom-file-upload">Upload a file</label>
+            <input type="file" id="imageInput" name="image" accept="image/*" required><br>
+            <!-- Custom submit button -->
+            <input type="submit" value="Submit">
+        </form>
 
-    <div id="loadingMessage" style="display: none;">Processing...</div> <!-- Display loading message here -->
+        <div id="loadingMessage">Processing...</div> <!-- Display loading message here -->
 
-    <div id="results"></div> <!-- Display results here -->
+        <div id="results"></div> <!-- Display results here -->
+    </div>
 
     <script>
         document.getElementById("attendanceForm").addEventListener("submit", function(event) {

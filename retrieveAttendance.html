@@ -4,23 +4,96 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Retrieve Attendance Records</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            color: #003572;
+            font-weight: bold;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        form {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="time"],
+        input[type="submit"] {
+            width: calc(100% - 16px); /* Adjusted width */
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="submit"] {
+            background-color: #003572;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #001d44;
+        }
+
+        #results {
+            margin-top: 20px;
+        }
+
+        .error-message {
+            color: #f00;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Retrieve Attendance Records</h1>
-    <form id="retrieveForm" action="/retrieve" method="post" onsubmit="return validateForm()">
-        <label for="course">Course:</label>
-        <input type="text" id="course" name="course"><br>
-
-        <label for="date">Date (YYYY-MM-DD):</label>
-        <input type="date" id="date" name="date"><br>
-
-        <label for="time">Time (HH:MM):</label>
-        <input type="time" id="time" name="time"><br>
-
-        <input type="submit" value="Retrieve">
-    </form>
-
-    <div id="results"></div> <!-- Display results here -->
+    <div class="container">
+        <h1>Retrieve Attendance Records</h1>
+        <form id="retrieveForm" action="/retrieve" method="post" onsubmit="return validateForm()">
+            <label for="course">Course:</label>
+            <input type="text" id="course" name="course"><br>
+            <label for="date">Date (YYYY-MM-DD):</label>
+            <input type="date" id="date" name="date"><br>
+            <label for="time">Time (HH:MM):</label>
+            <input type="time" id="time" name="time"><br>
+            <input type="submit" value="Retrieve">
+        </form>
+        <div id="results"></div> <!-- Display results here -->
+    </div>
 
     <script>
         document.getElementById("retrieveForm").addEventListener("submit", function(event) {
