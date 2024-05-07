@@ -7,8 +7,15 @@ from botocore.exceptions import ClientError
 
 app = Flask(__name__)
 
-# Initialize Boto3 S3 client
+# Initialize Boto3 client
 s3 = boto3.client('s3')
+dynamodb = boto3.client('dynamodb', region_name='ap-southeast-1')
+rekognition = boto3.client('rekognition', region_name='ap-southeast-1')
+
+# Global variables 
+dynamodb_attendance_table_name = "swiftAttendance"
+dynamodb_registration_table_name = "swiftAttend"
+rekognition_collection_name = "swiftAttend"
 initialized_date = ""
 initialized_course = ""
 
@@ -66,9 +73,8 @@ def initialize_class():
 
 
 def fetch_students_from_dynamodb():
-    dynamodb = boto3.client('dynamodb', region_name='ap-southeast-1')
     response = dynamodb.scan(
-        TableName='swiftAttend'
+        TableName= dynamodb_registration_table_name
     )
     items = response.get('Items', [])
     students = []
@@ -81,8 +87,7 @@ def fetch_students_from_dynamodb():
     return students
 
 def save_class_record_to_dynamodb(class_record):
-    dynamodb = boto3.client('dynamodb', region_name='ap-southeast-1')
-    table_name = 'swiftAttendance'  # Update with your table name
+    global dynamodb_attendance_table_name
 
     course = class_record['Course']
     students = class_record['Students']
@@ -97,7 +102,7 @@ def save_class_record_to_dynamodb(class_record):
         }
         
         dynamodb.put_item(
-            TableName=table_name,
+            TableName= dynamodb_attendance_table_name,
             Item=item
         )
 
@@ -129,12 +134,9 @@ def detect_faces():
     image_file = request.files['image']
     image_bytes = image_file.read()
 
-    # Initialize Boto3 Rekognition client
-    rekognition = boto3.client('rekognition', region_name='ap-southeast-1')
-
     # Index all faces in the input image
     response_index = rekognition.index_faces(
-        CollectionId='swiftAttend',
+        CollectionId=rekognition_collection_name,
         Image={'Bytes': image_bytes}
     )
 
@@ -145,7 +147,7 @@ def detect_faces():
 
     for face_id in face_ids:
         response_search = rekognition.search_faces(
-            CollectionId = 'swiftAttend',
+            CollectionId = rekognition_collection_name,
             FaceId = face_id, 
             FaceMatchThreshold=70,
             MaxFaces=10
@@ -154,9 +156,8 @@ def detect_faces():
         if 'FaceMatches' in response_search and len(response_search['FaceMatches']) > 0:
                 for match in response_search['FaceMatches']:
                     # Retrieve the information about the recognized person from DynamoDB
-                    dynamodb = boto3.client('dynamodb', region_name='ap-southeast-1')
                     person_info = dynamodb.get_item(
-                        TableName='swiftAttend',
+                        TableName=dynamodb_registration_table_name,
                         Key={'RekognitionId': {'S': match['Face']['FaceId']}}
                     )
                     if 'Item' in person_info:
@@ -194,9 +195,10 @@ def generate_signed_url(bucket_name, object_key, expiration=3600):
         return None
 
 def fetch_student_in_class():
-    dynamodb = boto3.client('dynamodb', region_name='ap-southeast-1')
+    global dynamodb_attendance_table_name
+
     response = dynamodb.scan(
-        TableName='swiftAttendance',
+        TableName=dynamodb_attendance_table_name,
         ExpressionAttributeNames={'#D': 'Date'},  # Alias for the reserved keyword 'Date'
         FilterExpression='#D = :d AND Course = :c',  # Using the alias and normal attribute name in the filter expression
         ExpressionAttributeValues={':d': {'S': initialized_date}, ':c': {'S': initialized_course}}
@@ -213,12 +215,10 @@ def fetch_student_in_class():
 
 
 def update_attendance(student_id, attendance, date):
-    # Initialize Boto3 DynamoDB client
-    dynamodb = boto3.client('dynamodb', region_name='ap-southeast-1')
-    
+    global dynamodb_attendance_table_name
     # Update the item in DynamoDB table
     response = dynamodb.update_item(
-        TableName='swiftAttendance',
+        TableName=dynamodb_attendance_table_name,
         Key={
             'StudentId': {'S': student_id},
             'Date': {'S': date}
@@ -289,8 +289,6 @@ def retrieve_attendance():
 
 
 def ret_student_in_class(course=None, date=None, time=None):
-    dynamodb = boto3.client('dynamodb', region_name='ap-southeast-1')
-    
     # Initialize expression attribute names and values
     expression_attribute_names = {}
     expression_attribute_values = {}
@@ -317,9 +315,11 @@ def ret_student_in_class(course=None, date=None, time=None):
     # Combine filter expression parts with 'AND'
     filter_expression = ' AND '.join(filter_expression_parts)
 
+    global dynamodb_attendance_table_name
+
     # Query DynamoDB table based on the constructed filter expression
     response = dynamodb.scan(
-        TableName='swiftAttendance',
+        TableName=dynamodb_attendance_table_name,
         FilterExpression=filter_expression,
         ExpressionAttributeNames=expression_attribute_names,
         ExpressionAttributeValues=expression_attribute_values
@@ -339,11 +339,6 @@ def ret_student_in_class(course=None, date=None, time=None):
         students.append(student)
 
     return students
-
-
-
-
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
