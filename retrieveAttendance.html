@@ -21,8 +21,11 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 400px;
+            width: 100%; /* Set width to 100% */
+            max-width: 400px; /* Set maximum width */
+            margin: auto; /* Center the container horizontally */
         }
+
 
         h1 {
             text-align: center;
@@ -78,6 +81,18 @@
             text-align: center;
             margin-top: 10px;
         }
+
+        p {
+            text-align: center;
+            margin-top: 10px;
+            color: #003572;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        p:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -92,7 +107,8 @@
             <input type="time" id="time" name="time"><br>
             <input type="submit" value="Retrieve">
         </form>
-        <div id="results"></div> <!-- Display results here -->
+        <div id="results"></div>
+        <a href="/"><p>Home</p></a>
     </div>
 
     <script>

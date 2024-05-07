@@ -20,7 +20,9 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 80%;
+            width: 90%; /* Updated width to 100% */
+            max-width: 600px; /* Added max-width for responsiveness */
+            margin: auto; /* Center the container horizontally */
         }
         h1 {
             color: #003572;
@@ -31,12 +33,12 @@
         }
         table {
             border-collapse: collapse;
-            width: 100%;
+            width: 100%; /* Set table width to 100% */
             margin-bottom: 20px;
         }
         th, td {
             border: 1px solid #dddddd;
-            text-align: left;
+            text-align: center;
             padding: 8px;
         }
         th {
@@ -54,21 +56,21 @@
         <table>
             <thead>
                 <tr>
+                    <th>Date</th>
                     <th>Student ID</th>
                     <th>Full Name</th>
-                    <th>Date</th>
-                    <th>Attendance</th>
                     <th>Course</th>
+                    <th>Attendance</th>
                 </tr>
             </thead>
             <tbody>
                 {% for record in attendance_records %}
                 <tr>
+                    <td>{{ record.Date }}</td>
                     <td>{{ record.StudentId }}</td>
                     <td>{{ record.FullName }}</td>
-                    <td>{{ record.Date }}</td>
-                    <td>{{ record.Attendance }}</td>
                     <td>{{ record.Course }}</td>
+                    <td>{{ record.Attendance }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

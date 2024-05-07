@@ -109,6 +109,18 @@
             margin-left: auto; /* Centers the image horizontally */
             margin-right: auto; /* Centers the image horizontally */
         }
+
+        p {
+            text-align: center;
+            margin-top: 10px;
+            color: #003572;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        p:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -128,6 +140,7 @@
         <div id="loadingMessage">Processing...</div> <!-- Display loading message here -->
 
         <div id="results"></div> <!-- Display results here -->
+        <a href="/"><p>Home</p></a>
     </div>
 
     <script>

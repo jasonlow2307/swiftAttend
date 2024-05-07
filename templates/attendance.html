@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Records</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,46 +12,73 @@
             padding: 0;
         }
 
-        #attendance-container {
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
         h1 {
             color: #003572;
             text-align: center;
-            margin-top: 0;
+            margin-top: 20px;
+        }
+
+        #attendance-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        #attendance {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 800px;
+            width: 100%;
         }
 
         h2 {
             color: #003572;
             font-size: 20px;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
 
-        ul {
-            list-style-type: none;
-            padding: 0;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
         }
 
-        li {
-            margin-bottom: 10px;
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #003572;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        img {
+            max-width: 100px;
+            height: auto;
+            border-radius: 5px;
         }
 
         p {
             text-align: center;
             color: #666;
-            margin-top: 0;
+            margin-top: 20px;
         }
 
         a {
             display: block;
             text-align: center;
-            margin-top: 40px;
+            margin-top: 20px;
             color: #003572;
             text-decoration: none;
             font-weight: bold;
@@ -63,20 +91,29 @@
 </head>
 <body>
     <div id="attendance-container">
-        <h1>Attendance Records</h1>
         {% if attendance_records %}
             <div id="attendance">
                 <h2>Attendance Records:</h2>
-                <ul>
-                    {% for record in attendance_records %}
-                        <li>{{ record.FullName }}: {{ record.Attendance }}</li>
-                    {% endfor %}
-                </ul>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Image</th>  
+                            <th>Full Name</th>
+                            <th>Attendance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance_records %}
+                            <tr>
+                                <td><img src="{{ record.SignedURL }}" alt="Student Image"></td>
+                                <td>{{ record.FullName }}</td>
+                                <td>{{ record.Attendance }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        {% else %}
-            <p>No attendance records found</p>
         {% endif %}
-        <a href="/check">Go back to check attendance</a>
     </div>
 </body>
 </html>

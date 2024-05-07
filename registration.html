@@ -86,15 +86,27 @@
         }
 
         #previewImage {
-        margin-top: 10px;
-        margin-bottom: 10px;
-        border-radius: 5px;
-        max-width: 100%;
-        display: block; /* Ensures the image takes up its full container width */
-        margin-left: auto; /* Centers the image horizontally */
-        margin-right: auto; /* Centers the image horizontally */
+            margin-top: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            max-width: 100%;
+            display: block; /* Ensures the image takes up its full container width */
+            margin-left: auto; /* Centers the image horizontally */
+            margin-right: auto; /* Centers the image horizontally */
         }
 
+        /* Style for the "Home" link */
+        p {
+            text-align: center;
+            margin-top: 10px;
+            color: #003572;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        p:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -110,6 +122,7 @@
             <input type="text" name="studentid" placeholder="Enter Your Student ID" required><br>
             <input type="submit" value="Submit">
         </form>
+        <a href="/"><p>Home</p></a>
     </div>
 
     <script>

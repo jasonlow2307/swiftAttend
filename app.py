@@ -3,6 +3,7 @@ import boto3
 import io
 from datetime import datetime
 from boto3.dynamodb.conditions import Key, Attr
+from botocore.exceptions import ClientError
 
 app = Flask(__name__)
 
@@ -109,7 +110,7 @@ def save():
 
     # Upload image to S3 bucket with metadata
     bucket_name = 'swift-attend-faces'
-    key = f'index/{image.filename}'  # Object key in S3 bucket
+    key = f'index/{student_id}'  # Object key in S3 bucket
     image_bytes = image.read()
     s3.upload_fileobj(
         io.BytesIO(image_bytes),
@@ -127,10 +128,6 @@ def detect_faces():
 
     image_file = request.files['image']
     image_bytes = image_file.read()
-
-    # Retrieve date and course from the form data
-    date = request.form.get('date')
-    course = request.form.get('course')
 
     # Initialize Boto3 Rekognition client
     rekognition = boto3.client('rekognition', region_name='ap-southeast-1')
@@ -163,11 +160,9 @@ def detect_faces():
                         Key={'RekognitionId': {'S': match['Face']['FaceId']}}
                     )
                     if 'Item' in person_info:
-                        #detected_people.add(person_info['Item']['FullName']['S'])
                         detected_student_id.add(person_info['Item']['StudentId']['S'])
 
     print(detected_student_id)
-
 
     # Fetch student records based on date and course
     student_records = fetch_student_in_class()
@@ -178,11 +173,25 @@ def detect_faces():
     # Iterate through student records and update attendance
     for student in student_records:
         attendance_status = 'PRESENT' if student['StudentId'] in detected_student_id else 'ABSENT'
-        attendance_records.append({'FullName': student['FullName'], 'Attendance': attendance_status})
+        image_key = "index/" + student['StudentId']
+        signed_url = generate_signed_url('swift-attend-faces', image_key)
+        attendance_records.append({'FullName': student['FullName'], 'Attendance': attendance_status, 'SignedURL': signed_url})
         # Update attendance in the database
         update_attendance(student['StudentId'], attendance_status, initialized_date)
+        print(signed_url)
 
     return render_template('attendance.html', attendance_records=attendance_records)
+
+def generate_signed_url(bucket_name, object_key, expiration=3600):
+    try:
+        response = s3.generate_presigned_url('get_object',
+                                                    Params={'Bucket': bucket_name,
+                                                            'Key': object_key},
+                                                    ExpiresIn=expiration)
+        return response
+    except ClientError as e:
+        print("Error generating presigned URL:", e)
+        return None
 
 def fetch_student_in_class():
     dynamodb = boto3.client('dynamodb', region_name='ap-southeast-1')
