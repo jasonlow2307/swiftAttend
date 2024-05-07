@@ -84,15 +84,27 @@
         input[type="submit"]:hover {
             background-color: #001d44;
         }
+
+        #previewImage {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        max-width: 100%;
+        display: block; /* Ensures the image takes up its full container width */
+        margin-left: auto; /* Centers the image horizontally */
+        margin-right: auto; /* Centers the image horizontally */
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Registration</h2>
+        <img id="previewImage" src="#" alt="Image Preview" style="display: none;">
         <form id="registrationForm" enctype="multipart/form-data">
             <label class="file-upload">
                 Choose File
-                <input type="file" name="image" id="imageInput" accept="image/*" required>
+                <input type="file" name="image" id="imageInput" accept="image/*" required onchange="previewImage()">
             </label><br>
             <input type="text" name="name" placeholder="Enter Your Name" required><br>
             <input type="text" name="studentid" placeholder="Enter Your Student ID" required><br>
@@ -101,6 +113,22 @@
     </div>
 
     <script>
+        function previewImage() {
+            var fileInput = document.getElementById('imageInput');
+            var previewImage = document.getElementById('previewImage');
+
+            if (fileInput.files && fileInput.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                }
+
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        }
+
         document.getElementById("registrationForm").addEventListener("submit", function(event) {
             event.preventDefault(); // Prevent default form submission
             var formData = new FormData(this);

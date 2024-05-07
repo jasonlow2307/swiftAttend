@@ -44,7 +44,7 @@
         }
 
         /* Custom file upload button */
-        .custom-file-upload {
+        .file-upload {
             display: inline-block;
             background-color: #003572;
             color: white;
@@ -55,7 +55,7 @@
             transition: background-color 0.3s;
         }
 
-        .custom-file-upload:hover {
+        .file-upload:hover {
             background-color: #001d44;
         }
 
@@ -98,15 +98,29 @@
             text-align: center;
             margin-top: 10px;
         }
+
+        /* Style for the preview image */
+        #previewImage {
+            margin-top: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            max-width: 100%;
+            display: block; /* Ensures the image takes up its full container width */
+            margin-left: auto; /* Centers the image horizontally */
+            margin-right: auto; /* Centers the image horizontally */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Attendance Checking</h1>
+        <img id="previewImage" src="#" alt="Image Preview" style="display: none;">
         <form id="attendanceForm" action="/detect" method="post" enctype="multipart/form-data">
             <!-- Custom file upload button -->
-            <label for="imageInput" class="custom-file-upload">Upload a file</label>
-            <input type="file" id="imageInput" name="image" accept="image/*" required><br>
+            <label class="file-upload">
+                Choose File
+                <input type="file" name="image" id="imageInput" accept="image/*" required onchange="previewImage()">
+            </label><br>
             <!-- Custom submit button -->
             <input type="submit" value="Submit">
         </form>
@@ -117,6 +131,22 @@
     </div>
 
     <script>
+        function previewImage() {
+            var fileInput = document.getElementById('imageInput');
+            var previewImage = document.getElementById('previewImage');
+
+            if (fileInput.files && fileInput.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                }
+
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        }
+
         document.getElementById("attendanceForm").addEventListener("submit", function(event) {
             event.preventDefault(); // Prevent default form submission
             var formData = new FormData(this);

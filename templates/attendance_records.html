@@ -5,14 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance Records</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+        }
+        h1 {
+            color: #003572;
+            font-weight: bold;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
         table {
             border-collapse: collapse;
             width: 100%;
+            margin-bottom: 20px;
         }
         th, td {
             border: 1px solid #dddddd;
             text-align: left;
             padding: 8px;
+        }
+        th {
+            background-color: #003572;
+            color: white;
         }
         tr:nth-child(even) {
             background-color: #f2f2f2;
@@ -20,28 +49,30 @@
     </style>
 </head>
 <body>
-    <h1>Attendance Records</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Student ID</th>
-                <th>Full Name</th>
-                <th>Date</th>
-                <th>Attendance</th>
-                <th>Course</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for record in attendance_records %}
-            <tr>
-                <td>{{ record.StudentId }}</td>
-                <td>{{ record.FullName }}</td>
-                <td>{{ record.Date }}</td>
-                <td>{{ record.Attendance }}</td>
-                <td>{{ record.Course }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="container">
+        <h1>Attendance Records</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Full Name</th>
+                    <th>Date</th>
+                    <th>Attendance</th>
+                    <th>Course</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in attendance_records %}
+                <tr>
+                    <td>{{ record.StudentId }}</td>
+                    <td>{{ record.FullName }}</td>
+                    <td>{{ record.Date }}</td>
+                    <td>{{ record.Attendance }}</td>
+                    <td>{{ record.Course }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>
