@@ -127,7 +127,7 @@
     <div class="container">
         <h1>Attendance Checking</h1>
         <img id="previewImage" src="#" alt="Image Preview" style="display: none;">
-        <form id="attendanceForm" action="/detect" method="post" enctype="multipart/form-data">
+        <form id="attendanceForm" action="/check_form" method="post" enctype="multipart/form-data">
             <!-- Custom file upload button -->
             <label class="file-upload">
                 Choose File
@@ -168,7 +168,7 @@
             document.getElementById("loadingMessage").style.display = "block";
 
             // Send form data to server using fetch API
-            fetch("/detect", {
+            fetch("/check_form", {
                 method: "POST",
                 body: formData
             })

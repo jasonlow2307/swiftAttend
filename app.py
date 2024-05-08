@@ -7,6 +7,7 @@ from botocore.exceptions import ClientError
 
 app = Flask(__name__)
 
+
 # Initialize Boto3 client
 s3 = boto3.client('s3')
 dynamodb = boto3.client('dynamodb', region_name='ap-southeast-1')
@@ -23,7 +24,7 @@ initialized_course = ""
 def index():
     return send_from_directory('.', 'index.html')
 
-@app.route('/register')
+@app.route('/reg')
 def register():
     return send_from_directory('.', 'registration.html')
 
@@ -39,7 +40,7 @@ def check():
 def ret():
     return send_from_directory('.', 'retrieveAttendance.html')
 
-@app.route('/initialize_class', methods=['POST'])
+@app.route('/init_form', methods=['POST'])
 def initialize_class():
     global initialized_date
     global initialized_course
@@ -71,43 +72,7 @@ def initialize_class():
     # Redirect the user to '/check' route after class initialization
     return jsonify({'success': True, 'message': 'Class initialized successfully!'}), 200
 
-
-def fetch_students_from_dynamodb():
-    response = dynamodb.scan(
-        TableName= dynamodb_registration_table_name
-    )
-    items = response.get('Items', [])
-    students = []
-    for item in items:
-        student = {
-            'FullName': item.get('FullName', {}).get('S'),
-            'StudentId': item.get('StudentId', {}).get('S')
-        }
-        students.append(student)
-    return students
-
-def save_class_record_to_dynamodb(class_record):
-    global dynamodb_attendance_table_name
-
-    course = class_record['Course']
-    students = class_record['Students']
-    
-    for student in students:
-        item = {
-            'Date': {'S': str(class_record['StartTime'])},
-            'Course': {'S': course},
-            'FullName': {'S': student['FullName']},
-            'StudentId': {'S': student['StudentId']},
-            'Attendance': {'S': ""}
-        }
-        
-        dynamodb.put_item(
-            TableName= dynamodb_attendance_table_name,
-            Item=item
-        )
-
-
-@app.route('/save', methods=['POST'])
+@app.route('/reg_form', methods=['POST'])
 def save():
     image = request.files['image']
     name = request.form['name']
@@ -126,7 +91,7 @@ def save():
 
     return '', 200  # Respond with success status code
 
-@app.route('/detect', methods=['POST'])
+@app.route('/check_form', methods=['POST'])
 def detect_faces():
     if 'image' not in request.files:
         return jsonify({'error': 'No image provided'}), 400
@@ -232,7 +197,7 @@ def update_attendance(student_id, attendance, date):
     
     print(f"Attendance updated for student ID {student_id} on date {date} to {attendance}.")
 
-@app.route('/retrieve', methods=['POST'])
+@app.route('/ret_form', methods=['POST'])
 def retrieve_attendance():
     # Get form data from the request
     course = request.form.get('course')
@@ -287,7 +252,44 @@ def retrieve_attendance():
     # Render the attendance records template with the retrieved records
     return render_template('attendance_records.html', attendance_records=student_records)
 
+############################ Custom Functions ###########################
+# For initializing class
+def fetch_students_from_dynamodb():
+    response = dynamodb.scan(
+        TableName= dynamodb_registration_table_name
+    )
+    items = response.get('Items', [])
+    students = []
+    for item in items:
+        student = {
+            'FullName': item.get('FullName', {}).get('S'),
+            'StudentId': item.get('StudentId', {}).get('S')
+        }
+        students.append(student)
+    return students
 
+# For retrieve_attendance
+def save_class_record_to_dynamodb(class_record):
+    global dynamodb_attendance_table_name
+
+    course = class_record['Course']
+    students = class_record['Students']
+    
+    for student in students:
+        item = {
+            'Date': {'S': str(class_record['StartTime'])},
+            'Course': {'S': course},
+            'FullName': {'S': student['FullName']},
+            'StudentId': {'S': student['StudentId']},
+            'Attendance': {'S': ""}
+        }
+        
+        dynamodb.put_item(
+            TableName= dynamodb_attendance_table_name,
+            Item=item
+        )
+
+# For retrieve_attendance
 def ret_student_in_class(course=None, date=None, time=None):
     # Initialize expression attribute names and values
     expression_attribute_names = {}

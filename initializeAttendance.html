@@ -81,7 +81,7 @@
 <body>
     <div class="container">
         <h1>Attendance Checking</h1>
-        <form id="attendanceForm" action="/initialize_class" method="post" enctype="multipart/form-data">
+        <form id="attendanceForm" action="/init_form" method="post" enctype="multipart/form-data">
             <label for="date">Date:</label><br>
             <input type="date" id="dateInput" name="date" required><br>
             <label for="course">Course:</label><br>
@@ -108,7 +108,7 @@
             var formData = new FormData(this);
             
             // Send form data to server using fetch API
-            fetch("/initialize_class", {
+            fetch("/init_form", {
                 method: "POST",
                 body: formData
             })
