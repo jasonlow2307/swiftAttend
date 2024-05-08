@@ -14,23 +14,23 @@ initialized_course = ''
 
 @blueprint.route('/')
 def index():
-    return send_from_directory('.', 'index.html')
+    return send_from_directory('.', 'pages/index.html')
 
 @blueprint.route('/reg')
 def register():
-    return send_from_directory('.', 'registration.html')
+    return send_from_directory('.', 'pages/registration.html')
 
 @blueprint.route('/init')
 def init():
-    return send_from_directory('.', 'initializeAttendance.html')
+    return send_from_directory('.', 'pages/initializeAttendance.html')
 
 @blueprint.route('/check')
 def check():
-    return send_from_directory('.', 'checkingAttendance.html')
+    return send_from_directory('.', 'pages/checkingAttendance.html')
 
 @blueprint.route('/ret')
 def ret():
-    return send_from_directory('.', 'retrieveAttendance.html')
+    return send_from_directory('.', 'pages/retrieveAttendance.html')
 
 @blueprint.route('/init_form', methods=['POST'])
 def initialize_class():
