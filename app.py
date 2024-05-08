@@ -4,6 +4,7 @@ import io
 from datetime import datetime
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
+from config import DYNAMODB_ATTENDANCE_TABLE_NAME, DYNAMODB_REGISTRATION_TABLE_NAME, REKOGNITION_COLLECTION_NAME
 
 app = Flask(__name__)
 
@@ -14,11 +15,8 @@ dynamodb = boto3.client('dynamodb', region_name='ap-southeast-1')
 rekognition = boto3.client('rekognition', region_name='ap-southeast-1')
 
 # Global variables 
-dynamodb_attendance_table_name = "swiftAttendance"
-dynamodb_registration_table_name = "swiftAttend"
-rekognition_collection_name = "swiftAttend"
-initialized_date = ""
-initialized_course = ""
+initialized_date = ''
+initialized_course = ''
 
 @app.route('/')
 def index():
@@ -101,7 +99,7 @@ def detect_faces():
 
     # Index all faces in the input image
     response_index = rekognition.index_faces(
-        CollectionId=rekognition_collection_name,
+        CollectionId=REKOGNITION_COLLECTION_NAME,
         Image={'Bytes': image_bytes}
     )
 
@@ -112,7 +110,7 @@ def detect_faces():
 
     for face_id in face_ids:
         response_search = rekognition.search_faces(
-            CollectionId = rekognition_collection_name,
+            CollectionId = REKOGNITION_COLLECTION_NAME,
             FaceId = face_id, 
             FaceMatchThreshold=70,
             MaxFaces=10
@@ -122,7 +120,7 @@ def detect_faces():
                 for match in response_search['FaceMatches']:
                     # Retrieve the information about the recognized person from DynamoDB
                     person_info = dynamodb.get_item(
-                        TableName=dynamodb_registration_table_name,
+                        TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
                         Key={'RekognitionId': {'S': match['Face']['FaceId']}}
                     )
                     if 'Item' in person_info:
@@ -139,7 +137,7 @@ def detect_faces():
     # Iterate through student records and update attendance
     for student in student_records:
         attendance_status = 'PRESENT' if student['StudentId'] in detected_student_id else 'ABSENT'
-        image_key = "index/" + student['StudentId']
+        image_key = 'index/' + student['StudentId']
         signed_url = generate_signed_url('swift-attend-faces', image_key)
         attendance_records.append({'FullName': student['FullName'], 'Attendance': attendance_status, 'SignedURL': signed_url})
         # Update attendance in the database
@@ -156,14 +154,12 @@ def generate_signed_url(bucket_name, object_key, expiration=3600):
                                                     ExpiresIn=expiration)
         return response
     except ClientError as e:
-        print("Error generating presigned URL:", e)
+        print('Error generating presigned URL:', e)
         return None
 
 def fetch_student_in_class():
-    global dynamodb_attendance_table_name
-
     response = dynamodb.scan(
-        TableName=dynamodb_attendance_table_name,
+        TableName=DYNAMODB_ATTENDANCE_TABLE_NAME,
         ExpressionAttributeNames={'#D': 'Date'},  # Alias for the reserved keyword 'Date'
         FilterExpression='#D = :d AND Course = :c',  # Using the alias and normal attribute name in the filter expression
         ExpressionAttributeValues={':d': {'S': initialized_date}, ':c': {'S': initialized_course}}
@@ -180,10 +176,9 @@ def fetch_student_in_class():
 
 
 def update_attendance(student_id, attendance, date):
-    global dynamodb_attendance_table_name
     # Update the item in DynamoDB table
     response = dynamodb.update_item(
-        TableName=dynamodb_attendance_table_name,
+        TableName=DYNAMODB_ATTENDANCE_TABLE_NAME,
         Key={
             'StudentId': {'S': student_id},
             'Date': {'S': date}
@@ -195,7 +190,7 @@ def update_attendance(student_id, attendance, date):
         ReturnValues='UPDATED_NEW'
     )
     
-    print(f"Attendance updated for student ID {student_id} on date {date} to {attendance}.")
+    print(f'Attendance updated for student ID {student_id} on date {date} to {attendance}.')
 
 @app.route('/ret_form', methods=['POST'])
 def retrieve_attendance():
@@ -206,7 +201,7 @@ def retrieve_attendance():
 
     # Check if date is filled and time is empty
     if date and not time:
-        return render_template('error.html', message="Time is required when date is provided.")
+        return render_template('error.html', message='Time is required when date is provided.')
 
     print(course)
     print(date)
@@ -247,7 +242,7 @@ def retrieve_attendance():
 
     # Check if no records are found
     if not student_records:
-        return render_template('error.html', message="No records found.")
+        return render_template('error.html', message='No records found.')
 
     # Render the attendance records template with the retrieved records
     return render_template('attendance_records.html', attendance_records=student_records)
@@ -256,7 +251,7 @@ def retrieve_attendance():
 # For initializing class
 def fetch_students_from_dynamodb():
     response = dynamodb.scan(
-        TableName= dynamodb_registration_table_name
+        TableName= DYNAMODB_REGISTRATION_TABLE_NAME
     )
     items = response.get('Items', [])
     students = []
@@ -270,8 +265,6 @@ def fetch_students_from_dynamodb():
 
 # For retrieve_attendance
 def save_class_record_to_dynamodb(class_record):
-    global dynamodb_attendance_table_name
-
     course = class_record['Course']
     students = class_record['Students']
     
@@ -281,11 +274,11 @@ def save_class_record_to_dynamodb(class_record):
             'Course': {'S': course},
             'FullName': {'S': student['FullName']},
             'StudentId': {'S': student['StudentId']},
-            'Attendance': {'S': ""}
+            'Attendance': {'S': ''}
         }
         
         dynamodb.put_item(
-            TableName= dynamodb_attendance_table_name,
+            TableName= DYNAMODB_ATTENDANCE_TABLE_NAME,
             Item=item
         )
 
@@ -317,11 +310,9 @@ def ret_student_in_class(course=None, date=None, time=None):
     # Combine filter expression parts with 'AND'
     filter_expression = ' AND '.join(filter_expression_parts)
 
-    global dynamodb_attendance_table_name
-
     # Query DynamoDB table based on the constructed filter expression
     response = dynamodb.scan(
-        TableName=dynamodb_attendance_table_name,
+        TableName=DYNAMODB_ATTENDANCE_TABLE_NAME,
         FilterExpression=filter_expression,
         ExpressionAttributeNames=expression_attribute_names,
         ExpressionAttributeValues=expression_attribute_values
