@@ -28,7 +28,7 @@
         
         <label>Select Students:</label><br>
         {% for student in students %}
-            <label><input type="checkbox" name="students" value="{{ student }}"> {{ student.StudentId + " - " +  student.FullName }}</label><br>
+            <label><input type="checkbox" name="students" value="{{ student.FullName }}"> {{ student.StudentId + " - " +  student.FullName }}</label><br>
         {% endfor %}
         <br>
         

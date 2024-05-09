@@ -50,8 +50,10 @@ def create_class():
     day = request.form['day']
     time = request.form['time']
     selected_students = request.form.getlist('students')
+    print(selected_students)
     students = fetch_students_from_dynamodb()
     selected_students = [student for student in students if student['FullName'] in selected_students]
+    print(selected_students)
     selected_student_ids = ""
 
     for student in selected_students:
