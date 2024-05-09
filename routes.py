@@ -1,7 +1,7 @@
 from flask import Blueprint, send_from_directory, request, jsonify, render_template
 from datetime import datetime
 import io
-from config import DYNAMODB_ATTENDANCE_TABLE_NAME, DYNAMODB_REGISTRATION_TABLE_NAME, REKOGNITION_COLLECTION_NAME
+from config import *
 from boto3.dynamodb.conditions import Attr
 from botocore.exceptions import ClientError
 from common import s3, dynamodb, rekognition
@@ -31,6 +31,45 @@ def check():
 @blueprint.route('/ret')
 def ret():
     return send_from_directory('.', 'pages/retrieveAttendance.html')
+
+@blueprint.route('/create')
+def create():
+    # Fetch the list of registered students
+    students = fetch_students_from_dynamodb()
+    # Extract unique student names
+    unique_student_names = set(student['FullName'] for student in students)
+    # Convert set back to a list
+    unique_student_list = list(unique_student_names)
+    print(unique_student_list)
+    return render_template('createClass.html', students=students)
+
+@blueprint.route('/create_form', methods=['POST'])
+def create_class():
+    course_name = request.form['courseName']
+    course_code = request.form['courseCode']
+    day = request.form['day']
+    time = request.form['time']
+    selected_students = request.form.getlist('students')
+    students = fetch_students_from_dynamodb()
+    selected_students = [student for student in students if student['FullName'] in selected_students]
+    selected_student_ids = ""
+
+    for student in selected_students:
+        selected_student_ids = selected_student_ids + "|" + student['StudentId']
+
+    item = {
+        'CourseCode': {'S': course_code},
+        'CourseName': {'S': course_name},
+        'Day': {'S': day},
+        'Time': {'S': time},
+        'Students': {'S': selected_student_ids}
+    }
+        
+    dynamodb.put_item(
+        TableName= DYNAMODB_CLASSES_TABLE_NAME,
+        Item=item
+    )
+    return jsonify({'success': True, 'message': 'Class created successfully!'}), 200
 
 @blueprint.route('/init_form', methods=['POST'])
 def initialize_class():
@@ -83,6 +122,7 @@ def save():
 
 @blueprint.route('/check_form', methods=['POST'])
 def detect_faces():
+    print("Checking face")
     global initialized_course
     global initialized_date
 
