@@ -22,7 +22,25 @@ def register():
 
 @blueprint.route('/init')
 def init():
-    return send_from_directory('.', 'pages/initializeAttendance.html')
+    classes = fetch_classes_from_dynamodb()
+    return render_template('initializeAttendance.html', classes=classes)
+
+def fetch_classes_from_dynamodb():
+    response = dynamodb.scan(
+        TableName= DYNAMODB_CLASSES_TABLE_NAME
+    )
+    items = response.get('Items', [])
+    classes = []
+    for item in items:
+        course = {
+            'CourseCode': item.get('CourseCode', {}).get('S'),
+            'CourseName': item.get('CourseName', {}).get('S'),
+            'Day': item.get('Day', {}).get('S'),
+            'Time': item.get('Time', {}).get('S'),
+            'Students': item.get('Students', {}).get('S')
+        }
+        classes.append(course)
+    return classes
 
 @blueprint.route('/check')
 def check():
@@ -73,35 +91,73 @@ def create_class():
     )
     return jsonify({'success': True, 'message': 'Class created successfully!'}), 200
 
+#Take class selected and search in classes table to get list of student id, then get fresh students from register table and match students in course, 
+#if yes, write fresh record to attendance table
+
+import ast
+
 @blueprint.route('/init_form', methods=['POST'])
 def initialize_class():
     global initialized_date
     global initialized_course
 
     date = request.form['date']
-    course = request.form['course']
-    start_time = request.form['time']
-    class_datetime = datetime.strptime(date + ' ' + start_time, '%Y-%m-%d %H:%M')
+    selected_course = request.form['course']
+    selected_course = ast.literal_eval(selected_course)
 
-    # Update global variables
-    initialized_date = str(class_datetime)
-    initialized_course = course
+    date_and_time = datetime.strptime(date + ' ' + selected_course['Time'], '%Y-%m-%d %H:%M')
+    initialized_date = str(date_and_time)
+    initialized_course = selected_course['CourseCode']
+                                      
+
+    student_ids = selected_course['Students'].split('|')
+    student_ids = student_ids[1:]
 
     # Fetch list of students from 'swiftAttend' table
-    students = fetch_students_from_dynamodb()
+    matched_students = fetch_students_from_registration_table(student_ids)
 
-    # Initialize class in 'swiftAttendance' table
+    print(matched_students)
+
+    # Initialize class record
     class_record = {
-        'Course': course,
-        'StartTime': class_datetime,
-        'Students': students
+        'Course': selected_course['CourseCode'],
+        'StartTime': date_and_time,
+        'Students': matched_students
     }
     
     # Save class record to 'swiftAttendance' table
     save_class_record_to_dynamodb(class_record)
-    
-    # Redirect the user to '/check' route after class initialization
+
+    # Return success response
     return jsonify({'success': True, 'message': 'Class initialized successfully!'}), 200
+    
+
+def fetch_classes_from_table():
+    response = dynamodb.scan(
+        TableName= DYNAMODB_CLASSES_TABLE_NAME
+    )
+    items = response.get('Items', [])
+    classes = []
+    for item in items:
+        c = {
+            'CourseCode': item.get('CourseCode', {}).get('S'),
+            'CourseName': item.get('CourseName', {}).get('S'),
+            'Time': item.get('Time', {}).get('S')
+        }
+        classes.append(c)
+    return classes
+
+def fetch_students_from_registration_table(student_ids):
+    students = []
+    for student_id in student_ids:
+        response = dynamodb.scan(
+            TableName='swiftAttend',
+            FilterExpression='StudentId = :student_id',
+            ExpressionAttributeValues={':student_id': {'S': student_id}}
+        )
+        items = response.get('Items', [])
+        students.extend(items)
+    return students
 
 @blueprint.route('/reg_form', methods=['POST'])
 def save():
@@ -264,8 +320,8 @@ def save_class_record_to_dynamodb(class_record):
         item = {
             'Date': {'S': str(class_record['StartTime'])},
             'Course': {'S': course},
-            'FullName': {'S': student['FullName']},
-            'StudentId': {'S': student['StudentId']},
+            'FullName': student['FullName'],
+            'StudentId': student['StudentId'],
             'Attendance': {'S': ''}
         }
         

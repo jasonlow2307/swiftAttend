@@ -81,14 +81,15 @@
 <body>
     <div class="container">
         <h1>Attendance Checking</h1>
-        <form id="attendanceForm" action="/init_form" method="post" enctype="multipart/form-data">
+        <form id="attendanceForm" action="/init_form" method="post">
             <label for="date">Date:</label><br>
             <input type="date" id="dateInput" name="date" required><br>
             <label for="course">Course:</label><br>
-            <input type="text" id="courseInput" name="course" required><br>
-            <label for="time">Class Start Time:</label><br>
-            <input type="time" id="timeInput" name="time" required><br>
-            <input type="hidden" id="classDateTime" name="classDateTime" value="">
+            <select id="courseInput" name="course">
+                {% for class in classes %}
+                    <input name="course" value="{{ course.CourseCode }}">{{ class.CourseCode + " - " + class.CourseName }}</option>
+                {% endfor %}
+            </select>
             <input type="submit" value="Submit">
         </form>
         <div id="results"></div> <!-- Display results here -->
@@ -97,14 +98,14 @@
     <script>
         document.getElementById("attendanceForm").addEventListener("submit", function(event) {
             event.preventDefault(); // Prevent default form submission
-    
+            
             // Capture current date and time
             var currentDate = new Date();
             var classDateTime = currentDate.toISOString(); // Convert to ISO string format
-    
+            
             // Set the value of the hidden input field
             document.getElementById("classDateTime").value = classDateTime;
-    
+
             var formData = new FormData(this);
             
             // Send form data to server using fetch API
@@ -116,7 +117,7 @@
             .then(data => {
                 // Handle success response
                 if (data.success) {
-                   // Display success message to the user
+                    // Display success message to the user
                     alert(data.message);
                     // Redirect to the '/check' route
                     window.location.href = "/check";
