@@ -22,8 +22,8 @@ def register():
 
 @blueprint.route('/init')
 def init():
-    classes = fetch_classes_from_dynamodb()
-    return render_template('initializeAttendance.html', classes=classes)
+    courses = fetch_classes_from_dynamodb()
+    return render_template('initializeAttendance.html', course=courses)
 
 def fetch_classes_from_dynamodb():
     response = dynamodb.scan(

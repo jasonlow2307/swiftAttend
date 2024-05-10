@@ -86,8 +86,8 @@
             <input type="date" id="dateInput" name="date" required><br>
             <label for="course">Course:</label><br>
             <select id="courseInput" name="course">
-                {% for class in classes %}
-                    <input name="course" value="{{ course.CourseCode }}">{{ class.CourseCode + " - " + class.CourseName }}</option>
+                {% for class in course %} 
+                    <option value="{{ class.CourseCode }}">{{ class.CourseCode + " - " + class.CourseName }}</option>
                 {% endfor %}
             </select>
             <input type="submit" value="Submit">
