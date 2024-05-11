@@ -4,36 +4,133 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Class Creation</title>
+    <style>
+        body {
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+    
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            margin: 50px auto;
+        }
+    
+        h1 {
+            color: #003572;
+            font-weight: bold;
+            font-size: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    
+        form {
+            text-align: center;
+        }
+    
+        label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+    
+        input[type="text"],
+        select,
+        input[type="time"],
+        input[type="submit"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+    
+        input[type="submit"] {
+            background-color: #003572;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+    
+        input[type="submit"]:hover {
+            background-color: #001d44;
+        }
+    
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #003572;
+            border-radius: 3px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-container input[type="checkbox"]:checked {
+            background-color: #003572;
+        }
+
+        .checkbox-container input[type="checkbox"]:checked::before {
+            content: "\2713";
+            display: block;
+            color: white;
+            text-align: center;
+            line-height: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Class Creation</h1>
-    <form id="classForm" action="/create_form" method="POST">
-        <label for="courseName">Course Name:</label>
-        <input type="text" id="courseName" name="courseName" required><br><br>
-        
-        <label for="courseName">Course Code:</label>
-        <input type="text" id="courseCode" name="courseCode" required><br><br>
+    <div class="container">
+        <h1>Create Class</h1>
+        <form id="classForm" action="/create_form" method="POST">
+            <label for="courseName">Course Name:</label>
+            <input type="text" id="courseName" name="courseName" required><br><br>
+            
+            <label for="courseName">Course Code:</label>
+            <input type="text" id="courseCode" name="courseCode" required><br><br>
+    
+            <label for="day">Day:</label>
+            <select id="day" name="day" required>
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+            </select><br><br>
+            
+            <label for="time">Time:</label>
+            <input type="time" id="time" name="time" required><br><br>
+            
+            <label>Select Students:</label><br>
+            {% for student in students %}
+                <div class="checkbox-container">
+                    <input type="checkbox" name="students" value="{{ student.FullName }}">
+                    <label>{{ student.StudentId + " - " +  student.FullName }}</label>
+                </div>
+            {% endfor %}
+            <br>
+            
+            <input type="submit" value="Create Class">
 
-        <label for="day">Day:</label>
-        <select id="day" name="day" required>
-            <option value="Monday">Monday</option>
-            <option value="Tuesday">Tuesday</option>
-            <option value="Wednesday">Wednesday</option>
-            <option value="Thursday">Thursday</option>
-            <option value="Friday">Friday</option>
-        </select><br><br>
-        
-        <label for="time">Time:</label>
-        <input type="time" id="time" name="time" required><br><br>
-        
-        <label>Select Students:</label><br>
-        {% for student in students %}
-            <label><input type="checkbox" name="students" value="{{ student.FullName }}"> {{ student.StudentId + " - " +  student.FullName }}</label><br>
-        {% endfor %}
-        <br>
-        
-        <input type="submit" value="Create Class">
-    </form>
+            <a href="/"><p>Home</p></a>
+        </form>
     
     <!-- Script to handle form submission and display JSON response -->
     <script>
