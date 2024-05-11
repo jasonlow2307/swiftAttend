@@ -36,6 +36,8 @@ def retrieve():
 @blueprint.route('/create')
 def create_class():
     students = fetch_students_from_dynamodb()
+    for student in students:
+        student['StudentId'] = int(student['StudentId'])
     unique_student_names = {student['FullName'] for student in students}
     unique_student_list = list(unique_student_names)
     return render_template('createClass.html', students=students)

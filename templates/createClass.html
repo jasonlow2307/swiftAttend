@@ -119,13 +119,15 @@
             <input type="time" id="time" name="time" required><br><br>
             
             <label>Select Students:</label><br>
-            {% for student in students %}
+            {% for student in students|sort(attribute='StudentId') %}
                 <div class="checkbox-container">
                     <input type="checkbox" name="students" value="{{ student.FullName }}">
-                    <label>{{ student.StudentId + " - " +  student.FullName }}</label>
+                    <label>{{ student.StudentId|string + " - " +  student.FullName }}</label>
                 </div>
             {% endfor %}
             <br>
+
+
             
             <input type="submit" value="Create Class">
 
