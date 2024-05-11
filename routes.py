@@ -349,7 +349,7 @@ def retrieve_student_records(course=None, date=None, time=None):
     for item in items:
         student = {
             'FullName': item.get('FullName', {}).get('S'),
-            'StudentId': item.get('StudentId', {}).get('S'),
+            'StudentId': int(item.get('StudentId', {}).get('S')),
             'Date': item.get('Date', {}).get('S'),
             'Attendance': item.get('Attendance', {}).get('S'),
             'Course': item.get('Course', {}).get('S')

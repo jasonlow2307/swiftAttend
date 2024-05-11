@@ -64,7 +64,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for record in attendance_records %}
+                {% for record in attendance_records|sort(attribute='StudentId') %}
                 <tr>
                     <td>{{ record.Date }}</td>
                     <td>{{ record.StudentId }}</td>
