@@ -6,6 +6,8 @@ from boto3.dynamodb.conditions import Attr
 from botocore.exceptions import ClientError
 from common import s3, dynamodb, rekognition
 import ast
+import random
+from datetime import datetime
 
 blueprint = Blueprint('app', __name__)
 
@@ -106,8 +108,31 @@ def initialize_class_record():
 def save_student_registration():
     image = request.files['image']
     name = request.form['name']
-    student_id = request.form['studentid']
 
+    # Generate student ID
+    year_month = datetime.now().strftime('%y%m')
+    random_numbers = str(random.randint(1000, 9999))
+    student_id = year_month + random_numbers
+
+    # Check if student_id already exists in DYNAMODB_REGISTRATION_TABLE_NAME
+    response = dynamodb.scan(
+        TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
+        FilterExpression='studentId = :student_id',
+        ExpressionAttributeValues={':student_id': {'S': student_id}}
+    )
+    items = response.get('Items', [])
+    while items:
+        # Regenerate student_id
+        random_numbers = str(random.randint(100000, 999999))
+        student_id = year_month + random_numbers
+        response = dynamodb.scan(
+            TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
+            FilterExpression='studentId = :student_id',
+            ExpressionAttributeValues={':student_id': {'S': student_id}}
+        )
+        items = response.get('Items', [])
+
+    # Use the generated student ID in your code
     bucket_name = 'swift-attend-faces'
     key = f'index/{student_id}'
     image_bytes = image.read()
