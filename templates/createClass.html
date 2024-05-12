@@ -121,7 +121,7 @@
             <label>Select Students:</label><br>
             {% for student in students|sort(attribute='StudentId') %}
                 <div class="checkbox-container">
-                    <input type="checkbox" name="students" value="{{ student.FullName }}">
+                    <input type="checkbox" name="students" value="{{ student }}">
                     <label>{{ student.StudentId|string + " - " +  student.FullName }}</label>
                 </div>
             {% endfor %}

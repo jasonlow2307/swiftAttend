@@ -38,8 +38,6 @@ def create_class():
     students = fetch_students_from_dynamodb()
     for student in students:
         student['StudentId'] = int(student['StudentId'])
-    unique_student_names = {student['FullName'] for student in students}
-    unique_student_list = list(unique_student_names)
     return render_template('createClass.html', students=students)
 
 @blueprint.route('/create_form', methods=['POST'])
@@ -48,11 +46,18 @@ def create_class_record():
     course_code = request.form['courseCode']
     day = request.form['day']
     time = request.form['time']
+    # Getting list of students in string 
     selected_students = request.form.getlist('students')
-    students = fetch_students_from_dynamodb()
-    selected_students = [student for student in students if student['FullName'] in selected_students]
-    selected_student_ids = "|".join(student['StudentId'] for student in selected_students)
+    # List to store converted students in proper dictionary format
+    selected_students_dic = []
+    for student in selected_students:
+        student = ast.literal_eval(student)
+        student['StudentId'] = str(student['StudentId'])
+        selected_students_dic.append(student)
     
+    # Join all student ids of selected students with | separator
+    selected_student_ids = "|".join(student['StudentId'] for student in selected_students_dic)
+
     item = {
         'CourseCode': {'S': course_code},
         'CourseName': {'S': course_name},
@@ -65,6 +70,7 @@ def create_class_record():
         TableName= DYNAMODB_CLASSES_TABLE_NAME,
         Item=item
     )
+    
     return jsonify({'success': True, 'message': 'Class created successfully!'}), 200
 
 @blueprint.route('/init_form', methods=['POST'])
