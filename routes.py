@@ -27,7 +27,6 @@ class RegisterForm(FlaskForm):
     submit = SubmitField('Register')
 
 class ConfirmForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired()])
     code = StringField('Confirmation Code', validators=[DataRequired()])
     submit = SubmitField('Confirm')
 
@@ -35,6 +34,13 @@ class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
+
+@blueprint.route('/logout', methods=['GET', 'POST'])
+def logout():
+    print("Session before clearing: ", session)
+    session.pop('id_token', None)
+    print("Session after clearing: ", session)
+    return redirect(url_for('app.login'))
 
 @blueprint.route('/register', methods=['GET', 'POST'])
 def register():
@@ -50,10 +56,18 @@ def register():
                 Username=email,
                 Password=password,
                 UserAttributes=[
-                    {'Name': 'given_name', 'Value': given_name},
-                    {'Name': 'family_name', 'Value': family_name},
-                ],
+                    {
+                        'Name': 'given_name',
+                        'Value': given_name
+                    },
+                    {
+                        'Name': 'family_name',
+                        'Value': family_name
+                    }
+                ]
             )
+            # Save the user's email in the session
+            session['email'] = email
             return redirect(url_for('app.confirm'))
         except ClientError as e:
             error = e.response['Error']['Message']
@@ -63,8 +77,11 @@ def register():
 @blueprint.route('/confirm', methods=['GET', 'POST'])
 def confirm():
     form = ConfirmForm()
+    email = session.get('email')
+    print("Email")
+    print(email)
     if form.validate_on_submit():
-        email = form.email.data
+        # Retrieve the user's email from the session
         confirmation_code = form.code.data
         try:
             response = cognito.confirm_sign_up(

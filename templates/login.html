@@ -2,21 +2,113 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #003572;
+            font-weight: bold;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        form {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+            width: calc(100% - 40px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        /* Custom submit button */
+        input[type="submit"] {
+            display: inline-block;
+            width: calc(100% - 40px); /* Adjusted width */
+            background-color: #003572;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold; /* Bold text */
+            transition: background-color 0.3s;
+            margin-top: 20px; /* Add this line to increase space above the button */
+        }
+
+
+        input[type="submit"]:hover {
+            background-color: #001d44;
+        }
+
+        .error-message {
+            color: #f00;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        p {
+            text-align: center;
+            margin-top: 10px;
+            color: #003572;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        p:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        <p>
-            {{ form.email.label }}<br>
-            {{ form.email(size=32) }}<br>
-            {{ form.password.label }}<br>
-            {{ form.password(size=32) }}<br>
-            {{ form.submit() }}
-        </p>
-        {% if error %}
-            <p style="color: red;">{{ error }}</p>
-        {% endif %}
-    </form>
+    <div class="container">
+        <h1>Login</h1>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <p>
+                {{ form.email.label }}<br>
+                {{ form.email(size=32) }}<br>
+                {{ form.password.label }}<br>
+                {{ form.password(size=32) }}<br>
+                {{ form.submit(class="btn btn-primary") }}
+            </p>
+            {% if error %}
+                <p class="error-message">{{ error }}</p>
+            {% endif %}
+        </form>
+    </div>
 </body>
 </html>
