@@ -27,7 +27,7 @@ class RegisterForm(FlaskForm):
     submit = SubmitField('Register')
 
 class ConfirmForm(FlaskForm):
-    code = StringField('Confirmation Code', validators=[DataRequired()])
+    code = StringField('Confirmation Code:', validators=[DataRequired()])
     submit = SubmitField('Confirm')
 
 class LoginForm(FlaskForm):
