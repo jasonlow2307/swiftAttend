@@ -1,41 +1,152 @@
-from flask import Blueprint, send_from_directory, request, jsonify, render_template
+from functools import wraps
+from flask import Blueprint, redirect, render_template_string, send_from_directory, request, jsonify, render_template, url_for, session
 from datetime import datetime
 import io
 from config import *
 from boto3.dynamodb.conditions import Attr
 from botocore.exceptions import ClientError
-from common import s3, dynamodb, rekognition
+from common import *
 import ast
 import random
 from datetime import datetime
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Email
 
 blueprint = Blueprint('app', __name__)
 
 initialized_date = ''
 initialized_course = ''
+COGNITO_CLIENT_ID = '66soki1i4q3q8ttrera7f6318v'
+
+class RegisterForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    given_name = StringField('Given Name', validators=[DataRequired()])
+    family_name = StringField('Family Name', validators=[DataRequired()])
+    submit = SubmitField('Register')
+
+class ConfirmForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired()])
+    code = StringField('Confirmation Code', validators=[DataRequired()])
+    submit = SubmitField('Confirm')
+
+class LoginForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Login')
+
+@blueprint.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password.data
+        given_name = form.given_name.data
+        family_name = form.family_name.data
+        try:
+            response = cognito.sign_up(
+                ClientId=COGNITO_CLIENT_ID,
+                Username=email,
+                Password=password,
+                UserAttributes=[
+                    {'Name': 'given_name', 'Value': given_name},
+                    {'Name': 'family_name', 'Value': family_name},
+                ],
+            )
+            return redirect(url_for('app.confirm'))
+        except ClientError as e:
+            error = e.response['Error']['Message']
+            return render_template('register.html', form=form, error=error)
+    return render_template('register.html', form=form)
+
+@blueprint.route('/confirm', methods=['GET', 'POST'])
+def confirm():
+    form = ConfirmForm()
+    if form.validate_on_submit():
+        email = form.email.data
+        confirmation_code = form.code.data
+        try:
+            response = cognito.confirm_sign_up(
+                ClientId=COGNITO_CLIENT_ID,
+                Username=email,
+                ConfirmationCode=confirmation_code,
+            )
+            return redirect(url_for('app.login'))
+        except ClientError as e:
+            error = e.response['Error']['Message']
+            return render_template('confirm.html', form=form, error=error)
+    return render_template('confirm.html', form=form)
+
+@blueprint.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password.data
+        try:
+            response = cognito.initiate_auth(
+                ClientId=COGNITO_CLIENT_ID,
+                AuthFlow='USER_PASSWORD_AUTH',
+                AuthParameters={
+                    'USERNAME': email,
+                    'PASSWORD': password,
+                }
+            )
+            print(response)  # Print the entire response for debugging
+            if 'AuthenticationResult' in response:
+                session['id_token'] = response['AuthenticationResult']['IdToken']
+                return redirect(url_for('app.index'))
+            else:
+                error = response.get('ChallengeName', 'Authentication failed. Please check your email and password.')
+                return render_template('login.html', form=form, error=error)
+        except ClientError as e:
+            error = e.response['Error']['Message']
+            return render_template('login.html', form=form, error=error)
+    return render_template('login.html', form=form)
+
+# Define login_required decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'id_token' not in session:
+            return render_template_string('''
+                <script>
+                    alert("You need to log in first.");
+                    window.location.href = "{{ url_for('app.login') }}";
+                </script>
+            ''')
+        return f(*args, **kwargs)
+    return decorated_function
 
 @blueprint.route('/')
+@login_required
 def index():
     return send_from_directory('.', 'pages/index.html')
 
-@blueprint.route('/reg')
-def register():
-    return send_from_directory('.', 'pages/registration.html')
+@blueprint.route('/regstd')
+@login_required
+def registerStd():
+    return send_from_directory('.', 'pages/registerStudent.html')
 
 @blueprint.route('/init')
+@login_required
 def initialize():
     courses = fetch_courses_from_dynamodb()
     return render_template('initializeAttendance.html', courses=courses)
 
 @blueprint.route('/check')
+@login_required
 def check_attendance():
     return send_from_directory('.', 'pages/checkingAttendance.html')
 
 @blueprint.route('/ret')
+@login_required
 def retrieve():
     return send_from_directory('.', 'pages/retrieveAttendance.html')
 
 @blueprint.route('/create')
+@login_required
 def create_class():
     students = fetch_students_from_dynamodb()
     for student in students:
@@ -104,7 +215,7 @@ def initialize_class_record():
     return jsonify({'success': True, 'message': 'Class initialized successfully!'}), 200
     
 
-@blueprint.route('/reg_form', methods=['POST'])
+@blueprint.route('/regstd_form', methods=['POST'])
 def save_student_registration():
     image = request.files['image']
     name = request.form['name']
