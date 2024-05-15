@@ -23,14 +23,23 @@ def list_classes():
     courses = fetch_courses_from_dynamodb()
     for course in courses:
         course['StudentCount'] = len(course['Students'].split('|'))
-        course['Students'] = fetch_students_from_dynamodb(course['Students'].split('|'))
 
-        student_ids = set()
-        course['Students'] = [student for student in course['Students'] if student['StudentId'] not in student_ids and not student_ids.add(student['StudentId'])]
+        items = fetch_students_from_dynamodb(course['Students'].split('|'))
+        students = []
+
+        for item in items:
+            student = {
+                'FullName': item.get('FullName', {}).get('S'),
+                'StudentId': item.get('StudentId', {}).get('S')
+            }
+            students.append(student)
+
+        course['Students'] = students
 
         for student in course['Students']:
             image_key = 'index/' + str(student['StudentId'])
             student['Image'] = generate_signed_url('swift-attend-faces', image_key)
+
     return render_template('courses.html', courses=courses)
 
 class RegisterForm(FlaskForm):
@@ -236,7 +245,7 @@ def initialize_class_record():
 
     student_ids = selected_course['Students'].split('|')
 
-    matched_students = fetch_matching_students(student_ids)
+    matched_students = fetch_students_from_dynamodb(student_ids)
 
     class_record = {
         'Course': selected_course['CourseCode'],
@@ -247,8 +256,8 @@ def initialize_class_record():
     save_class_record(class_record)
 
     return jsonify({'success': True, 'message': 'Class initialized successfully!'}), 200
-    
 
+    
 @blueprint.route('/regstd_form', methods=['POST'])
 def save_student_registration():
     image = request.files['image']
@@ -386,20 +395,6 @@ def fetch_courses_from_dynamodb():
         courses.append(course)
     return courses
 
-# For /init_form
-# Return students with matching IDs for the selected course
-def fetch_matching_students(student_ids):
-    students = []
-    for student_id in student_ids:
-        response = dynamodb.scan(
-            TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
-            FilterExpression='StudentId = :student_id',
-            ExpressionAttributeValues={':student_id': {'S': student_id}}
-        )
-        items = response.get('Items', [])
-        students.extend(items)
-    return students
-
 # For /create and /create_form
 # Return all students from registration table
 def fetch_students_from_dynamodb(studentIds = None):
@@ -417,13 +412,14 @@ def fetch_students_from_dynamodb(studentIds = None):
             students.append(student)
     else:
         # If studentIds provided, filter the items based on those IDs
-        for item in items:
-            if item.get('StudentId', {}).get('S') in studentIds:
-                student = {
-                    'FullName': item.get('FullName', {}).get('S'),
-                    'StudentId': item.get('StudentId', {}).get('S')
-                }
-                students.append(student)
+        for student_id in studentIds:
+            response = dynamodb.scan(
+                TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
+                FilterExpression='StudentId = :student_id',
+                ExpressionAttributeValues={':student_id': {'S': student_id}}
+            )
+            items = response.get('Items', [])
+            students.extend(items)
     return students
 
 # For /create_form
