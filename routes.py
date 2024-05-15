@@ -162,7 +162,8 @@ def check_attendance():
 @blueprint.route('/ret')
 @login_required
 def retrieve():
-    return send_from_directory('.', 'pages/retrieveAttendance.html')
+    courses = fetch_courses_from_dynamodb()
+    return render_template('retrieveAttendance.html', courses=courses)
 
 @blueprint.route('/create')
 @login_required
@@ -334,7 +335,9 @@ def check_attendance_record():
 
 @blueprint.route('/ret_form', methods=['POST'])
 def retrieve_attendance_records():
-    course = request.form.get('course')
+    course = ast.literal_eval(request.form.get('course'))
+    # Extract the course code from the course string
+    course = course ['CourseCode']
     date = request.form.get('date')
     time = request.form.get('time')
 
