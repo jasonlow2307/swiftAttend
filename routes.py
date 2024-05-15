@@ -71,6 +71,8 @@ def register():
             return redirect(url_for('app.confirm'))
         except ClientError as e:
             error = e.response['Error']['Message']
+            if e.response['Error']['Code'] == 'UsernameExistsException':
+                error = 'This email is already registered. Please log in.'
             return render_template('register.html', form=form, error=error)
     return render_template('register.html', form=form)
 

@@ -87,10 +87,6 @@
             cursor: pointer;
             font-weight: bold;
         }
-
-        p:hover {
-            text-decoration: underline;
-        }
     </style>
 </head>
 <body>
@@ -105,6 +101,8 @@
                 {{ form.password(size=32) }}<br>
                 {{ form.submit(class="btn btn-primary") }}
             </p>
+            <p>Don't have an account?</p>
+            <a href = "register"><p>Register</p></a>
             {% if error %}
                 <p class="error-message">{{ error }}</p>
             {% endif %}

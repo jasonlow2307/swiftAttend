@@ -86,14 +86,16 @@
             font-weight: bold;
         }
 
-        p:hover {
-            text-decoration: underline;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Register</h1>
+        {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+        {% endif %}
         <form method="POST" action="{{ url_for('app.register') }}">
             {{ form.hidden_tag() }}
             <p>
@@ -126,6 +128,8 @@
             </p>
             <p>{{ form.submit(class="btn btn-primary") }}</p>
         </form>
+        <p>Already have an account?</p>
+        <a href="/login"><p>Log In</p></a>
     </div>
 </body>
 </html>
