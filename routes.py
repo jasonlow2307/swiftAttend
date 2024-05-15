@@ -315,15 +315,22 @@ def check_attendance_record():
     student_records = fetch_student_records()
 
     attendance_records = []
+    present_counter = 0
 
     for student in student_records:
         attendance_status = 'PRESENT' if student['StudentId'] in detected_student_id else 'ABSENT'
+        if attendance_status == 'PRESENT':
+            present_counter += 1
         image_key = 'index/' + student['StudentId']
         signed_url = generate_signed_url('swift-attend-faces', image_key)
         attendance_records.append({'FullName': student['FullName'], 'Attendance': attendance_status, 'SignedURL': signed_url})
         update_attendance(student['StudentId'], attendance_status, initialized_date)
 
-    return render_template('checked_attendance.html', attendance_records=attendance_records)
+    if present_counter == 0:
+        error = "The people in the image are not in the course, please check if the image is correct"
+
+
+    return render_template('checked_attendance.html', attendance_records=attendance_records, error=error)
 
 @blueprint.route('/ret_form', methods=['POST'])
 def retrieve_attendance_records():
