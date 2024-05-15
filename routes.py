@@ -21,6 +21,16 @@ initialized_course = ''
 @blueprint.route('/courses')
 def list_classes():
     courses = fetch_courses_from_dynamodb()
+    for course in courses:
+        course['StudentCount'] = len(course['Students'].split('|'))
+        course['Students'] = fetch_students_from_dynamodb(course['Students'].split('|'))
+
+        student_ids = set()
+        course['Students'] = [student for student in course['Students'] if student['StudentId'] not in student_ids and not student_ids.add(student['StudentId'])]
+
+        for student in course['Students']:
+            image_key = 'index/' + str(student['StudentId'])
+            student['Image'] = generate_signed_url('swift-attend-faces', image_key)
     return render_template('courses.html', courses=courses)
 
 class RegisterForm(FlaskForm):
@@ -333,7 +343,8 @@ def check_attendance_record():
 
     if present_counter == 0:
         error = "The people in the image are not in the course, please check if the image is correct"
-
+    else:
+        error = ""
 
     return render_template('checked_attendance.html', attendance_records=attendance_records, error=error)
 
@@ -391,18 +402,28 @@ def fetch_matching_students(student_ids):
 
 # For /create and /create_form
 # Return all students from registration table
-def fetch_students_from_dynamodb():
+def fetch_students_from_dynamodb(studentIds = None):
     response = dynamodb.scan(
         TableName= DYNAMODB_REGISTRATION_TABLE_NAME
     )
     items = response.get('Items', [])
     students = []
-    for item in items:
-        student = {
-            'FullName': item.get('FullName', {}).get('S'),
-            'StudentId': item.get('StudentId', {}).get('S')
-        }
-        students.append(student)
+    if (studentIds == None):
+        for item in items:
+            student = {
+                'FullName': item.get('FullName', {}).get('S'),
+                'StudentId': item.get('StudentId', {}).get('S')
+            }
+            students.append(student)
+    else:
+        # If studentIds provided, filter the items based on those IDs
+        for item in items:
+            if item.get('StudentId', {}).get('S') in studentIds:
+                student = {
+                    'FullName': item.get('FullName', {}).get('S'),
+                    'StudentId': item.get('StudentId', {}).get('S')
+                }
+                students.append(student)
     return students
 
 # For /create_form
