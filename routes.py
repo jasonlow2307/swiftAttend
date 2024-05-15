@@ -38,7 +38,7 @@ def list_classes():
 
         for student in course['Students']:
             image_key = 'index/' + str(student['StudentId'])
-            student['Image'] = generate_signed_url('swift-attend-faces', image_key)
+            student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
 
     return render_template('courses.html', courses=courses)
 
@@ -287,7 +287,7 @@ def save_student_registration():
         items = response.get('Items', [])
 
     # Use the generated student ID in your code
-    bucket_name = 'swift-attend-faces'
+    bucket_name = S3_BUCKET_NAME
     key = f'index/{student_id}'
     image_bytes = image.read()
     s3.upload_fileobj(
@@ -346,7 +346,7 @@ def check_attendance_record():
         if attendance_status == 'PRESENT':
             present_counter += 1
         image_key = 'index/' + student['StudentId']
-        signed_url = generate_signed_url('swift-attend-faces', image_key)
+        signed_url = generate_signed_url(S3_BUCKET_NAME, image_key)
         attendance_records.append({'FullName': student['FullName'], 'Attendance': attendance_status, 'SignedURL': signed_url})
         update_attendance(student['StudentId'], attendance_status, initialized_date)
 
