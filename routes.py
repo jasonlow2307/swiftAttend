@@ -17,7 +17,6 @@ blueprint = Blueprint('app', __name__)
 
 initialized_date = ''
 initialized_course = ''
-COGNITO_CLIENT_ID = '66soki1i4q3q8ttrera7f6318v'
 
 class RegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
