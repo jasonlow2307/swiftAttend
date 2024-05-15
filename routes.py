@@ -18,6 +18,11 @@ blueprint = Blueprint('app', __name__)
 initialized_date = ''
 initialized_course = ''
 
+@blueprint.route('/courses')
+def list_classes():
+    courses = fetch_courses_from_dynamodb()
+    return render_template('courses.html', courses=courses)
+
 class RegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])

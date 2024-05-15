@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .box {
+            border: 1px solid black;
+            padding: 10px 20px; /* Increase horizontal padding */
+            margin: 10px;
+            display: inline-block;
+            vertical-align: top;
+            width: 200px; /* Set a width for the boxes */
+        }
+
+        #class-container {
+            white-space: nowrap;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Classes</h1>
+    <div id="class-container"></div>
+
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="courseName"></h3>
+            <p id="courseCode"></p>
+            <p id="students"></p>
+        </div>
+    </div>
+
+    <script>
+        var classes = [
+            {courseName: "Course 1", courseCode: "C1", students: 30},
+            {courseName: "Course 2", courseCode: "C2", students: 25},
+            // Add more classes here...
+        ];
+
+        function generateClassBoxes() {
+            var classContainer = document.getElementById("class-container");
+
+            classes.forEach(function(classData) {
+                var classBox = document.createElement("div");
+                classBox.className = "class-box box";
+                classBox.innerHTML = `
+                    <h3>${classData.courseName}</h3>
+                    <p>${classData.courseCode}</p>
+                    <p>Students: ${classData.students}</p>
+                `;
+
+                classBox.addEventListener("click", function() {
+                    var modal = document.getElementById("myModal");
+                    document.getElementById("courseName").innerText = classData.courseName;
+                    document.getElementById("courseCode").innerText = classData.courseCode;
+                    document.getElementById("students").innerText = "Students: " + classData.students;
+                    modal.style.display = "block";
+                });
+
+                classContainer.appendChild(classBox);
+            });
+
+            var span = document.getElementsByClassName("close")[0];
+            span.onclick = function() {
+                var modal = document.getElementById("myModal");
+                modal.style.display = "none";
+            }
+        }
+
+        window.addEventListener("load", generateClassBoxes);
+    </script>
+</body>
+</html>
