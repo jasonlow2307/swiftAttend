@@ -17,6 +17,7 @@ blueprint = Blueprint('app', __name__)
 
 initialized_date = ''
 initialized_course = ''
+initialized = False
 
 class RegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
@@ -180,6 +181,16 @@ def initialize():
 @blueprint.route('/check')
 @login_required
 def check_attendance():
+    global initialized
+
+    if not initialized:
+        return render_template_string('''
+                <script>
+                    alert("You need to initialize the class first.");
+                    window.location.href = "{{ url_for('app.initialize') }}";
+                </script>
+            ''')
+
     return send_from_directory('.', 'pages/checkingAttendance.html')
 
 @blueprint.route('/ret')
@@ -233,6 +244,7 @@ def create_class_record():
 def initialize_class_record():
     global initialized_date
     global initialized_course
+    global initialized
 
     date = request.form['date']
     selected_course = request.form['course']
@@ -241,7 +253,7 @@ def initialize_class_record():
     date_and_time = datetime.strptime(date + ' ' + selected_course['Time'], '%Y-%m-%d %H:%M')
     initialized_date = str(date_and_time)
     initialized_course = selected_course['CourseCode']
-                                      
+    initialized = True                           
 
     student_ids = selected_course['Students'].split('|')
 
@@ -303,6 +315,7 @@ def save_student_registration():
 def check_attendance_record():
     global initialized_course
     global initialized_date
+    global initialized
 
     if 'image' not in request.files:
         return jsonify({'error': 'No image provided'}), 400
@@ -354,6 +367,9 @@ def check_attendance_record():
         error = "The people in the image are not in the course, please check if the image is correct"
     else:
         error = ""
+
+    # Reset initialized global variable
+    initialized = False
 
     return render_template('checked_attendance.html', attendance_records=attendance_records, error=error)
 
