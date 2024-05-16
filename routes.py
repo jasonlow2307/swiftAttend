@@ -18,30 +18,6 @@ blueprint = Blueprint('app', __name__)
 initialized_date = ''
 initialized_course = ''
 
-@blueprint.route('/courses')
-def list_classes():
-    courses = fetch_courses_from_dynamodb()
-    for course in courses:
-        course['StudentCount'] = len(course['Students'].split('|'))
-
-        items = fetch_students_from_dynamodb(course['Students'].split('|'))
-        students = []
-
-        for item in items:
-            student = {
-                'FullName': item.get('FullName', {}).get('S'),
-                'StudentId': item.get('StudentId', {}).get('S')
-            }
-            students.append(student)
-
-        course['Students'] = students
-
-        for student in course['Students']:
-            image_key = 'index/' + str(student['StudentId'])
-            student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
-
-    return render_template('courses.html', courses=courses)
-
 class RegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
@@ -135,7 +111,6 @@ def login():
                     'PASSWORD': password,
                 }
             )
-            print(response)  # Print the entire response for debugging
             if 'AuthenticationResult' in response:
                 session['id_token'] = response['AuthenticationResult']['IdToken']
                 return redirect(url_for('app.index'))
@@ -165,6 +140,31 @@ def login_required(f):
 @login_required
 def index():
     return send_from_directory('.', 'pages/index.html')
+
+@blueprint.route('/courses')
+@login_required
+def list_classes():
+    courses = fetch_courses_from_dynamodb()
+    for course in courses:
+        course['StudentCount'] = len(course['Students'].split('|'))
+
+        items = fetch_students_from_dynamodb(course['Students'].split('|'))
+        students = []
+
+        for item in items:
+            student = {
+                'FullName': item.get('FullName', {}).get('S'),
+                'StudentId': item.get('StudentId', {}).get('S')
+            }
+            students.append(student)
+
+        course['Students'] = students
+
+        for student in course['Students']:
+            image_key = 'index/' + str(student['StudentId'])
+            student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
+
+    return render_template('courses.html', courses=courses)
 
 @blueprint.route('/regstd')
 @login_required
