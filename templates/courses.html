@@ -184,7 +184,7 @@
         }
         */
 
-        .remove-column, #add-student-button{
+        .remove-column, #add-student-button, #exit-edit-button{
             display:none;
         }
     </style>
@@ -229,6 +229,7 @@
 
                 <!-- New button for adding a student -->
                 <button id="add-student-button" onclick="addStudent()">Add Student</button>
+                <button id="exit-edit-button" onClick="exitEditMode()">Exit Edit Mode</button>
             </div>
         </div>
     </div>
@@ -265,22 +266,7 @@
             var modal = document.getElementById("myModal");
             modal.style.display = "none";
 
-            // Hide the remove button column
-            var removeColumn = document.querySelectorAll('.remove-column');
-            for (var i = 0; i < removeColumn.length; i++) {
-                removeColumn[i].style.display = "none";
-            }
-
-            // Show the edit button
-            var editButton = document.getElementById("edit-button");
-            editButton.style.display = "inline-block";
-
-            // Hide the add student button
-            var addStudentButton = document.getElementById("add-student-button");
-            addStudentButton.style.display = "none";
-
-            // Toggle off the edit mode
-            modal.classList.remove("edit-mode")
+            exitEditMode();
         }
 
         // Get the modal
@@ -292,6 +278,38 @@
                 modal.style.display = 'none';
             }
         });
+        
+        function exitEditMode() {
+            // Hide the remove button column header 
+            var removeColumn = document.querySelectorAll('.remove-column');
+            for (var i = 0; i < removeColumn.length; i++) {
+                removeColumn[i].style.display = "none";
+            }
+
+            // Hide the remove button cells in each row
+            var studentsTable = document.getElementById("students").getElementsByTagName('tbody')[0];
+            var rows = studentsTable.getElementsByTagName('tr');
+            for (var i = 0; i < rows.length; i++) {
+                var cells = rows[i].getElementsByTagName('td');
+                if (cells.length > 0) {
+                    cells[cells.length - 1].style.display = "none"; // Hide the last cell (remove button cell)
+                }
+            }
+
+            // Show the edit button
+            var editButton = document.getElementById("edit-button");
+            editButton.style.display = "inline-block";
+
+            // Hide the add student button
+            var addStudentButton = document.getElementById("add-student-button");
+            addStudentButton.style.display = "none";
+
+            var exitEditButton = document.getElementById("exit-edit-button");
+            exitEditButton.style.display = "none";
+
+            // Toggle off the edit mode
+            modal.classList.remove("edit-mode")
+        }
 
         function toggleEditMode() {
             var modal = document.getElementById("myModal");
@@ -323,7 +341,10 @@
             // Toggle edit mode
             modal.classList.toggle("edit-mode");
             var addStudentButton = document.getElementById("add-student-button");
-            addStudentButton.style.display = addStudentButton.style.display = "inline-block";
+            addStudentButton.style.display = "inline-block";
+
+            var exitEditModeButton = document.getElementById("exit-edit-button");
+            exitEditModeButton.style.display = "inline-block";
         }
 
 
