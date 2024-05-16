@@ -82,6 +82,7 @@
     
         .box:hover {
             border-color: #6699CC; /* Change the border color to a lighter blue when hovered over */
+            cursor: pointer; /* Change the cursor to indicate it can be clicked */
         }
     
         #class-container {
@@ -147,6 +148,45 @@
         p:hover{
             color:#6699CC
         }
+
+        .edit-mode .remove-student-button {
+            display: inline-block;
+            margin-left: 10px;
+            color: red;
+            cursor: pointer;
+        }
+
+        .edit-mode #add-student-button {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #6699CC;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .modal .edit-mode .remove-student-button {
+            display: inline-block;
+            margin-left: 10px;
+            color: red;
+            cursor: pointer;
+        }
+
+        /*
+        .remove-student-button {
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        */
+
+        .remove-column, #add-student-button{
+            display:none;
+        }
     </style>
     
 </head>
@@ -166,23 +206,30 @@
             <a href="/"><p>Home</p></a>
         </div>
 
-    <div id="myModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h3 id="courseName"></h3>
-            <p id="courseCode"></p>
-            <table id="students">
-                <thead>
-                    <tr>
-                        <th>Image</th>
-                        <th>Student ID</th>
-                        <th>Name</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Student rows will be inserted here -->
-                </tbody>
-            </table>
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h3 id="courseName"></h3>
+                <p id="courseCode"></p>
+                <table id="students">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th class="remove-column">Remove</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Student rows will be inserted here -->
+                    </tbody>
+                </table>
+                <!-- Add an edit button -->
+                <button id="edit-button" onclick="toggleEditMode()">Edit</button>
+
+                <!-- New button for adding a student -->
+                <button id="add-student-button" onclick="addStudent()">Add Student</button>
+            </div>
         </div>
     </div>
 
@@ -217,8 +264,25 @@
         function closeModal() {
             var modal = document.getElementById("myModal");
             modal.style.display = "none";
+
+            // Hide the remove button column
+            var removeColumn = document.querySelectorAll('.remove-column');
+            for (var i = 0; i < removeColumn.length; i++) {
+                removeColumn[i].style.display = "none";
+            }
+
+            // Show the edit button
+            var editButton = document.getElementById("edit-button");
+            editButton.style.display = "inline-block";
+
+            // Hide the add student button
+            var addStudentButton = document.getElementById("add-student-button");
+            addStudentButton.style.display = "none";
+
+            // Toggle off the edit mode
+            modal.classList.remove("edit-mode")
         }
-        
+
         // Get the modal
         var modal = document.getElementById('myModal');
 
@@ -228,6 +292,55 @@
                 modal.style.display = 'none';
             }
         });
+
+        function toggleEditMode() {
+            var modal = document.getElementById("myModal");
+            var studentsTable = document.getElementById("students").getElementsByTagName('tbody')[0];
+            var rows = studentsTable.getElementsByTagName('tr');
+
+            // Check if edit mode is already active
+            var editModeActive = modal.classList.contains("edit-mode");
+
+            // Remove the edit button when edit mode is activated
+            var editButton = document.getElementById("edit-button");
+            editButton.style.display = "none";
+
+            // If edit mode is not active, add the remove buttons to each existing row
+            if (!editModeActive) {
+                for (var i = 0; i < rows.length; i++) {
+                    var row = rows[i];
+                    var removeButtonCell = row.insertCell();
+                    removeButtonCell.innerHTML = '<button class="remove-student-button" onclick="removeStudent(this.parentNode)">Remove</button>';
+                }
+
+                // Show the remove button column
+                var removeColumn = document.querySelectorAll('.remove-column');
+                for (var i = 0; i < removeColumn.length; i++) {
+                    removeColumn[i].style.display = "table-cell";
+                }
+            }
+
+            // Toggle edit mode
+            modal.classList.toggle("edit-mode");
+            var addStudentButton = document.getElementById("add-student-button");
+            addStudentButton.style.display = addStudentButton.style.display = "inline-block";
+        }
+
+
+        // Function to remove a student
+        function removeStudent(row) {
+            row.remove();
+        }
+
+        function addStudent() {
+            var studentsTable = document.getElementById("students").getElementsByTagName('tbody')[0];
+            var newRow = studentsTable.insertRow();
+            newRow.innerHTML = '<td><input type="text" placeholder="Image URL"></td>' +
+                            '<td><input type="text" placeholder="Student ID"></td>' +
+                            '<td><input type="text" placeholder="Full Name"></td>' +
+                            '<td><button class="remove-student-button" onclick="removeStudent(this.parentNode.parentNode)">Remove</button></td>';
+        }
+
     </script>
 </body>
 </html>
