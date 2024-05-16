@@ -222,6 +222,7 @@
                     </thead>
                     <tbody>
                         <!-- Student rows will be inserted here -->
+                        <button>HERE</button>
                     </tbody>
                 </table>
                 <!-- Add an edit button -->
@@ -251,6 +252,7 @@
             students.forEach(function(student) {
                 var row = studentsTable.insertRow();
                 var cell1 = row.insertCell();
+                cell1.id = "studentId";
                 var cell2 = row.insertCell();
                 var cell3 = row.insertCell();
 
@@ -328,7 +330,7 @@
                 for (var i = 0; i < rows.length; i++) {
                     var row = rows[i];
                     var removeButtonCell = row.insertCell();
-                    removeButtonCell.innerHTML = '<button class="remove-student-button" onclick="removeStudent(this.parentNode)">Remove</button>';
+                    removeButtonCell.innerHTML = `<button class="remove-student-button" onclick="removeStudent(this.parentNode.parentNode, this)">Remove</button>`;
                 }
 
                 // Show the remove button column
@@ -349,9 +351,47 @@
 
 
         // Function to remove a student
-        function removeStudent(row) {
-            row.remove();
+        function removeStudent(row, button) {
+            // Extracting student ID from the row
+            var cells = row.getElementsByTagName('td');
+            console.log("Number of cells:", cells.length);
+
+            // Traverse up the DOM tree to find the container of the button
+            var container = button.closest('.container');
+            // Access the <p> tag with id courseCode within the container
+            var courseCode = container.querySelector('#courseCode').innerText
+            
+            console.log("Course Code:", courseCode)
+
+            if (cells.length >= 2) { // Ensure there are at least two cells in the row
+                var studentIdCell = cells[1];
+                console.log("Student ID Cell:", studentIdCell);
+                var studentId = studentIdCell.innerText;
+
+                // Sending an AJAX request to the Flask route
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/remove_student", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        // If the removal is successful, remove the row from the table
+                        row.remove();
+                    }
+                };
+
+                // Sending the student ID and course code as JSON data
+                var data = JSON.stringify({
+                    "studentId": studentId,
+                    "courseCode": courseCode
+                });
+                xhr.send(data);
+            } else {
+                console.error("Unable to find student ID cell in the row.");
+            }
         }
+
+
 
         function addStudent() {
             var studentsTable = document.getElementById("students").getElementsByTagName('tbody')[0];

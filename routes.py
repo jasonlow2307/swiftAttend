@@ -1,4 +1,5 @@
 from functools import wraps
+import re
 from flask import Blueprint, redirect, render_template_string, send_from_directory, request, jsonify, render_template, url_for, session
 from datetime import datetime
 import io
@@ -18,6 +19,46 @@ blueprint = Blueprint('app', __name__)
 initialized_date = ''
 initialized_course = ''
 initialized = False
+
+@blueprint.route('/remove_student', methods=['POST'])
+def remove_student():
+    data = request.get_json()
+    student_id = data['studentId']
+    course_code = data['courseCode'].split(': ')[1]
+
+    print(student_id)
+    print(course_code)
+
+    remove_student_from_course(student_id, course_code)
+
+    return jsonify({'success': True, 'message': 'Student removed successfully!'}), 200
+
+def remove_student_from_course(student_id, course_code):
+    # Can optimize by overloading the function to accept course_code
+    courses = fetch_courses_from_dynamodb()
+    for course in courses:
+        if (course['CourseCode'] == course_code):
+            matched_course = course
+    
+    print(matched_course['Students'])
+    matched_course['Students'] = re.sub(r'\|' + re.escape(student_id), '', matched_course['Students'])
+    update_classes_table(course_code, matched_course['CourseName'], matched_course['Students'])
+    print(str(student_id) + " removed")
+    print(matched_course['Students'])
+
+def update_classes_table(course_code, course_name, students):
+
+    dynamodb.update_item(
+        TableName=DYNAMODB_CLASSES_TABLE_NAME,
+        Key={'CourseCode': {'S': course_code}, 'CourseName': {'S': course_name}},
+        UpdateExpression='SET Students = :students',
+        ExpressionAttributeValues={':students': {'S': students}},
+        ReturnValues='UPDATED_NEW'  # You can specify the desired return values as needed
+    )
+
+    return {'success': True, 'message': f'Students updated for course {course_code} successfully!'}, 200
+
+
 
 class RegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
