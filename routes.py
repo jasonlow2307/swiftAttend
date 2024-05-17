@@ -46,6 +46,20 @@ def remove_student_from_course(student_id, course_code):
     print(str(student_id) + " removed")
     print(matched_course['Students'])
 
+# can optimize by overloading the function and combine with remove_student_from_course
+def add_student_to_course(student_id, course_code):
+    # Can optimize by overloading the function to accept course_code
+    courses = fetch_courses_from_dynamodb()
+    for course in courses:
+        if (course['CourseCode'] == course_code):
+            matched_course = course
+    
+    print(matched_course['Students'])
+    matched_course['Students'] += '|' + student_id
+    update_classes_table(course_code, matched_course['CourseName'], matched_course['Students'])
+    print(str(student_id) + " added")
+    print(matched_course['Students'])
+
 def update_classes_table(course_code, course_name, students):
 
     dynamodb.update_item(
@@ -208,6 +222,10 @@ def list_classes():
 
         all_students = fetch_students_from_dynamodb()
 
+        for student in all_students:
+            image_key = 'index/' + str(student['StudentId'])
+            student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
+
         course_students_ids = [int(student['StudentId']['S']) for student in course_students]
         new_students = []
 
@@ -217,9 +235,19 @@ def list_classes():
                     new_students.append(student)
     
         course['NewStudents'] = new_students
-
-
     return render_template('courses.html', courses=courses, all_students=all_students)
+
+@blueprint.route('/add_student', methods=['POST'])
+def add_student():
+    data = request.get_json()
+    student_id = data['studentId']
+    course_code = data['courseCode']
+
+    print(student_id)
+    print(course_code)
+
+    add_student_to_course(student_id, course_code)
+    return jsonify({'success': True, 'message': 'Student added successfully!'}), 200
 
 @blueprint.route('/regstd')
 @login_required

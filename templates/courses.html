@@ -150,34 +150,59 @@
             color: #6699CC;
         }
 
-        .edit-mode .remove-student-button {
-            display: inline-block;
-            margin-left: 10px;
-            color: red;
-            cursor: pointer;
+        .remove-column, #add-student-button, #exit-edit-button {
+            display: none;
         }
 
-        .edit-mode #add-student-button {
-            display: inline-block;
+        #add-student-button, #edit-button, #exit-edit-button, .remove-student-button {
             margin-top: 10px;
             padding: 8px 16px;
-            background-color: #6699CC;
+            background-color: #003572; /* Dark blue background */
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            transition: background-color 0.3s ease; /* Smooth transition for background color */
         }
 
-        .modal .edit-mode .remove-student-button {
-            display: inline-block;
-            margin-left: 10px;
-            color: red;
+        #add-student-button:hover, #edit-button:hover, #exit-edit-button:hover, .remove-student-button:hover {
+            background-color: #6699CC; /* Light blue background on hover */
+        }
+
+        /* Style the dropdown selection */
+        #studentIdDropdown {
+            padding: 8px;
+            border: 1px solid #003572; /* Dark blue border */
+            border-radius: 5px;
+            background-color: white;
+            color: #003572; /* Dark blue text color */
+            font-size: 14px;
             cursor: pointer;
         }
 
-        .remove-column, #add-student-button, #exit-edit-button {
-            display: none;
+        /* Style the dropdown selection options */
+        #studentIdDropdown option {
+            background-color: white;
+            color: #003572; /* Dark blue text color */
+            font-size: 14px;
         }
+
+        /* Style the confirm button */
+        #confirm-button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #003572; /* Dark blue background */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* Smooth transition for background color */
+        }
+
+        #confirm-button:hover {
+            background-color: #6699CC; /* Light blue background on hover */
+        }
+
     </style>
 </head>
 <body>
@@ -256,6 +281,8 @@
             var modal = document.getElementById("myModal");
             modal.style.display = "none";
 
+            location.reload(); // Refresh the page
+
             exitEditMode();
         }
 
@@ -265,7 +292,9 @@
         // When the user presses the Esc key, close the modal
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape' && modal.style.display === 'block') {
-                modal.style.display = 'none';
+                event.preventDefault(); // Prevent the default action
+                closeModal();
+                location.reload(); // Refresh the page
             }
         });
 
@@ -397,10 +426,9 @@
             filteredStudents.forEach(function(student) {
                 dropdownHTML += '<option value="' + student.StudentId + '">' + student.FullName + '</option>';
             });
-            dropdownHTML += '</select></td><td><button onclick="confirmStudent()">Confirm</button></td>';
+            dropdownHTML += '</select></td><td><button id="confirm-button" onclick="confirmStudent()">Confirm</button></td>';
             newRow.innerHTML = dropdownHTML;
         }
-
 
         function confirmStudent() {
             var dropdown = document.getElementById("studentIdDropdown");
@@ -409,6 +437,15 @@
             
             var newRow = dropdown.closest("tr");
             var courseCode = document.getElementById("courseCode").innerText.split(": ")[1];
+
+            // Find the selected student's image from the global variable all_students
+            var availableStudents = JSON.parse('{{ all_students|tojson|safe }}');
+            var selectedStudent = availableStudents.find(student => student.StudentId === selectedStudentId);
+
+            if (!selectedStudent) {
+                console.error("Student not found in all_students list.");
+                return;
+            }
 
             // Sending an AJAX request to the Flask route
             var xhr = new XMLHttpRequest();
@@ -419,15 +456,22 @@
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     var response = JSON.parse(xhr.responseText);
                     if (response.success) {
-                        newRow.innerHTML = '<td><img src="' + response.student.Image + '" alt="Student Image" class="student-image"></td>' +
-                                            '<td>' + selectedStudentId + '</td>' +
-                                            '<td>' + selectedStudentName + '</td>' +
-                                            '<td class="remove-column"><button class="remove-student-button" onclick="removeStudent(this.parentNode.parentNode, this)">Remove</button></td>';
+                        var newRowHTML = '<td><img src="' + selectedStudent.Image + '" alt="Student Image" class="student-image"></td>' +
+                                        '<td>' + selectedStudentId + '</td>' +
+                                        '<td>' + selectedStudentName + '</td>' +
+                                        '<td class="remove-column"><button class="remove-student-button" onclick="removeStudent(this.parentNode.parentNode, this)">Remove</button></td>';
+                        newRow.innerHTML = newRowHTML;
+                        // Show the remove button column
+                        var removeColumn = document.querySelectorAll('.remove-column');
+                        for (var i = 0; i < removeColumn.length; i++) {
+                            removeColumn[i].style.display = "table-cell";
+                        }
                     } else {
                         console.error("Failed to add student: " + response.message);
                     }
                 }
             };
+
 
             // Sending the student ID and course code as JSON data
             var data = JSON.stringify({
@@ -436,6 +480,7 @@
             });
             xhr.send(data);
         }
+
     </script>
 </body>
 </html>
