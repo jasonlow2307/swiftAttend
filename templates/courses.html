@@ -305,6 +305,7 @@
             var addStudentButton = document.getElementById("add-student-button");
             addStudentButton.style.display = "none";
 
+            // Hide the exit edit button
             var exitEditButton = document.getElementById("exit-edit-button");
             exitEditButton.style.display = "none";
 
@@ -315,7 +316,8 @@
         function toggleEditMode() {
             var modal = document.getElementById("myModal");
             var studentsTable = document.getElementById("students").getElementsByTagName('tbody')[0];
-            var rows = studentsTable.getElementsByTagName('tr');
+            var rows = studentsTable.querySelectorAll('tr:not(#unconfirmedStudent)');
+            console.log("Number of rows:", rows.length);
 
             // Check if edit mode is already active
             var editModeActive = modal.classList.contains("edit-mode");
@@ -395,16 +397,13 @@
         function addStudent() {
             var studentsTable = document.getElementById("students").getElementsByTagName('tbody')[0];
             var newRow = studentsTable.insertRow();
-            newRow.innerHTML = '<td><input type="text" placeholder="Image URL"></td>' +
-                            '<td><select id="studentIdDropdown">' +
-                            '{% for student in new_students %}' +
-                            '<option value="{{ student.StudentId }}">{{ student.FullName }}</option>' +
-                            '{% endfor %}' +
-                            '</select></td>' +
-                            '<td><input type="text" placeholder="Full Name"></td>' +
-                            '<td><button class="remove-student-button" onclick="removeStudent(this.parentNode.parentNode)">Remove</button></td>';
+            newRow.id = "unconfirmedStudent";
+            newRow.innerHTML = '<td colspan="4"><select id="studentIdDropdown">' +
+                                '{% for student in new_students %}' +
+                                '<option value="{{ student.StudentId }}">{{ student.FullName }}</option>' +
+                                '{% endfor %}' +
+                                '</select></td>';
         }
-
     </script>
 </body>
 </html>
