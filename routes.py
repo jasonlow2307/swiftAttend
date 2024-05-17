@@ -207,10 +207,19 @@ def list_classes():
             student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
 
         all_students = fetch_students_from_dynamodb()
-        course_students_ids = [student['StudentId'] for student in course_students]
-        new_students = [student for student in all_students if student['StudentId'] not in course_students_ids]
 
-    return render_template('courses.html', courses=courses, new_students=new_students)
+        course_students_ids = [int(student['StudentId']['S']) for student in course_students]
+        new_students = []
+
+        for student in all_students:
+            for student_id in course_students_ids:
+                if student['StudentId'] != str(student_id):
+                    new_students.append(student)
+    
+        course['NewStudents'] = new_students
+
+
+    return render_template('courses.html', courses=courses, all_students=all_students)
 
 @blueprint.route('/regstd')
 @login_required
