@@ -190,10 +190,10 @@ def list_classes():
     for course in courses:
         course['StudentCount'] = len(course['Students'].split('|'))
 
-        items = fetch_students_from_dynamodb(course['Students'].split('|'))
+        course_students = fetch_students_from_dynamodb(course['Students'].split('|'))
         students = []
 
-        for item in items:
+        for item in course_students:
             student = {
                 'FullName': item.get('FullName', {}).get('S'),
                 'StudentId': item.get('StudentId', {}).get('S')
@@ -206,7 +206,11 @@ def list_classes():
             image_key = 'index/' + str(student['StudentId'])
             student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
 
-    return render_template('courses.html', courses=courses)
+        all_students = fetch_students_from_dynamodb()
+        course_students_ids = [student['StudentId'] for student in course_students]
+        new_students = [student for student in all_students if student['StudentId'] not in course_students_ids]
+
+    return render_template('courses.html', courses=courses, new_students=new_students)
 
 @blueprint.route('/regstd')
 @login_required

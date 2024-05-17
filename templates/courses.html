@@ -222,7 +222,6 @@
                     </thead>
                     <tbody>
                         <!-- Student rows will be inserted here -->
-                        <button>HERE</button>
                     </tbody>
                 </table>
                 <!-- Add an edit button -->
@@ -397,7 +396,11 @@
             var studentsTable = document.getElementById("students").getElementsByTagName('tbody')[0];
             var newRow = studentsTable.insertRow();
             newRow.innerHTML = '<td><input type="text" placeholder="Image URL"></td>' +
-                            '<td><input type="text" placeholder="Student ID"></td>' +
+                            '<td><select id="studentIdDropdown">' +
+                            '{% for student in new_students %}' +
+                            '<option value="{{ student.StudentId }}">{{ student.FullName }}</option>' +
+                            '{% endfor %}' +
+                            '</select></td>' +
                             '<td><input type="text" placeholder="Full Name"></td>' +
                             '<td><button class="remove-student-button" onclick="removeStudent(this.parentNode.parentNode)">Remove</button></td>';
         }
