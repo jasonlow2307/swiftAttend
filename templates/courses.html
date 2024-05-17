@@ -2,6 +2,38 @@
 <html>
 <head>
     <style>
+        /* Consolidated CSS rules */
+        .box:hover, #add-student-button:hover, #edit-button:hover, #exit-edit-button:hover, .remove-student-button:hover {
+            background-color: #6699CC; /* Light blue background on hover */
+        }
+
+        /* Removed duplicate CSS rules */
+        #class-container {
+                    white-space: nowrap;
+                    overflow-x: auto;
+        }
+
+        #studentIdDropdown, #confirm-button {
+                    padding: 8px;
+                    border: 1px solid #003572;
+                    border-radius: 5px;
+                    background-color: white;
+                    color: #003572;
+                    font-size: 14px;
+                    cursor: pointer;
+        }
+
+        #confirm-button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #003572;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -144,10 +176,6 @@
         p {
             font-weight: bold;
             color: #003572;
-        }
-
-        p:hover {
-            color: #6699CC;
         }
 
         .remove-column, #add-student-button, #exit-edit-button {
