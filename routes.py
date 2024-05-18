@@ -191,7 +191,7 @@ def add_student():
     print(student_id)
     print(course_code)
 
-    add_student_to_course(student_id, course_code)
+    edit_student_in_course(student_id, course_code, True)
     return jsonify({'success': True, 'message': 'Student added successfully!'}), 200
 
 @blueprint.route('/remove_student', methods=['POST'])
@@ -203,7 +203,7 @@ def remove_student():
     print(student_id)
     print(course_code)
 
-    remove_student_from_course(student_id, course_code)
+    edit_student_in_course(student_id, course_code, False)
 
     return jsonify({'success': True, 'message': 'Student removed successfully!'}), 200
 
@@ -432,8 +432,8 @@ def retrieve_attendance_records():
     return render_template('attendance_records.html', attendance_records=student_records)
 
 ############################ Custom Functions ###########################
-# Removing student id from a course student field
-def remove_student_from_course(student_id, course_code):
+# Adding/removing student id from a course student field
+def edit_student_in_course(student_id, course_code, add=True):
     # Can optimize by overloading the function to accept course_code
     courses = fetch_courses_from_dynamodb()
     for course in courses:
@@ -441,24 +441,13 @@ def remove_student_from_course(student_id, course_code):
             matched_course = course
     
     print(matched_course['Students'])
-    matched_course['Students'] = re.sub(r'\|' + re.escape(student_id), '', matched_course['Students'])
+    if not add:
+        matched_course['Students'] = re.sub(r'\|' + re.escape(student_id), '', matched_course['Students'])
+        print(str(student_id) + " removed")
+    else:
+        matched_course['Students'] += '|' + student_id
+        print(str(student_id) + " added")
     update_classes_table(course_code, matched_course['CourseName'], matched_course['Students'])
-    print(str(student_id) + " removed")
-    print(matched_course['Students'])
-
-# Adding student id to a course student field
-# can optimize by overloading the function and combine with remove_student_from_course
-def add_student_to_course(student_id, course_code):
-    # Can optimize by overloading the function to accept course_code
-    courses = fetch_courses_from_dynamodb()
-    for course in courses:
-        if (course['CourseCode'] == course_code):
-            matched_course = course
-    
-    print(matched_course['Students'])
-    matched_course['Students'] += '|' + student_id
-    update_classes_table(course_code, matched_course['CourseName'], matched_course['Students'])
-    print(str(student_id) + " added")
     print(matched_course['Students'])
 
 # Update record in classes table
