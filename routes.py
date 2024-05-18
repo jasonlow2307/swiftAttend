@@ -137,7 +137,7 @@ def login():
             return render_template('login.html', form=form, error=error)
     return render_template('login.html', form=form)
 
-def role_required(role):
+def role_required(roles):
     def wrapper(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -148,7 +148,7 @@ def role_required(role):
                         window.location.href = "{{ url_for('app.login') }}";
                     </script>
                 ''')
-            if session['role'] != role:
+            if session['role'] not in roles:
                 return render_template_string('''
                     <script>
                         alert("You do not have permission to access this page.");
@@ -177,11 +177,15 @@ def login_required(f):
 @blueprint.route('/')
 @login_required
 def index():
-    return send_from_directory('.', 'pages/index.html')
+    role = session.get('role')
+    if role:
+        welcome_message = f"Welcome back, {role.capitalize()}"
+    else:
+        welcome_message = "Welcome to Swift Attend"
+    return render_template('index.html', welcome_message=welcome_message)
 
 @blueprint.route('/courses')
-@role_required('student')
-@login_required
+@role_required(['lecturer', 'admin'])
 def list_classes():
     courses = fetch_courses_from_dynamodb()
     for course in courses:
@@ -247,19 +251,17 @@ def remove_student():
 
 @blueprint.route('/regstd')
 @login_required
-@role_required ('admin')
 def registerStd():
     return send_from_directory('.', 'pages/registerStudent.html')
 
 @blueprint.route('/init')
-@login_required
-@role_required ('lecturer')
+@role_required(['lecturer', 'admin'])
 def initialize():
     courses = fetch_courses_from_dynamodb()
     return render_template('initializeAttendance.html', courses=courses)
 
 @blueprint.route('/check')
-@login_required
+@role_required(['lecturer', 'admin'])
 def check_attendance():
     global initialized
 
@@ -274,13 +276,13 @@ def check_attendance():
     return send_from_directory('.', 'pages/checkingAttendance.html')
 
 @blueprint.route('/ret')
-@login_required
+@role_required(['lecturer', 'admin'])
 def retrieve():
     courses = fetch_courses_from_dynamodb()
     return render_template('retrieveAttendance.html', courses=courses)
 
 @blueprint.route('/create')
-@login_required
+@role_required(['lecturer', 'admin'])
 def create_class():
     students = fetch_students_from_dynamodb()
     for student in students:
