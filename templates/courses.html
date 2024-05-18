@@ -405,7 +405,7 @@
             // Traverse up the DOM tree to find the container of the button
             var container = button.closest('.container');
             // Access the <p> tag with id courseCode within the container
-            var courseCode = container.querySelector('#courseCode').innerText
+            var courseCode = document.getElementById("courseCode").innerText.split(": ")[1];
             
             console.log("Course Code:", courseCode)
 

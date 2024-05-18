@@ -182,6 +182,7 @@ def list_classes():
         course['NewStudents'] = new_students
     return render_template('courses.html', courses=courses, all_students=all_students)
 
+# For adding students to course
 @blueprint.route('/add_student', methods=['POST'])
 def add_student():
     data = request.get_json()
@@ -189,19 +190,18 @@ def add_student():
     course_code = data['courseCode']
 
     print(student_id)
-    print(course_code)
 
     edit_student_in_course(student_id, course_code, True)
     return jsonify({'success': True, 'message': 'Student added successfully!'}), 200
 
+# For removing students from course
 @blueprint.route('/remove_student', methods=['POST'])
 def remove_student():
     data = request.get_json()
     student_id = data['studentId']
-    course_code = data['courseCode'].split(': ')[1]
+    course_code = data['courseCode']
 
     print(student_id)
-    print(course_code)
 
     edit_student_in_course(student_id, course_code, False)
 
@@ -435,12 +435,7 @@ def retrieve_attendance_records():
 # Adding/removing student id from a course student field
 def edit_student_in_course(student_id, course_code, add=True):
     # Can optimize by overloading the function to accept course_code
-    courses = fetch_courses_from_dynamodb()
-    for course in courses:
-        if (course['CourseCode'] == course_code):
-            matched_course = course
-    
-    print(matched_course['Students'])
+    matched_course = fetch_courses_from_dynamodb(course_code=course_code)
     if not add:
         matched_course['Students'] = re.sub(r'\|' + re.escape(student_id), '', matched_course['Students'])
         print(str(student_id) + " removed")
@@ -452,7 +447,6 @@ def edit_student_in_course(student_id, course_code, add=True):
 
 # Update record in classes table
 def update_classes_table(course_code, course_name, students):
-
     dynamodb.update_item(
         TableName=DYNAMODB_CLASSES_TABLE_NAME,
         Key={'CourseCode': {'S': course_code}, 'CourseName': {'S': course_name}},
@@ -465,21 +459,33 @@ def update_classes_table(course_code, course_name, students):
 
 # For /init
 # Fetch all classes from the classes table
-def fetch_courses_from_dynamodb():
+def fetch_courses_from_dynamodb(course_code = None):
     response = dynamodb.scan(
         TableName= DYNAMODB_CLASSES_TABLE_NAME
     )
     items = response.get('Items', [])
     courses = []
     for item in items:
-        course = {
-            'CourseCode': item.get('CourseCode', {}).get('S'),
-            'CourseName': item.get('CourseName', {}).get('S'),
-            'Day': item.get('Day', {}).get('S'),
-            'Time': item.get('Time', {}).get('S'),
-            'Students': item.get('Students', {}).get('S')
-        }
-        courses.append(course)
+        if course_code == None:
+                course = {
+                    'CourseCode': item.get('CourseCode', {}).get('S'),
+                    'CourseName': item.get('CourseName', {}).get('S'),
+                    'Day': item.get('Day', {}).get('S'),
+                    'Time': item.get('Time', {}).get('S'),
+                    'Students': item.get('Students', {}).get('S')
+                }
+                courses.append(course)
+        else:
+            if item.get('CourseCode', {}).get('S') == course_code:
+                    course = {
+                        'CourseCode': item.get('CourseCode', {}).get('S'),
+                        'CourseName': item.get('CourseName', {}).get('S'),
+                        'Day': item.get('Day', {}).get('S'),
+                        'Time': item.get('Time', {}).get('S'),
+                        'Students': item.get('Students', {}).get('S')
+                    }
+                    # If specified course_code, only return one course
+                    return course
     return courses
 
 # For /create and /create_form
