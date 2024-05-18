@@ -46,7 +46,8 @@
 
         input[type="text"],
         input[type="password"],
-        input[type="email"] {
+        input[type="email"],
+        select {
             width: calc(100% - 40px);
             padding: 10px;
             margin-bottom: 10px;
@@ -124,6 +125,13 @@
                 {{ form.family_name.label }}<br>
                 {{ form.family_name(size=32) }}<br>
                 {% for error in form.family_name.errors %}
+                    <span class="error-message">{{ error }}</span><br>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.role.label }}<br>
+                {{ form.role() }}<br>
+                {% for error in form.role.errors %}
                     <span class="error-message">{{ error }}</span><br>
                 {% endfor %}
             </p>

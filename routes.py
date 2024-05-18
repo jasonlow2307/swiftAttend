@@ -10,8 +10,8 @@ import ast
 import random
 from datetime import datetime
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired
+from wtforms import StringField, PasswordField, SubmitField, SelectField
+from wtforms.validators import DataRequired, Email
 
 blueprint = Blueprint('app', __name__)
 
@@ -20,10 +20,11 @@ initialized_course = ''
 initialized = False
 
 class RegisterForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     given_name = StringField('Given Name', validators=[DataRequired()])
     family_name = StringField('Family Name', validators=[DataRequired()])
+    role = SelectField('Role', choices=[('student', 'Student'), ('lecturer', 'Lecturer'), ('admin', 'Admin')], validators=[DataRequired()])
     submit = SubmitField('Register')
 
 class ConfirmForm(FlaskForm):
@@ -50,31 +51,37 @@ def register():
         password = form.password.data
         given_name = form.given_name.data
         family_name = form.family_name.data
+        role = form.role.data
         try:
             response = cognito.sign_up(
                 ClientId=COGNITO_CLIENT_ID,
                 Username=email,
                 Password=password,
                 UserAttributes=[
-                    {
-                        'Name': 'given_name',
-                        'Value': given_name
-                    },
-                    {
-                        'Name': 'family_name',
-                        'Value': family_name
-                    }
+                    {'Name': 'given_name', 'Value': given_name},
+                    {'Name': 'family_name', 'Value': family_name},
+                    {'Name': 'custom:role', 'Value': role}
                 ]
             )
             # Save the user's email in the session
             session['email'] = email
             return redirect(url_for('app.confirm'))
         except ClientError as e:
+            # Print the entire exception object
+            print(f"Exception: {e}")
+            
+            # Print the full error response
+            if 'Error' in e.response:
+                print(f"Error Code: {e.response['Error']['Code']}")
+                print(f"Error Message: {e.response['Error']['Message']}")
+                print(f"Error Response: {e.response}")
+            
             error = e.response['Error']['Message']
             if e.response['Error']['Code'] == 'UsernameExistsException':
                 error = 'This email is already registered. Please log in.'
             return render_template('register.html', form=form, error=error)
     return render_template('register.html', form=form)
+
 
 @blueprint.route('/confirm', methods=['GET', 'POST'])
 def confirm():
@@ -113,7 +120,14 @@ def login():
                 }
             )
             if 'AuthenticationResult' in response:
-                session['id_token'] = response['AuthenticationResult']['IdToken']
+                id_token = response['AuthenticationResult']['IdToken']
+                session['id_token'] = id_token
+
+                # Decode the ID token to get user attributes
+                user_info = cognito.get_user(AccessToken=response['AuthenticationResult']['AccessToken'])
+                role = next(attr['Value'] for attr in user_info['UserAttributes'] if attr['Name'] == 'custom:role')
+                session['role'] = role
+                
                 return redirect(url_for('app.index'))
             else:
                 error = response.get('ChallengeName', 'Authentication failed. Please check your email and password.')
@@ -122,6 +136,29 @@ def login():
             error = e.response['Error']['Message']
             return render_template('login.html', form=form, error=error)
     return render_template('login.html', form=form)
+
+def role_required(role):
+    def wrapper(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'id_token' not in session or 'role' not in session:
+                return render_template_string('''
+                    <script>
+                        alert("You need to log in first.");
+                        window.location.href = "{{ url_for('app.login') }}";
+                    </script>
+                ''')
+            if session['role'] != role:
+                return render_template_string('''
+                    <script>
+                        alert("You do not have permission to access this page.");
+                        window.location.href = "{{ url_for('app.index') }}";
+                    </script>
+                ''')
+            return f(*args, **kwargs)
+        return decorated_function
+    return wrapper
+
 
 # Define login_required decorator
 def login_required(f):
@@ -143,6 +180,7 @@ def index():
     return send_from_directory('.', 'pages/index.html')
 
 @blueprint.route('/courses')
+@role_required('student')
 @login_required
 def list_classes():
     courses = fetch_courses_from_dynamodb()
@@ -209,11 +247,13 @@ def remove_student():
 
 @blueprint.route('/regstd')
 @login_required
+@role_required ('admin')
 def registerStd():
     return send_from_directory('.', 'pages/registerStudent.html')
 
 @blueprint.route('/init')
 @login_required
+@role_required ('lecturer')
 def initialize():
     courses = fetch_courses_from_dynamodb()
     return render_template('initializeAttendance.html', courses=courses)
