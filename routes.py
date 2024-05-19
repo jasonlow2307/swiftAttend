@@ -127,12 +127,7 @@ def login():
                 user_info = cognito.get_user(AccessToken=response['AuthenticationResult']['AccessToken'])
                 role = next(attr['Value'] for attr in user_info['UserAttributes'] if attr['Name'] == 'custom:role')
                 session['role'] = role
-                if role == 'student':
-                    return redirect(url_for('app.index_student'))
-                elif role == 'lecturer':
-                    return redirect(url_for('app.index_lecturer'))
-                else:
-                    return redirect(url_for('app.index_admin'))
+                return redirect(url_for('app.index'))
             else:
                 error = response.get('ChallengeName', 'Authentication failed. Please check your email and password.')
                 return render_template('login.html', form=form, error=error)
