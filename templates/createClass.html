@@ -12,7 +12,7 @@
             margin: 0;
             padding: 0;
         }
-    
+
         .container {
             background-color: white;
             padding: 20px;
@@ -21,7 +21,7 @@
             width: 400px;
             margin: 50px auto;
         }
-    
+
         h1 {
             color: #003572;
             font-weight: bold;
@@ -29,11 +29,11 @@
             margin-bottom: 20px;
             text-align: center;
         }
-    
+
         form {
             text-align: center;
         }
-    
+
         label {
             display: block;
             font-weight: bold;
@@ -41,7 +41,7 @@
             margin-top: 10px;
             margin-bottom: 5px;
         }
-    
+
         input[type="text"],
         select,
         input[type="time"],
@@ -54,25 +54,26 @@
             box-sizing: border-box;
             transition: border-color 0.3s, box-shadow 0.3s;
         }
-    
+
         input[type="submit"] {
             background-color: #003572;
             color: white;
             cursor: pointer;
             border: none;
         }
-    
+
         input[type="submit"]:hover {
             background-color: #001d44;
         }
-    
-        .checkbox-container {
+
+        .checkbox-container, .radio-container {
             display: flex;
             align-items: center;
             margin-bottom: 5px;
         }
 
-        .checkbox-container input[type="checkbox"] {
+        .checkbox-container input[type="checkbox"],
+        .radio-container input[type="radio"] {
             appearance: none;
             -webkit-appearance: none;
             -moz-appearance: none;
@@ -82,19 +83,40 @@
             border-radius: 3px;
             margin-right: 10px;
             cursor: pointer;
+            position: relative;
         }
 
-        .checkbox-container input[type="checkbox"]:checked {
+        .checkbox-container input[type="checkbox"]:checked,
+        .radio-container input[type="radio"]:checked {
             background-color: #003572;
         }
 
-        .checkbox-container input[type="checkbox"]:checked::before {
+        .checkbox-container input[type="checkbox"]:checked::before,
+        .radio-container input[type="radio"]:checked::before {
             content: "\2713";
             display: block;
             color: white;
             text-align: center;
             line-height: 20px;
         }
+
+        .radio-container input[type="radio"] {
+            border-radius: 50%;
+        }
+
+        .radio-container input[type="radio"]:checked::before {
+            content: "";
+            display: block;
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
     </style>
 </head>
 <body>
@@ -127,13 +149,21 @@
                 </div>
             {% endfor %}
             <br>
-
-
             
+            <label>Select Lecturer:</label><br>
+            {% for lecturer in lecturers|sort(attribute='LecturerId') %}
+                <div class="radio-container">
+                    <input type="radio" name="lecturer" value="{{ lecturer }}">
+                    <label>{{ lecturer.LecturerId|string + " - " +  lecturer.FullName }}</label>
+                </div>
+            {% endfor %}
+            <br>
+
             <input type="submit" value="Create Class">
 
             <a href="/"><p>Home</p></a>
         </form>
+    </div>
     
     <!-- Script to handle form submission and display JSON response -->
     <script>
@@ -154,6 +184,18 @@
             .catch(error => {
                 console.error("Error:", error);
                 alert("Error creating class!");
+            });
+        });
+
+        document.querySelectorAll('.radio-container input[type="radio"]').forEach(radio => {
+            radio.addEventListener('click', function(event) {
+                if (this.previousChecked) {
+                    this.checked = false;
+                    this.previousChecked = false;
+                } else {
+                    document.querySelectorAll('.radio-container input[type="radio"]').forEach(r => r.previousChecked = false);
+                    this.previousChecked = true;
+                }
             });
         });
     </script>

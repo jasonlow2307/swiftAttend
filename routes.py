@@ -292,9 +292,13 @@ def retrieve():
 @role_required(['lecturer', 'admin'])
 def create_class():
     students = fetch_students_from_dynamodb()
+    lecturers = fetch_lecturers_from_dynamodb()
+    print(lecturers)
     for student in students:
         student['StudentId'] = int(student['StudentId'])
-    return render_template('createClass.html', students=students)
+    for lecturer in lecturers:
+        lecturer['LecturerId'] = int(lecturer['LecturerId'])
+    return render_template('createClass.html', students=students, lecturers = lecturers)
 
 @blueprint.route('/create_form', methods=['POST'])
 def create_class_record():
@@ -302,14 +306,19 @@ def create_class_record():
     course_code = request.form['courseCode']
     day = request.form['day']
     time = request.form['time']
-    # Getting list of students in string 
+    # Getting list of students and lecturers in string 
     selected_students = request.form.getlist('students')
-    # List to store converted students in proper dictionary format
+    selected_lecturer = request.form['lecturer']
+    # List to store converted students and lecrturer in proper dictionary format
     selected_students_dic = []
     for student in selected_students:
         student = ast.literal_eval(student)
         student['StudentId'] = str(student['StudentId'])
         selected_students_dic.append(student)
+
+    # Convert selected lecturer to dictionary
+    selected_lecturer = ast.literal_eval(selected_lecturer)
+    selected_lecturer['LecturerId'] = str(selected_lecturer['LecturerId'])
     
     # Join all student ids of selected students with | separator
     selected_student_ids = "|".join(student['StudentId'] for student in selected_students_dic)
@@ -319,7 +328,8 @@ def create_class_record():
         'CourseName': {'S': course_name},
         'Day': {'S': day},
         'Time': {'S': time},
-        'Students': {'S': selected_student_ids}
+        'Students': {'S': selected_student_ids},
+        'Lecturer': {'S': selected_lecturer['LecturerId']}
     }
         
     dynamodb.put_item(
@@ -358,74 +368,54 @@ def initialize_class_record():
 
     return jsonify({'success': True, 'message': 'Class initialized successfully!'}), 200
 
-    
-@blueprint.route('/regstd_form', methods=['POST'])
-def save_student_registration():
-    image = request.files['image']
-    name = request.form['name']
-
-    # Generate student ID
-    year_month = datetime.now().strftime('%y%m')
-    random_numbers = str(random.randint(1000, 9999))
-    student_id = year_month + random_numbers
-
-    # Check if student_id already exists in DYNAMODB_REGISTRATION_TABLE_NAME
-    response = dynamodb.scan(
-        TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
-        FilterExpression='studentId = :student_id',
-        ExpressionAttributeValues={':student_id': {'S': student_id}}
-    )
-    items = response.get('Items', [])
-    while items:
-        # Regenerate student_id
-        random_numbers = str(random.randint(100000, 999999))
-        student_id = year_month + random_numbers
-        response = dynamodb.scan(
-            TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
-            FilterExpression='studentId = :student_id',
-            ExpressionAttributeValues={':student_id': {'S': student_id}}
-        )
-        items = response.get('Items', [])
-
-    # Use the generated student ID in your code
-    bucket_name = S3_BUCKET_NAME
-    key = f'index/{student_id}'
-    image_bytes = image.read()
-    s3.upload_fileobj(
-        io.BytesIO(image_bytes),
-        bucket_name,
-        key,
-        ExtraArgs={'Metadata': {'FullName': name, 'student_id': student_id}}
-    )
-
-    return '', 200
-
 @blueprint.route('/regstdlec_form', methods=['POST'])
 def save_lecturer_registration():
     image = request.files['image']
     name = request.form['name']
     role = request.form['role']
 
-    # Generate student ID
+    # Generate ID
     year_month = datetime.now().strftime('%y%m')
-    random_numbers = str(random.randint(1000, 9999))
+    if role == 'student':
+        # student's fifth digit is 0 to 4
+        random_numbers = str(random.randint(0000, 4999))
+    else:
+        # lecturer's fifth digit is 5 to 9
+        random_numbers = str(random.randint(5000, 9999))
     id = year_month + random_numbers
 
-    # Check if student_id already exists in DYNAMODB_REGISTRATION_TABLE_NAME
+    # Check if id already exists in table
     response = dynamodb.scan(
-        TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
+        TableName=DYNAMODB_STUDENT_TABLE_NAME,
         FilterExpression='studentId = :student_id',
         ExpressionAttributeValues={':student_id': {'S': id}}
     )
     items = response.get('Items', [])
     while items:
         # Regenerate student_id
-        random_numbers = str(random.randint(100000, 999999))
+        random_numbers = str(random.randint(0000, 4999))
         id = year_month + random_numbers
         response = dynamodb.scan(
-            TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
+            TableName=DYNAMODB_STUDENT_TABLE_NAME,
             FilterExpression='studentId = :student_id',
             ExpressionAttributeValues={':student_id': {'S': id}}
+        )
+        items = response.get('Items', [])
+
+    response = dynamodb.scan(
+        TableName=DYNAMODB_LECTURER_TABLE_NAME,
+        FilterExpression='lecturerId = :lecturer_id',
+        ExpressionAttributeValues={':lecturer_id': {'S': id}}
+    )
+    items = response.get('Items', [])
+    while items:
+        # Regenerate lecturer_id
+        random_numbers = str(random.randint(5000, 9999))
+        id = year_month + random_numbers
+        response = dynamodb.scan(
+            TableName=DYNAMODB_LECTURER_TABLE_NAME,
+            FilterExpression='lecturerId = :lecturer_id',
+            ExpressionAttributeValues={':lecturer_id': {'S': id}}
         )
         items = response.get('Items', [])
 
@@ -474,7 +464,7 @@ def check_attendance_record():
         if 'FaceMatches' in response_search and len(response_search['FaceMatches']) > 0:
                 for match in response_search['FaceMatches']:
                     person_info = dynamodb.get_item(
-                        TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
+                        TableName=DYNAMODB_STUDENT_TABLE_NAME,
                         Key={'RekognitionId': {'S': match['Face']['FaceId']}}
                     )
                     if 'Item' in person_info:
@@ -583,7 +573,7 @@ def fetch_courses_from_dynamodb(course_code = None):
 # Return all students from registration table
 def fetch_students_from_dynamodb(studentIds = None):
     response = dynamodb.scan(
-        TableName= DYNAMODB_REGISTRATION_TABLE_NAME
+        TableName= DYNAMODB_STUDENT_TABLE_NAME
     )
     items = response.get('Items', [])
     students = []
@@ -598,13 +588,39 @@ def fetch_students_from_dynamodb(studentIds = None):
         # If studentIds provided, filter the items based on those IDs
         for student_id in studentIds:
             response = dynamodb.scan(
-                TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
+                TableName=DYNAMODB_STUDENT_TABLE_NAME,
                 FilterExpression='StudentId = :student_id',
                 ExpressionAttributeValues={':student_id': {'S': student_id}}
             )
             items = response.get('Items', [])
             students.extend(items)
     return students
+
+# Can optimize by combining with fetching students
+def fetch_lecturers_from_dynamodb(lecturerIds = None):
+    response = dynamodb.scan(
+        TableName= DYNAMODB_LECTURER_TABLE_NAME
+    )
+    items = response.get('Items', [])
+    lecturers = []
+    if (lecturerIds == None):
+        for item in items:
+            lecturer = {
+                'FullName': item.get('FullName', {}).get('S'),
+                'LecturerId': item.get('LecturerId', {}).get('S')
+            }
+            lecturers.append(lecturer)
+    else:
+        # If studentIds provided, filter the items based on those IDs
+        for lecturer_id in lecturerIds:
+            response = dynamodb.scan(
+                TableName=DYNAMODB_STUDENT_TABLE_NAME,
+                FilterExpression='StudentId = :student_id',
+                ExpressionAttributeValues={':LecturerId': {'S': lecturer_id}}
+            )
+            items = response.get('Items', [])
+            lecturers.extend(lecturer)
+    return lecturers
 
 # For /create_form
 # Save created class record to DynamoDB
