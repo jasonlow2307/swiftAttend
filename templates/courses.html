@@ -246,7 +246,7 @@
             <h1>Classes</h1>
             <div class="box-container">
                 {% for course in courses %}
-                <div class="class-box box" onclick="openModal('{{ course.CourseName }}', '{{ course.CourseCode }}', '{{ course.Students|escapejs }}')">
+                <div class="class-box box" onclick="openModal('{{ course.CourseName }}', '{{ course.CourseCode }}', '{{ course.Students|escapejs }}', '{{ course.Lecturer.FullName }}', '{{ course.Lecturer.Image }}')">
                     <h3>{{ course.CourseName }}</h3>
                     <p>{{ course.CourseCode }}</p>
                     <img src="{{ course.Lecturer.Image }}" alt="Lecturer Image" class="lecturer-image">
@@ -263,6 +263,8 @@
                 <span class="close" onclick="closeModal()">&times;</span>
                 <h3 id="courseName"></h3>
                 <p id="courseCode"></p>
+                <p id="lecturer"></p>
+                <img id="lecturer-image" class="lecturer-image" alt="Lecturer Image">
                 <table id="students">
                     <thead>
                         <tr>
@@ -287,13 +289,19 @@
     </div>
 
     <script>
-        function openModal(courseName, courseCode, students) {
-            console.log("Open Modal")
+        // Global variable to track changes
+        let changesMade = false;
+
+        function openModal(courseName, courseCode, students, lecturerName, lecturerImage) {
+            console.log("Open Modal");
             students = JSON.parse(students);
-            console.log(students)
+            console.log(students);
+            
             var modal = document.getElementById("myModal");
             document.getElementById("courseName").innerText = courseName;
             document.getElementById("courseCode").innerText = "Course Code: " + courseCode;
+            document.getElementById("lecturer").innerText = "Lecturer: " + lecturerName;
+            document.getElementById("lecturer-image").src = lecturerImage;
 
             var studentsTable = document.getElementById("students").getElementsByTagName('tbody')[0];
             // Clear any existing rows
@@ -318,7 +326,9 @@
             var modal = document.getElementById("myModal");
             modal.style.display = "none";
 
-            location.reload(); // Refresh the page
+            if (changesMade){
+                location.reload(); // Refresh the page only if changes were made
+            }
 
             exitEditMode();
         }
@@ -331,7 +341,6 @@
             if (event.key === 'Escape' && modal.style.display === 'block') {
                 event.preventDefault(); // Prevent the default action
                 closeModal();
-                location.reload(); // Refresh the page
             }
         });
 
@@ -431,6 +440,8 @@
                     if (xhr.readyState === 4 && xhr.status === 200) {
                         // If the removal is successful, remove the row from the table
                         row.remove();
+                        // Mark changes made
+                        changesMade = true;
                     }
                 };
 
@@ -503,6 +514,8 @@
                         for (var i = 0; i < removeColumn.length; i++) {
                             removeColumn[i].style.display = "table-cell";
                         }
+                        // Mark changes made
+                        changesMade = true;
                     } else {
                         console.error("Failed to add student: " + response.message);
                     }

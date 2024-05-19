@@ -204,7 +204,6 @@ def list_classes():
         lecturer_id = course_lecturer['LecturerId']['S']
         image_key = 'index/' + lecturer_id
         course['Lecturer']['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
-        print(course['Lecturer'])
 
         students = []
         for item in course_students:
