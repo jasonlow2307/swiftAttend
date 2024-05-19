@@ -400,7 +400,7 @@ def save_student_registration():
 
     return '', 200
 
-@blueprint.route('/reglec_form', methods=['POST'])
+@blueprint.route('/regstdlec_form', methods=['POST'])
 def save_lecturer_registration():
     image = request.files['image']
     name = request.form['name']
@@ -409,35 +409,35 @@ def save_lecturer_registration():
     # Generate student ID
     year_month = datetime.now().strftime('%y%m')
     random_numbers = str(random.randint(1000, 9999))
-    student_id = year_month + random_numbers
+    id = year_month + random_numbers
 
     # Check if student_id already exists in DYNAMODB_REGISTRATION_TABLE_NAME
     response = dynamodb.scan(
         TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
         FilterExpression='studentId = :student_id',
-        ExpressionAttributeValues={':student_id': {'S': student_id}}
+        ExpressionAttributeValues={':student_id': {'S': id}}
     )
     items = response.get('Items', [])
     while items:
         # Regenerate student_id
         random_numbers = str(random.randint(100000, 999999))
-        student_id = year_month + random_numbers
+        id = year_month + random_numbers
         response = dynamodb.scan(
             TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
             FilterExpression='studentId = :student_id',
-            ExpressionAttributeValues={':student_id': {'S': student_id}}
+            ExpressionAttributeValues={':student_id': {'S': id}}
         )
         items = response.get('Items', [])
 
     # Use the generated student ID in your code
     bucket_name = S3_BUCKET_NAME
-    key = f'index/{student_id}'
+    key = f'index/{id}'
     image_bytes = image.read()
     s3.upload_fileobj(
         io.BytesIO(image_bytes),
         bucket_name,
         key,
-        ExtraArgs={'Metadata': {'FullName': name, 'student_id': student_id, 'role': role}}
+        ExtraArgs={'Metadata': {'FullName': name, 'id': id, 'role': role}}
     )
 
     return '', 200

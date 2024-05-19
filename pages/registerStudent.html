@@ -121,6 +121,7 @@
             </label><br>
             <input type="text" name="name" placeholder="Enter Your Name" required><br>
             <input type="submit" value="Submit">
+            <input type="hidden" name="role" value="student">
         </form>
         <a href="/"><p>Home</p></a>
     </div>
@@ -147,7 +148,7 @@
             var formData = new FormData(this);
             
             // Send form data to server using fetch API
-            fetch("/regstd_form", {
+            fetch("/regstdlec_form", {
                 method: "POST",
                 body: formData
             })
