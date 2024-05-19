@@ -25,9 +25,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: relative;
         }
 
-        header .logo img {
+        .logo img {
             height: 50px;
         }
 
@@ -35,6 +36,7 @@
             list-style: none;
             display: flex;
             gap: 2rem;
+            transition: all 0.3s ease-in-out;
         }
 
         nav ul li a {
@@ -46,6 +48,51 @@
 
         nav ul li a:hover {
             color: #ffdd57;
+        }
+
+        .menu-icon {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .menu-icon div {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            margin: 4px;
+            transition: all 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            nav ul {
+                display: none;
+                flex-direction: column;
+                width: 100%;
+                background-color: #003572;
+                position: absolute;
+                top: 60px;
+                right: 0;
+                border-radius: 0 0 8px 8px;
+            }
+
+            nav ul li {
+                text-align: center;
+                padding: 1rem 0;
+                border-top: 1px solid #fff;
+            }
+
+            nav ul li:first-child {
+                border-top: none;
+            }
+
+            .menu-icon {
+                display: flex;
+            }
+
+            nav ul.show {
+                display: flex;
+            }
         }
 
         main {
@@ -71,7 +118,6 @@
             gap: 2rem;
             margin-top: 3rem;
             width: 70%;
-            align-self: center;
             margin: 0 auto;
             padding-top: 30px;
         }
@@ -128,8 +174,13 @@
         <div class="logo">
             <img src="../static/logo.png" alt="Swift Attend Logo">
         </div>
+        <div class="menu-icon" onclick="toggleMenu()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
         <nav>
-            <ul>
+            <ul id="nav-links">
                 <li><a href="/reglec">Register Lecturer</a></li>
                 <li><a href="/regstd">Register Students</a></li>
                 <li><a href="/create">Create Class</a></li>
@@ -228,6 +279,11 @@
             new Chart(ctx3, doughnutConfig(20, '#4fc3f7'));
             new Chart(ctx4, doughnutConfig(15, '#4fc3f7'));
         });
+
+        function toggleMenu() {
+            const navLinks = document.getElementById("nav-links");
+            navLinks.classList.toggle("show");
+        }
     </script>
 </body>
 </html>
