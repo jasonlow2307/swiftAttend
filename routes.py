@@ -127,8 +127,12 @@ def login():
                 user_info = cognito.get_user(AccessToken=response['AuthenticationResult']['AccessToken'])
                 role = next(attr['Value'] for attr in user_info['UserAttributes'] if attr['Name'] == 'custom:role')
                 session['role'] = role
-                
-                return redirect(url_for('app.index'))
+                if role == 'student':
+                    return redirect(url_for('app.index_student'))
+                elif role == 'lecturer':
+                    return redirect(url_for('app.index_lecturer'))
+                else:
+                    return redirect(url_for('app.index_admin'))
             else:
                 error = response.get('ChallengeName', 'Authentication failed. Please check your email and password.')
                 return render_template('login.html', form=form, error=error)
@@ -175,14 +179,16 @@ def login_required(f):
     return decorated_function
 
 @blueprint.route('/')
-@login_required
 def index():
     role = session.get('role')
-    if role:
-        welcome_message = f"Welcome back, {role.capitalize()}"
+    welcome_message = f"Welcome back, {role.capitalize()}"
+
+    if role == 'student':
+        return render_template('index_student.html', welcome_message=welcome_message)
+    elif role == 'lecturer':
+        return render_template('index_lecturer.html', welcome_message=welcome_message)
     else:
-        welcome_message = "Welcome to Swift Attend"
-    return render_template('index.html', welcome_message=welcome_message)
+        return render_template('index_admin.html', welcome_message=welcome_message)
 
 @blueprint.route('/courses')
 @role_required(['lecturer', 'admin'])

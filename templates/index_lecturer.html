@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="../static/logo.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Swift Attend</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 50px;
+            color: #003572;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        p {
+            text-align: center;
+            font-size: 18px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            text-align: center;
+        }
+
+        li {
+            margin-top: 30px;
+        }
+
+        a {
+            text-decoration: none;
+            color: white;
+            background-color: #003572;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-size: 18px;
+            display: inline-block;
+            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 250px; /* Set a fixed width */
+            text-align: center; /* Center the text */
+        }
+
+        a:hover {
+            background-color: #001d44;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Swift Attend</h1>
+    <p>{{ welcome_message }}</p>
+    <p>Choose an option below:</p>
+    <ul>
+        <li><a href="/regstd">Register Student</a></li>
+        <li><a href="/create">Create Class</a></li>
+        <li><a href="/init">Add Attendance Record</a></li>
+        <li><a href="/ret">Retrieve Attendance Records</a></li>
+        <li><a href="/courses">View Courses</a></li>
+        <li><a href="/logout" class="btn btn-primary">Logout</a></li>
+    </ul>
+</body>
+</html>
