@@ -194,8 +194,19 @@ def list_classes():
         course['StudentCount'] = len(course['Students'].split('|'))
 
         course_students = fetch_students_from_dynamodb(course['Students'].split('|'))
-        students = []
+        course_lecturer = fetch_lecturers_from_dynamodb([course['Lecturer']])[0]
+        
+        # Convert course lecturer's name to string
+        course['Lecturer'] = course_lecturer
+        course_lecturer['FullName'] = course_lecturer['FullName']['S']
+        
+        # Extract LecturerId as string
+        lecturer_id = course_lecturer['LecturerId']['S']
+        image_key = 'index/' + lecturer_id
+        course['Lecturer']['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
+        print(course['Lecturer'])
 
+        students = []
         for item in course_students:
             student = {
                 'FullName': item.get('FullName', {}).get('S'),
@@ -203,27 +214,29 @@ def list_classes():
             }
             students.append(student)
 
+        course['Lecturer'] = course_lecturer
         course['Students'] = students
 
         for student in course['Students']:
-            image_key = 'index/' + str(student['StudentId'])
+            student_id = student['StudentId']
+            image_key = 'index/' + student_id
             student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
 
         all_students = fetch_students_from_dynamodb()
-
         for student in all_students:
-            image_key = 'index/' + str(student['StudentId'])
+            student_id = student['StudentId']
+            image_key = 'index/' + student_id
             student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
 
         course_students_ids = [int(student['StudentId']['S']) for student in course_students]
         new_students = []
-
         for student in all_students:
             for student_id in course_students_ids:
                 if student['StudentId'] != str(student_id):
                     new_students.append(student)
     
         course['NewStudents'] = new_students
+    
     return render_template('courses.html', courses=courses, all_students=all_students)
 
 # For adding students to course
@@ -553,7 +566,8 @@ def fetch_courses_from_dynamodb(course_code = None):
                     'CourseName': item.get('CourseName', {}).get('S'),
                     'Day': item.get('Day', {}).get('S'),
                     'Time': item.get('Time', {}).get('S'),
-                    'Students': item.get('Students', {}).get('S')
+                    'Students': item.get('Students', {}).get('S'),
+                    'Lecturer': item.get('Lecturer', {}).get('S')
                 }
                 courses.append(course)
         else:
@@ -563,7 +577,8 @@ def fetch_courses_from_dynamodb(course_code = None):
                         'CourseName': item.get('CourseName', {}).get('S'),
                         'Day': item.get('Day', {}).get('S'),
                         'Time': item.get('Time', {}).get('S'),
-                        'Students': item.get('Students', {}).get('S')
+                        'Students': item.get('Students', {}).get('S'),
+                        'Lecturer': item.get('Lecturer', {}).get('S')
                     }
                     # If specified course_code, only return one course
                     return course
@@ -602,25 +617,23 @@ def fetch_lecturers_from_dynamodb(lecturerIds = None):
         TableName= DYNAMODB_LECTURER_TABLE_NAME
     )
     items = response.get('Items', [])
-    lecturers = []
     if (lecturerIds == None):
         for item in items:
             lecturer = {
                 'FullName': item.get('FullName', {}).get('S'),
                 'LecturerId': item.get('LecturerId', {}).get('S')
             }
-            lecturers.append(lecturer)
+            return lecturer
     else:
         # If studentIds provided, filter the items based on those IDs
         for lecturer_id in lecturerIds:
             response = dynamodb.scan(
-                TableName=DYNAMODB_STUDENT_TABLE_NAME,
-                FilterExpression='StudentId = :student_id',
-                ExpressionAttributeValues={':LecturerId': {'S': lecturer_id}}
+                TableName=DYNAMODB_LECTURER_TABLE_NAME,
+                FilterExpression='LecturerId = :lecturer_id',
+                ExpressionAttributeValues={':lecturer_id': {'S': lecturer_id}}
             )
             items = response.get('Items', [])
-            lecturers.extend(lecturer)
-    return lecturers
+        return items
 
 # For /create_form
 # Save created class record to DynamoDB
