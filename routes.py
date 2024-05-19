@@ -174,6 +174,7 @@ def login_required(f):
     return decorated_function
 
 @blueprint.route('/')
+@login_required
 def index():
     role = session.get('role')
     welcome_message = f"Welcome back, {role.capitalize()}"
@@ -249,6 +250,11 @@ def remove_student():
     edit_student_in_course(student_id, course_code, False)
 
     return jsonify({'success': True, 'message': 'Student removed successfully!'}), 200
+
+@blueprint.route('/reglec')
+@login_required
+def registerLec():
+    return send_from_directory('.', 'pages/registerLecturer.html')
 
 @blueprint.route('/regstd')
 @login_required
@@ -390,6 +396,48 @@ def save_student_registration():
         bucket_name,
         key,
         ExtraArgs={'Metadata': {'FullName': name, 'student_id': student_id}}
+    )
+
+    return '', 200
+
+@blueprint.route('/reglec_form', methods=['POST'])
+def save_lecturer_registration():
+    image = request.files['image']
+    name = request.form['name']
+    role = request.form['role']
+
+    # Generate student ID
+    year_month = datetime.now().strftime('%y%m')
+    random_numbers = str(random.randint(1000, 9999))
+    student_id = year_month + random_numbers
+
+    # Check if student_id already exists in DYNAMODB_REGISTRATION_TABLE_NAME
+    response = dynamodb.scan(
+        TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
+        FilterExpression='studentId = :student_id',
+        ExpressionAttributeValues={':student_id': {'S': student_id}}
+    )
+    items = response.get('Items', [])
+    while items:
+        # Regenerate student_id
+        random_numbers = str(random.randint(100000, 999999))
+        student_id = year_month + random_numbers
+        response = dynamodb.scan(
+            TableName=DYNAMODB_REGISTRATION_TABLE_NAME,
+            FilterExpression='studentId = :student_id',
+            ExpressionAttributeValues={':student_id': {'S': student_id}}
+        )
+        items = response.get('Items', [])
+
+    # Use the generated student ID in your code
+    bucket_name = S3_BUCKET_NAME
+    key = f'index/{student_id}'
+    image_bytes = image.read()
+    s3.upload_fileobj(
+        io.BytesIO(image_bytes),
+        bucket_name,
+        key,
+        ExtraArgs={'Metadata': {'FullName': name, 'student_id': student_id, 'role': role}}
     )
 
     return '', 200

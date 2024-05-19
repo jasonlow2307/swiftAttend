@@ -112,7 +112,7 @@
 </head>
 <body>
     <div class="container">
-        <h2>Student Registration</h2>
+        <h2>Lecturer Registration</h2>
         <img id="previewImage" src="#" alt="Image Preview" style="display: none;">
         <form id="registrationForm" enctype="multipart/form-data">
             <label class="file-upload">
@@ -121,6 +121,7 @@
             </label><br>
             <input type="text" name="name" placeholder="Enter Your Name" required><br>
             <input type="submit" value="Submit">
+            <input type="hidden" name="role" value="lecturer">
         </form>
         <a href="/"><p>Home</p></a>
     </div>
@@ -147,7 +148,7 @@
             var formData = new FormData(this);
             
             // Send form data to server using fetch API
-            fetch("/regstd_form", {
+            fetch("/reglec_form", {
                 method: "POST",
                 body: formData
             })
