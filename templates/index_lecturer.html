@@ -4,70 +4,288 @@
     <link rel="icon" type="image/png" href="../static/logo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Swift Attend</title>
+    <title>Swift Attend Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
     <style>
-        body {
-            background-color: #f0f0f0;
-            color: #333;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
         }
 
-        h1 {
-            text-align: center;
-            margin-top: 50px;
-            color: #003572;
-            font-size: 32px;
-            font-weight: bold;
+        body {
+            background-color: #f9f9f9;
+            color: #333;
         }
 
-        p {
-            text-align: center;
-            font-size: 18px;
-        }
-
-        ul {
-            list-style-type: none;
-            padding: 0;
-            text-align: center;
-        }
-
-        li {
-            margin-top: 30px;
-        }
-
-        a {
-            text-decoration: none;
-            color: white;
+        header {
             background-color: #003572;
-            padding: 10px 20px;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-            font-size: 18px;
-            display: inline-block;
-            margin-top: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 250px; /* Set a fixed width */
-            text-align: center; /* Center the text */
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
         }
 
-        a:hover {
-            background-color: #001d44;
+        .logo img {
+            height: 50px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            transition: all 0.3s ease-in-out;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #ffdd57;
+        }
+
+        .menu-icon {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .menu-icon div {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            margin: 4px;
+            transition: all 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            nav ul {
+                display: none;
+                flex-direction: column;
+                width: 100%;
+                background-color: #003572;
+                position: absolute;
+                top: 60px;
+                right: 0;
+                border-radius: 0 0 8px 8px;
+            }
+
+            nav ul li {
+                text-align: center;
+                padding: 1rem 0;
+                border-top: 1px solid #fff;
+            }
+
+            nav ul li:first-child {
+                border-top: none;
+            }
+
+            .menu-icon {
+                display: flex;
+            }
+
+            nav ul.show {
+                display: flex;
+            }
+        }
+
+        main {
+            text-align: center;
+            padding: 5rem 2rem;
+        }
+
+        main h1 {
+            font-size: 2.5rem;
+            color: #0056b3;
+        }
+
+        main p {
+            font-size: 1.25rem;
+            margin-top: 1rem;
+            color: #666;
+        }
+
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 3rem;
+            width: 70%;
+            margin: 0 auto;
+            padding-top: 30px;
+        }
+
+        .box {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            width: 300px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: left;
+            flex: 1 1 calc(33.333% - 2rem);
+        }
+
+        .box h2 {
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            color: #0056b3;
+        }
+
+        .box ul {
+            list-style: disc;
+            padding-left: 1.25rem;
+        }
+
+        .box canvas {
+            width: 100%;
+            height: 150px;
+        }
+
+        .box p {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #333;
+            text-align: center;
+        }
+
+        @media (max-width: 1200px) {
+            .box {
+                flex: 1 1 calc(50% - 2rem);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .box {
+                flex: 1 1 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Welcome to Swift Attend</h1>
-    <p>{{ welcome_message }}</p>
-    <p>Choose an option below:</p>
-    <ul>
-        <li><a href="/regstd">Register Student</a></li>
-        <li><a href="/create">Create Class</a></li>
-        <li><a href="/init">Add Attendance Record</a></li>
-        <li><a href="/ret">Retrieve Attendance Records</a></li>
-        <li><a href="/courses">View Courses</a></li>
-        <li><a href="/logout" class="btn btn-primary">Logout</a></li>
-    </ul>
+    <header>
+        <div class="logo">
+            <img src="../static/logo.png" alt="Swift Attend Logo">
+        </div>
+        <div class="menu-icon" onclick="toggleMenu()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        <nav>
+            <ul id="nav-links">
+                <li><a href="/reglec">Register Lecturer</a></li>
+                <li><a href="/regstd">Register Students</a></li>
+                <li><a href="/create">Create Class</a></li>
+                <li><a href="/init">Add Attendance</a></li>
+                <li><a href="/ret">Retrieve Attendance</a></li>
+                <li><a href="/courses">View Courses</a></li>
+                <li><a href="/logout">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h1>Welcome to Swift Attend</h1>
+        <p>Seamless Attendance, Effortlessly Accurate</p>
+        <p>{{ welcome_message }}</p>
+        <div class="dashboard">
+            <div class="box">
+                <h2>Courses</h2>
+                <ul>  
+                {% for course in courses %} 
+                    <li>{{ course.CourseName }}</li>  
+                {% endfor %}  
+                </ul> 
+            </div>
+            <div class="box">
+                <h2>Registered Students</h2>
+                <ul>
+                    <li>Alex</li>
+                    <li>Sam</li>
+                </ul>
+            </div>
+            <div class="box">
+                <h2>Number of Students</h2>
+                <canvas id="studentsChart"></canvas>
+            </div>
+            <div class="box">
+                <h2>Attendance Records - AI</h2>
+                <canvas id="attendanceAI"></canvas>
+                <p>5% late records for the past month</p>
+            </div>
+            <div class="box">
+                <h2>Attendance Records - OOP</h2>
+                <canvas id="attendanceOOP"></canvas>
+                <p>20% absence rate for the past month</p>
+            </div>
+            <div class="box">
+                <h2>Attendance Records - SE</h2>
+                <canvas id="attendanceSE"></canvas>
+                <p>15% absence rate for the past month</p>
+            </div>
+        </div>
+    </main>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const ctx1 = document.getElementById('studentsChart').getContext('2d');
+            const ctx2 = document.getElementById('attendanceAI').getContext('2d');
+            const ctx3 = document.getElementById('attendanceOOP').getContext('2d');
+            const ctx4 = document.getElementById('attendanceSE').getContext('2d');
+
+            new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                    datasets: [{
+                        label: 'Number of Students',
+                        data: [10, 12, 15, 20, 25],
+                        backgroundColor: '#4fc3f7',
+                        borderColor: '#0288d1',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    animation: {
+                        duration: 2000
+                    }
+                }
+            });
+
+            const doughnutConfig = (data, backgroundColor) => ({
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [data, 100 - data],
+                        backgroundColor: [backgroundColor, '#e0e0e0'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '80%',
+                    animation: {
+                        duration: 2000
+                    }
+                }
+            });
+
+            new Chart(ctx2, doughnutConfig(5, '#4fc3f7'));
+            new Chart(ctx3, doughnutConfig(20, '#4fc3f7'));
+            new Chart(ctx4, doughnutConfig(15, '#4fc3f7'));
+        });
+
+        function toggleMenu() {
+            const navLinks = document.getElementById("nav-links");
+            navLinks.classList.toggle("show");
+        }
+    </script>
 </body>
 </html>
