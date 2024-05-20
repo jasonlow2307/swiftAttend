@@ -24,7 +24,7 @@ class RegisterForm(FlaskForm):
     given_name = StringField('Given Name', validators=[DataRequired()])
     family_name = StringField('Family Name', validators=[DataRequired()])
     role = SelectField('Role', choices=[('student', 'Student'), ('lecturer', 'Lecturer'), ('admin', 'Admin')], validators=[DataRequired()])
-    image = FileField('Image')
+    image = FileField('Image', default='default.jpg')
     submit = SubmitField('Register')
 
 class ConfirmForm(FlaskForm):
