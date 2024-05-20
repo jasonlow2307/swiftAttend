@@ -10,7 +10,7 @@ import ast
 import random
 from datetime import datetime
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField
+from wtforms import FileField, StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Email
 
 blueprint = Blueprint('app', __name__)
@@ -18,13 +18,13 @@ blueprint = Blueprint('app', __name__)
 initialized_date = ''
 initialized_course = ''
 initialized = False
-
 class RegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     given_name = StringField('Given Name', validators=[DataRequired()])
     family_name = StringField('Family Name', validators=[DataRequired()])
     role = SelectField('Role', choices=[('student', 'Student'), ('lecturer', 'Lecturer'), ('admin', 'Admin')], validators=[DataRequired()])
+    image = FileField('Image')
     submit = SubmitField('Register')
 
 class ConfirmForm(FlaskForm):
@@ -51,7 +51,10 @@ def register():
         password = form.password.data
         given_name = form.given_name.data
         family_name = form.family_name.data
+        name = given_name + " " + family_name
+        image = form.image.data
         role = form.role.data
+        id = generate_id(role)
         try:
             response = cognito.sign_up(
                 ClientId=COGNITO_CLIENT_ID,
@@ -60,11 +63,25 @@ def register():
                 UserAttributes=[
                     {'Name': 'given_name', 'Value': given_name},
                     {'Name': 'family_name', 'Value': family_name},
-                    {'Name': 'custom:role', 'Value': role}
+                    {'Name': 'custom:role', 'Value': role},
+                    {'Name': 'custom:id', 'Value': id}
                 ]
             )
             # Save the user's email in the session
             session['email'] = email
+            session['id'] = id
+
+            # Use the generated ID in your code
+            bucket_name = S3_BUCKET_NAME
+            key = f'index/{id}'
+            image_bytes = image.read()
+            s3.upload_fileobj(
+                io.BytesIO(image_bytes),
+                bucket_name,
+                key,
+                ExtraArgs={'Metadata': {'FullName': name, 'id': id, 'role': role}}
+            )
+
             return redirect(url_for('app.confirm'))
         except ClientError as e:
             # Print the entire exception object
@@ -386,52 +403,9 @@ def save_lecturer_registration():
     name = request.form['name']
     role = request.form['role']
 
-    # Generate ID
-    year_month = datetime.now().strftime('%y%m')
-    if role == 'student':
-        # student's fifth digit is 0 to 4
-        random_numbers = str(random.randint(0000, 4999))
-    else:
-        # lecturer's fifth digit is 5 to 9
-        random_numbers = str(random.randint(5000, 9999))
-    id = year_month + random_numbers
+    id = generate_id(role)
 
-    # Check if id already exists in table
-    response = dynamodb.scan(
-        TableName=DYNAMODB_STUDENT_TABLE_NAME,
-        FilterExpression='studentId = :student_id',
-        ExpressionAttributeValues={':student_id': {'S': id}}
-    )
-    items = response.get('Items', [])
-    while items:
-        # Regenerate student_id
-        random_numbers = str(random.randint(0000, 4999))
-        id = year_month + random_numbers
-        response = dynamodb.scan(
-            TableName=DYNAMODB_STUDENT_TABLE_NAME,
-            FilterExpression='studentId = :student_id',
-            ExpressionAttributeValues={':student_id': {'S': id}}
-        )
-        items = response.get('Items', [])
-
-    response = dynamodb.scan(
-        TableName=DYNAMODB_LECTURER_TABLE_NAME,
-        FilterExpression='lecturerId = :lecturer_id',
-        ExpressionAttributeValues={':lecturer_id': {'S': id}}
-    )
-    items = response.get('Items', [])
-    while items:
-        # Regenerate lecturer_id
-        random_numbers = str(random.randint(5000, 9999))
-        id = year_month + random_numbers
-        response = dynamodb.scan(
-            TableName=DYNAMODB_LECTURER_TABLE_NAME,
-            FilterExpression='lecturerId = :lecturer_id',
-            ExpressionAttributeValues={':lecturer_id': {'S': id}}
-        )
-        items = response.get('Items', [])
-
-    # Use the generated student ID in your code
+    # Use the generated ID in your code
     bucket_name = S3_BUCKET_NAME
     key = f'index/{id}'
     image_bytes = image.read()
@@ -443,6 +417,57 @@ def save_lecturer_registration():
     )
 
     return '', 200
+
+def generate_id(role):
+    # Generate ID
+    year_month = datetime.now().strftime('%y%m')
+    if role == 'student':
+        # student's fifth digit is 1 to 5
+        random_numbers = str(random.randint(1000, 5999))
+        id = year_month + random_numbers
+        # Check if id already exists in table
+        response = dynamodb.scan(
+            TableName=DYNAMODB_STUDENT_TABLE_NAME,
+            FilterExpression='studentId = :student_id',
+            ExpressionAttributeValues={':student_id': {'S': id}}
+        )
+        items = response.get('Items', [])
+        while items:
+            # Regenerate student_id
+            random_numbers = str(random.randint(1000, 5999))
+            id = year_month + random_numbers
+            response = dynamodb.scan(
+                TableName=DYNAMODB_STUDENT_TABLE_NAME,
+                FilterExpression='studentId = :student_id',
+                ExpressionAttributeValues={':student_id': {'S': id}}
+            )
+            items = response.get('Items', [])
+    else:
+        # lecturer's fifth digit is 6 to 9
+        random_numbers = str(random.randint(6000, 9999))
+        id = year_month + random_numbers
+        response = dynamodb.scan(
+            TableName=DYNAMODB_LECTURER_TABLE_NAME,
+            FilterExpression='lecturerId = :lecturer_id',
+            ExpressionAttributeValues={':lecturer_id': {'S': id}}
+        )
+        items = response.get('Items', [])
+        while items:
+            # Regenerate lecturer_id
+            random_numbers = str(random.randint(6000, 9999))
+            id = year_month + random_numbers
+            response = dynamodb.scan(
+                TableName=DYNAMODB_LECTURER_TABLE_NAME,
+                FilterExpression='lecturerId = :lecturer_id',
+                ExpressionAttributeValues={':lecturer_id': {'S': id}}
+            )
+            items = response.get('Items', [])
+    id = year_month + random_numbers
+    return id
+
+    
+
+    
 
 @blueprint.route('/check_form', methods=['POST'])
 def check_attendance_record():

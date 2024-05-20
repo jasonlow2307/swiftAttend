@@ -47,6 +47,7 @@
         input[type="text"],
         input[type="password"],
         input[type="email"],
+        input[type="file"],
         select {
             width: calc(100% - 40px);
             padding: 10px;
@@ -75,7 +76,8 @@
 
         .error-message {
             color: #f00;
-            font-weight: bold;
+            font-weight:
+            bold;
             text-align: center;
             margin-top: 10px;
         }
@@ -88,6 +90,10 @@
             font-weight: bold;
         }
 
+        .alert {
+            color: red;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -98,7 +104,7 @@
             {{ error }}
         </div>
         {% endif %}
-        <form method="POST" action="{{ url_for('app.register') }}">
+        <form method="POST" action="{{ url_for('app.register') }}" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
             <p>
                 {{ form.email.label }}<br>
@@ -135,11 +141,18 @@
                     <span class="error-message">{{ error }}</span><br>
                 {% endfor %}
             </p>
+            <p>
+                {{ form.image.label }}<br>
+                {{ form.image() }}<br>
+                {% for error in form.image.errors %}
+                    <span class="error-message">{{ error }}</span><br>
+                {% endfor %}
+            </p>
             <p>{{ form.submit(class="btn btn-primary") }}</p>
         </form>
         <p style="display: none;">{{ error }}</p>
         <p>Already have an account?</p>
-        <a href="/login"><p>Log In</p></a>
+        <a href="{{ url_for('app.login') }}"><p>Log In</p></a>
     </div>
 </body>
 </html>
