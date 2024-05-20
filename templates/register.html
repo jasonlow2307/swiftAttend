@@ -14,7 +14,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            margin: 50px 0;
         }
 
         .container {
@@ -76,8 +77,7 @@
 
         .error-message {
             color: #f00;
-            font-weight:
-            bold;
+            font-weight: bold;
             text-align: center;
             margin-top: 10px;
         }
@@ -94,7 +94,71 @@
             color: red;
             font-weight: bold;
         }
+
+        .image-preview {
+            margin-top: 10px;
+            max-width: 100%;
+            height: auto;
+            display: none;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Adjust styles for file input */
+        input[type="file"] {
+            width: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .custom-upload-button {
+            display: inline-block;
+            background-color: #003572;
+            color: white;
+            padding: 10px 20px; /* Adjust padding */
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .custom-upload-button:hover {
+            background-color: #001d44;
+        }
+
+        /* Hide default file input button */
+        input[type="file"]::-webkit-file-upload-button {
+            display: none;
+        }
+
+        /* Adjust label styles for file input */
+        .custom-upload-label {
+            display: inline-block;
+            background-color: #003572;
+            color: white;
+            padding: 10px 20px; /* Adjust padding */
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .custom-upload-label:hover {
+            background-color: #001d44;
+        }
     </style>
+    <script>
+        function previewImage(event) {
+            const reader = new FileReader();
+            reader.onload = function(){
+                const output = document.getElementById('imagePreview');
+                output.src = reader.result;
+                output.style.display = 'block';
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -143,11 +207,13 @@
             </p>
             <p>
                 {{ form.image.label }}<br>
-                {{ form.image() }}<br>
+                <img id="imagePreview" class="image-preview" src="#" alt="Image Preview"><br>
+                <label for="upload" class="custom-upload-label">Choose Image</label>
+                <input type="file" id="upload" class="custom-upload-button" onchange="previewImage(event)" style="display: none;">
                 {% for error in form.image.errors %}
                     <span class="error-message">{{ error }}</span><br>
                 {% endfor %}
-            </p>
+            </p>            
             <p>{{ form.submit(class="btn btn-primary") }}</p>
         </form>
         <p style="display: none;">{{ error }}</p>
