@@ -69,7 +69,6 @@ def register():
             )
             # Save the user's email in the session
             session['email'] = email
-            session['id'] = id
 
             # Use the generated ID in your code
             bucket_name = S3_BUCKET_NAME
@@ -143,7 +142,11 @@ def login():
                 # Decode the ID token to get user attributes
                 user_info = cognito.get_user(AccessToken=response['AuthenticationResult']['AccessToken'])
                 role = next(attr['Value'] for attr in user_info['UserAttributes'] if attr['Name'] == 'custom:role')
+                id = next(attr['Value'] for attr in user_info['UserAttributes'] if attr['Name'] == 'custom:id')
                 session['role'] = role
+                session['id'] = id
+                print("ID")
+                print(id)
                 return redirect(url_for('app.index'))
             else:
                 error = response.get('ChallengeName', 'Authentication failed. Please check your email and password.')
@@ -193,8 +196,15 @@ def login_required(f):
 @blueprint.route('/')
 @login_required
 def index():
+    # Can optimize after combining lecturers and students
     role = session.get('role')
-    welcome_message = f"Welcome back, {role.capitalize()}"
+    id = session.get('id')
+    print(id)
+    if role == 'student':
+        user = fetch_students_from_dynamodb([id])[0]
+    else:
+        user = fetch_lecturers_from_dynamodb([id])[0]
+    welcome_message = f"Welcome back, {user['FullName']['S']}"
 
     if role == 'student':
         return render_template('index_student.html', welcome_message=welcome_message)
