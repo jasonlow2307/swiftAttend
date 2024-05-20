@@ -147,32 +147,15 @@
         .custom-upload-label:hover {
             background-color: #001d44;
         }
-    </style>
-    <script>
-        function previewImage(event) {
-            const reader = new FileReader();
-            reader.onload = function(){
-                const output = document.getElementById('imagePreview');
-                output.src = reader.result;
-                output.style.display = 'block';
-            };
-            reader.readAsDataURL(event.target.files[0]);
+
+        #imagePreview {
+            width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 20px;
+            border-radius: 10px;
         }
-
-        // Function to toggle visibility of file input and update file name display
-        document.getElementById("upload").addEventListener("change", function() {
-            var fileInput = document.getElementById("upload");
-            console.log(fileInput)
-            var fileNameDisplay = document.getElementById("uploadFileName");
-            fileNameDisplay.textContent = fileInput.files[0].name;
-        });
-
-        // Function to toggle visibility of file input when label is clicked
-        document.querySelector('.custom-upload-label').addEventListener('click', function() {
-            document.getElementById('upload').click();
-        });
-
-    </script>
+    </style>
 </head>
 <body>
     <div class="container">
@@ -221,6 +204,7 @@
             </p>
             <p>
                 {{ form.image.label }}<br>
+                <img id="imagePreview" src="#" alt="Image Preview" style="display: none;">
                 {{ form.image() }}<br>
                 {% for error in form.image.errors %}
                     <span class="error-message">{{ error }}</span><br>
@@ -232,5 +216,16 @@
         <p>Already have an account?</p>
         <a href="{{ url_for('app.login') }}"><p>Log In</p></a>
     </div>
+    <script>
+        // Function to preview image before upload
+        document.getElementById('{{ form.image.id }}').addEventListener('change', function(e) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'block';
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        });
+    </script>
 </body>
 </html>
