@@ -201,18 +201,17 @@ def index():
     id = session.get('id')
     if role == 'student':
         user = fetch_students_from_dynamodb([id])[0]
+        courses = fetch_courses_from_dynamodb(student_id=id)
     elif role == 'lecturer':
         user = fetch_lecturers_from_dynamodb([id])[0]
+        courses = fetch_courses_from_dynamodb(lecturer_id=id)
     else:
         user = {'FullName': {'S': "Admin"}}
-    welcome_message = f"Welcome back, {user['FullName']['S']}"
 
-    courses = fetch_courses_from_dynamodb(lecturer_id=id)
-    print(id)
-    print(courses)
+    welcome_message = f"Welcome back, {user['FullName']['S']} ({id})"
 
     if role == 'student':
-        return render_template('index_student.html', welcome_message=welcome_message)
+        return render_template('index_student.html', welcome_message=welcome_message, courses=courses)
     elif role == 'lecturer':
         return render_template('index_lecturer.html', welcome_message=welcome_message, courses=courses)
     else:
@@ -592,7 +591,7 @@ def update_classes_table(course_code, course_name, students):
 
 # For /init
 # Fetch all classes from the classes table
-def fetch_courses_from_dynamodb(course_code=None, lecturer_id=None):
+def fetch_courses_from_dynamodb(course_code=None, lecturer_id=None, student_id=None):
     response = dynamodb.scan(TableName=DYNAMODB_CLASSES_TABLE_NAME)
     items = response.get('Items', [])
     courses = []
@@ -612,12 +611,16 @@ def fetch_courses_from_dynamodb(course_code=None, lecturer_id=None):
 
         if lecturer_id is not None and course['Lecturer'] == lecturer_id:
             courses.append(course)
-            return courses
+            continue  # Continue to the next iteration instead of returning immediately
 
-        if course_code is None and lecturer_id is None:
+        if student_id is not None and course['Students'].find(student_id) != -1:
+            courses.append(course)
+            continue  # Continue to the next iteration instead of returning immediately
+
+        if course_code is None and lecturer_id is None and student_id is None:
             courses.append(course)
 
-    return courses 
+    return courses
 
 # For /create and /create_form
 # Return all students from registration table
