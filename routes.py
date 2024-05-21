@@ -252,87 +252,58 @@ def list_classes():
     print(role)
     if role == "lecturer" or role == "admin":
         courses = fetch_courses_from_dynamodb()
-        for course in courses:
-            course['StudentCount'] = len(course['Students'].split('|'))
-
-            course_students = fetch_students_from_dynamodb(course['Students'].split('|'))
-            course_lecturer = fetch_lecturers_from_dynamodb([course['Lecturer']])[0]
-            
-            # Convert course lecturer's name to string
-            course['Lecturer'] = course_lecturer
-            course_lecturer['FullName'] = course_lecturer['FullName']['S']
-            
-            # Extract LecturerId as string
-            lecturer_id = course_lecturer['LecturerId']['S']
-            image_key = 'index/' + lecturer_id
-            course['Lecturer']['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
-
-            students = []
-            for item in course_students:
-                student = {
-                    'FullName': item.get('FullName', {}).get('S'),
-                    'StudentId': item.get('StudentId', {}).get('S')
-                }
-                students.append(student)
-
-            course['Lecturer'] = course_lecturer
-            course['Students'] = students
-
-            for student in course['Students']:
-                student_id = student['StudentId']
-                image_key = 'index/' + student_id
-                student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
-
-            all_students = fetch_students_from_dynamodb()
-            for student in all_students:
-                student_id = student['StudentId']
-                image_key = 'index/' + student_id
-                student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
-
-            course_students_ids = [int(student['StudentId']['S']) for student in course_students]
-            new_students = []
-            for student in all_students:
-                for student_id in course_students_ids:
-                    if student['StudentId'] != str(student_id):
-                        new_students.append(student)
-        
-            course['NewStudents'] = new_students
-        
-        return render_template('courses_lecturer.html', courses=courses, all_students=all_students)
     else:
         courses = fetch_courses_from_dynamodb(student_id=session.get('id'))
-        for course in courses:
-            course['StudentCount'] = len(course['Students'].split('|'))
+    
+    for course in courses:
+        course['StudentCount'] = len(course['Students'].split('|'))
 
-            course_students = fetch_students_from_dynamodb(course['Students'].split('|'))
-            course_lecturer = fetch_lecturers_from_dynamodb([course['Lecturer']])[0]
-            
-            # Convert course lecturer's name to string
-            course['Lecturer'] = course_lecturer
-            course_lecturer['FullName'] = course_lecturer['FullName']['S']
-            
-            # Extract LecturerId as string
-            lecturer_id = course_lecturer['LecturerId']['S']
-            image_key = 'index/' + lecturer_id
-            course['Lecturer']['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
+        course_students = fetch_students_from_dynamodb(course['Students'].split('|'))
+        course_lecturer = fetch_lecturers_from_dynamodb([course['Lecturer']])[0]
+        
+        # Convert course lecturer's name to string
+        course['Lecturer'] = course_lecturer
+        course_lecturer['FullName'] = course_lecturer['FullName']['S']
+        
+        # Extract LecturerId as string
+        lecturer_id = course_lecturer['LecturerId']['S']
+        image_key = 'index/' + lecturer_id
+        course['Lecturer']['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
 
-            students = []
-            for item in course_students:
-                student = {
-                    'FullName': item.get('FullName', {}).get('S'),
-                    'StudentId': item.get('StudentId', {}).get('S')
-                }
-                students.append(student)
+        students = []
+        for item in course_students:
+            student = {
+                'FullName': item.get('FullName', {}).get('S'),
+                'StudentId': item.get('StudentId', {}).get('S')
+            }
+            students.append(student)
 
-            course['Lecturer'] = course_lecturer
-            course['Students'] = students
+        course['Lecturer'] = course_lecturer
+        course['Students'] = students
 
-            for student in course['Students']:
-                student_id = student['StudentId']
-                image_key = 'index/' + student_id
-                student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
-        print(courses)
-        # simplify this
+        for student in course['Students']:
+            student_id = student['StudentId']
+            image_key = 'index/' + student_id
+            student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
+
+        all_students = fetch_students_from_dynamodb()
+        for student in all_students:
+            student_id = student['StudentId']
+            image_key = 'index/' + student_id
+            student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
+
+        course_students_ids = [int(student['StudentId']['S']) for student in course_students]
+        new_students = []
+        for student in all_students:
+            for student_id in course_students_ids:
+                if student['StudentId'] != str(student_id):
+                    new_students.append(student)
+    
+        course['NewStudents'] = new_students
+    
+    if role == "lecturer" or role == "admin":
+        return render_template('courses_lecturer.html', courses=courses, all_students=all_students)
+    else:
         return render_template('courses_student.html', courses=courses)
 
 # For adding students to course
