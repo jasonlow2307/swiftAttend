@@ -201,6 +201,7 @@ def index():
     id = session.get('id')
     if role == 'student':
         user = fetch_students_from_dynamodb([id])[0]
+        user['Image'] = generate_signed_url(S3_BUCKET_NAME, 'index/' + id)
         courses = fetch_courses_from_dynamodb(student_id=id)
         for course in courses:
             present_counter = 0
@@ -239,9 +240,9 @@ def index():
     welcome_message = f"Welcome back, {user['FullName']['S']} ({id})"
 
     if role == 'student':
-        return render_template('index_student.html', welcome_message=welcome_message, courses=courses)
+        return render_template('index_student.html', user=user, courses=courses)
     elif role == 'lecturer':
-        return render_template('index_lecturer.html', welcome_message=welcome_message, courses=courses, students=students)
+        return render_template('index_lecturer.html', user=user, courses=courses, students=students)
     else:
         return render_template('index_admin.html', welcome_message=welcome_message)
 

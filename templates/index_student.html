@@ -167,6 +167,17 @@
                 flex: 1 1 100%;
             }
         }
+        
+        .profile_image{
+            width: 200px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 10px;
+        }
+
+        .courses{
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -194,25 +205,26 @@
     <main>
         <h1>Welcome to Swift Attend</h1>
         <p>Seamless Attendance, Effortlessly Accurate</p>
-        <p>{{ welcome_message }}</p>
+        <p>Welcome Back, {{user.FullName.S}} ({{user.StudentId.S}})</p>
         <div class="dashboard">
             <div class="box">
                 <h2>Courses</h2>
                 <ul>  
                 {% for course in courses %} 
-                    <li>{{ course.CourseName }}</li>  
+                    <li class = "courses">{{ course.CourseName }}</li>  
                 {% endfor %}  
                 </ul> 
             </div>
             <div class="box">
-                <h2>Registered Students</h2>
+                <h2>Profile</h2>
                 <ul>
-                    <li>Alex</li>
-                    <li>Sam</li>
+                    <img class = "profile_image" src = {{user.Image}}>
+                    <li>Full Name: {{user.FullName.S}}</li>
+                    <li>Student ID: {{user.StudentId.S}}</li>
                 </ul>
             </div>
             <div class="box">
-                <h2>Number of Students</h2>
+                <h2>Attendance Records</h2>
                 <canvas id="studentsChart"></canvas>
             </div>
             {% for course in courses %}
@@ -236,10 +248,10 @@
             new Chart(ctx1, {
                 type: 'bar',
                 data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                    labels: courses.map(course => course.CourseCode),
                     datasets: [{
-                        label: 'Number of Students',
-                        data: [10, 12, 15, 20, 25],
+                        label: 'Attendance Rate',
+                        data: courses.map(course => course.AttendanceRate),
                         backgroundColor: '#4fc3f7',
                         borderColor: '#0288d1',
                         borderWidth: 1
@@ -249,6 +261,12 @@
                     responsive: true,
                     animation: {
                         duration: 2000
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
                     }
                 }
             });
