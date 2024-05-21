@@ -295,7 +295,7 @@ def remove_student():
     return jsonify({'success': True, 'message': 'Student removed successfully!'}), 200
 
 @blueprint.route('/reglec')
-@login_required
+@role_required(['lecturer','admin'])
 def registerLec():
     return send_from_directory('.', 'pages/registerLecturer.html')
 
