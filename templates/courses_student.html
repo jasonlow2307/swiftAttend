@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <style>
+        /* Consolidated CSS rules */
+        .box:hover, #add-student-button:hover, #edit-button:hover, #exit-edit-button:hover, .remove-student-button:hover {
+            background-color: #6699CC; /* Light blue background on hover */
+        }
+
+        /* Removed duplicate CSS rules */
+        #class-container {
+                    white-space: nowrap;
+                    overflow-x: auto;
+        }
+
+        #studentIdDropdown, #confirm-button {
+                    padding: 8px;
+                    border: 1px solid #003572;
+                    border-radius: 5px;
+                    background-color: white;
+                    color: #003572;
+                    font-size: 14px;
+                    cursor: pointer;
+        }
+
+        #confirm-button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #003572;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+    
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            display: inline-block; /* Adjust the display to inline-block */
+            border-radius: 15px;
+            min-width: 200px;
+        }
+    
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+    
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    
+        #class-container {
+            white-space: nowrap;
+            overflow-x: auto;
+        }
+    
+        body {
+            background-color: #f0f0f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+    
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: auto;
+            text-align: center;
+        }
+    
+        h1 {
+            color: #003572;
+            font-weight: bold;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+    
+        .box {
+            border: 5px solid #003572; /* Change the border color to dark blue */
+            padding: 10px 20px;
+            margin: 10px;
+            display: inline-block;
+            vertical-align: top;
+            width: 200px;
+            border-radius: 10px; /* Add rounded corners */
+        }
+    
+        .box:hover {
+            border-color: #6699CC; /* Change the border color to a lighter blue when hovered over */
+            cursor: pointer; /* Change the cursor to indicate it can be clicked */
+        }
+    
+        #class-container {
+            white-space: nowrap;
+            overflow-x: auto;
+        }
+    
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+    
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+            font-size: 14px;
+        }
+    
+        table th {
+            background-color: #f2f2f2;
+        }
+    
+        .student-image {
+            max-width: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .lecturer-image{
+            max-width: 175px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+    
+        tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        #courseCode {
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .box-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        @media screen and (max-width: 800px) {
+            .box-container {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+        
+        p {
+            font-weight: bold;
+            color: #003572;
+        }
+
+        .remove-column, #add-student-button, #exit-edit-button {
+            display: none;
+        }
+
+        #add-student-button, #edit-button, #exit-edit-button, .remove-student-button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #003572; /* Dark blue background */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* Smooth transition for background color */
+        }
+
+        #add-student-button:hover, #edit-button:hover, #exit-edit-button:hover, .remove-student-button:hover {
+            background-color: #6699CC; /* Light blue background on hover */
+        }
+
+        /* Style the dropdown selection */
+        #studentIdDropdown {
+            padding: 8px;
+            border: 1px solid #003572; /* Dark blue border */
+            border-radius: 5px;
+            background-color: white;
+            color: #003572; /* Dark blue text color */
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Style the dropdown selection options */
+        #studentIdDropdown option {
+            background-color: white;
+            color: #003572; /* Dark blue text color */
+            font-size: 14px;
+        }
+
+        /* Style the confirm button */
+        #confirm-button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #003572; /* Dark blue background */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* Smooth transition for background color */
+        }
+
+        #confirm-button:hover {
+            background-color: #6699CC; /* Light blue background on hover */
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content">
+            <h1>Classes</h1>
+            <div class="box-container">
+                {% for course in courses %}
+                <div class="class-box box" onclick="openModal('{{ course.CourseName }}', '{{ course.CourseCode }}', '{{ course.Students|escapejs }}', '{{ course.Lecturer.FullName }}', '{{ course.Lecturer.Image }}')">
+                    <h3>{{ course.CourseName }}</h3>
+                    <p>{{ course.CourseCode }}</p>
+                    <img src="{{ course.Lecturer.Image }}" alt="Lecturer Image" class="lecturer-image">
+                    <p>Lecturer: {{ course.Lecturer.FullName }}</p>
+                    <p>Number of Students: {{ course.StudentCount }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="/"><p>Home</p></a>
+        </div>        
+
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h3 id="courseName"></h3>
+                <p id="courseCode"></p>
+                <p id="lecturer"></p>
+                <img id="lecturer-image" class="lecturer-image" alt="Lecturer Image">
+                <table id="students">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th class="remove-column">Remove</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Student rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal(courseName, courseCode, students, lecturerName, lecturerImage) {
+            console.log("Open Modal");
+            students = JSON.parse(students);
+            console.log(students);
+            
+            var modal = document.getElementById("myModal");
+            document.getElementById("courseName").innerText = courseName;
+            document.getElementById("courseCode").innerText = "Course Code: " + courseCode;
+            document.getElementById("lecturer").innerText = "Lecturer: " + lecturerName;
+            document.getElementById("lecturer-image").src = lecturerImage;
+
+            var studentsTable = document.getElementById("students").getElementsByTagName('tbody')[0];
+            // Clear any existing rows
+            studentsTable.innerHTML = '';
+
+            // Add a new row for each student
+            students.forEach(function(student) {
+                var row = studentsTable.insertRow();
+                var cell1 = row.insertCell();
+                var cell2 = row.insertCell();
+                var cell3 = row.insertCell();
+
+                cell1.innerHTML = '<img src="' + student.Image + '" alt="Student Image" class="student-image">';
+                cell2.innerText = student.StudentId;
+                cell3.innerText = student.FullName;
+            });
+
+            modal.style.display = "block";
+        }
+
+        function closeModal() {
+            var modal = document.getElementById("myModal");
+            modal.style.display = "none";
+        }
+
+        // Get the modal
+        var modal = document.getElementById('myModal');
+
+        // When the user presses the Esc key, close the modal
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && modal.style.display === 'block') {
+                event.preventDefault(); // Prevent the default action
+                closeModal();
+            }
+        });
+
+    </script>
+</body>
+</html>
