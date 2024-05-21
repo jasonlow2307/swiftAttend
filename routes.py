@@ -205,6 +205,16 @@ def index():
     elif role == 'lecturer':
         user = fetch_lecturers_from_dynamodb([id])[0]
         courses = fetch_courses_from_dynamodb(lecturer_id=id)
+        for course in courses:
+            present_counter = 0
+            attendance_records = retrieve_student_records(course=course['CourseCode'])
+            if len(attendance_records) != 0:
+                for record in attendance_records:
+                    if record['Attendance'] == 'PRESENT':
+                        present_counter += 1
+                attendance_rate = round(present_counter / len(attendance_records) * 100, 2)
+                course['AttendanceRate'] = attendance_rate
+        students = fetch_students_from_dynamodb()
     else:
         user = {'FullName': {'S': "Admin"}}
 
@@ -213,7 +223,7 @@ def index():
     if role == 'student':
         return render_template('index_student.html', welcome_message=welcome_message, courses=courses)
     elif role == 'lecturer':
-        return render_template('index_lecturer.html', welcome_message=welcome_message, courses=courses)
+        return render_template('index_lecturer.html', welcome_message=welcome_message, courses=courses, students=students)
     else:
         return render_template('index_admin.html', welcome_message=welcome_message)
 

@@ -207,29 +207,22 @@
             <div class="box">
                 <h2>Registered Students</h2>
                 <ul>
-                    <li>Alex</li>
-                    <li>Sam</li>
+                    {% for student in students %}
+                        <li>{{ student.FullName }}</li>
+                    {% endfor %}
                 </ul>
             </div>
             <div class="box">
-                <h2>Number of Students</h2>
+                <h2>Number of Students In Each Classes</h2>
                 <canvas id="studentsChart"></canvas>
             </div>
+            {% for course in courses %}
             <div class="box">
-                <h2>Attendance Records - AI</h2>
-                <canvas id="attendanceAI"></canvas>
-                <p>5% late records for the past month</p>
-            </div>
-            <div class="box">
-                <h2>Attendance Records - OOP</h2>
-                <canvas id="attendanceOOP"></canvas>
-                <p>20% absence rate for the past month</p>
-            </div>
-            <div class="box">
-                <h2>Attendance Records - SE</h2>
-                <canvas id="attendanceSE"></canvas>
-                <p>15% absence rate for the past month</p>
-            </div>
+                <h2>Attendance Records - {{ course.CourseCode }}</h2>
+                <canvas id="attendance{{ course.CourseName }}"></canvas>
+                <p>{{ course.AttendanceRate }}% absence rate for the past month</p>
+            </div>    
+            {% endfor %}  
         </div>
     </main>
     <script>
