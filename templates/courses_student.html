@@ -3,36 +3,8 @@
 <head>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <style>
-        /* Consolidated CSS rules */
         .box:hover, #add-student-button:hover, #edit-button:hover, #exit-edit-button:hover, .remove-student-button:hover {
             background-color: #6699CC; /* Light blue background on hover */
-        }
-
-        /* Removed duplicate CSS rules */
-        #class-container {
-                    white-space: nowrap;
-                    overflow-x: auto;
-        }
-
-        #studentIdDropdown, #confirm-button {
-                    padding: 8px;
-                    border: 1px solid #003572;
-                    border-radius: 5px;
-                    background-color: white;
-                    color: #003572;
-                    font-size: 14px;
-                    cursor: pointer;
-        }
-
-        #confirm-button {
-            margin-top: 10px;
-            padding: 8px 16px;
-            background-color: #003572;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
         }
 
         .modal {
@@ -52,7 +24,7 @@
             margin: 15% auto;
             padding: 20px;
             border: 1px solid #888;
-            display: inline-block; /* Adjust the display to inline-block */
+            display: inline-block;
             border-radius: 15px;
             min-width: 200px;
         }
@@ -71,11 +43,6 @@
             cursor: pointer;
         }
     
-        #class-container {
-            white-space: nowrap;
-            overflow-x: auto;
-        }
-    
         body {
             background-color: #f0f0f0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -84,7 +51,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
         }
     
         .container {
@@ -94,6 +60,8 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             width: auto;
             text-align: center;
+            max-height: 90vh;
+            overflow: auto;
         }
     
         h1 {
@@ -116,11 +84,6 @@
         .box:hover {
             border-color: #6699CC; /* Change the border color to a lighter blue when hovered over */
             cursor: pointer; /* Change the cursor to indicate it can be clicked */
-        }
-    
-        #class-container {
-            white-space: nowrap;
-            overflow-x: auto;
         }
     
         .content {
@@ -152,7 +115,7 @@
             border-radius: 5px;
         }
 
-        .lecturer-image{
+        .lecturer-image {
             max-width: 175px;
             object-fit: cover;
             border-radius: 5px;
@@ -200,44 +163,21 @@
             transition: background-color 0.3s ease; /* Smooth transition for background color */
         }
 
-        #add-student-button:hover, #edit-button:hover, #exit-edit-button:hover, .remove-student-button:hover {
-            background-color: #6699CC; /* Light blue background on hover */
-        }
-
-        /* Style the dropdown selection */
-        #studentIdDropdown {
+        #studentIdDropdown, #confirm-button {
             padding: 8px;
-            border: 1px solid #003572; /* Dark blue border */
+            border: 1px solid #003572;
             border-radius: 5px;
             background-color: white;
-            color: #003572; /* Dark blue text color */
+            color: #003572;
             font-size: 14px;
             cursor: pointer;
         }
 
-        /* Style the dropdown selection options */
         #studentIdDropdown option {
             background-color: white;
             color: #003572; /* Dark blue text color */
             font-size: 14px;
         }
-
-        /* Style the confirm button */
-        #confirm-button {
-            margin-top: 10px;
-            padding: 8px 16px;
-            background-color: #003572; /* Dark blue background */
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease; /* Smooth transition for background color */
-        }
-
-        #confirm-button:hover {
-            background-color: #6699CC; /* Light blue background on hover */
-        }
-
     </style>
 </head>
 <body>
@@ -332,3 +272,4 @@
     </script>
 </body>
 </html>
+```
