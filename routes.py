@@ -208,6 +208,7 @@ def index():
         for course in courses:
             present_counter = 0
             attendance_records = retrieve_student_records(course=course['CourseCode'])
+            course['StudentCount'] = course['Students'].count('|') + 1
             if len(attendance_records) != 0:
                 for record in attendance_records:
                     if record['Attendance'] == 'PRESENT':

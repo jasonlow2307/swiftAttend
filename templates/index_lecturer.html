@@ -228,13 +228,15 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const ctx1 = document.getElementById('studentsChart').getContext('2d');
+            const courses = JSON.parse('{{ courses | tojson | safe }}');
+            
             new Chart(ctx1, {
                 type: 'bar',
                 data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                    labels: courses.map(course => course.CourseCode),
                     datasets: [{
                         label: 'Number of Students',
-                        data: [10, 12, 15, 20, 25],
+                        data: courses.map(course => course.StudentCount),
                         backgroundColor: '#4fc3f7',
                         borderColor: '#0288d1',
                         borderWidth: 1
@@ -244,6 +246,12 @@
                     responsive: true,
                     animation: {
                         duration: 2000
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: Math.max(...courses.map(course => course.StudentCount)) + Math.ceil(0.2 * Math.max(...courses.map(course => course.StudentCount)))
+                        }
                     }
                 }
             });
@@ -265,8 +273,7 @@
                     }
                 }
             });
-            
-            const courses = JSON.parse('{{ courses | tojson | safe }}');
+        
             courses.forEach(course => {
                 const ctx = document.getElementById(`${course.CourseCode}`).getContext('2d');
                 if (course.AttendanceRate < 33) {
