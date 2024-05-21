@@ -219,19 +219,15 @@
             {% for course in courses %}
             <div class="box">
                 <h2>Attendance Records - {{ course.CourseCode }}</h2>
-                <canvas id="attendance{{ course.CourseName }}"></canvas>
+                <canvas id="{{ course.CourseCode }}"></canvas>
                 <p>{{ course.AttendanceRate }}% absence rate for the past month</p>
-            </div>    
-            {% endfor %}  
+            </div>
+            {% endfor %}
         </div>
     </main>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const ctx1 = document.getElementById('studentsChart').getContext('2d');
-            const ctx2 = document.getElementById('attendanceAI').getContext('2d');
-            const ctx3 = document.getElementById('attendanceOOP').getContext('2d');
-            const ctx4 = document.getElementById('attendanceSE').getContext('2d');
-
             new Chart(ctx1, {
                 type: 'bar',
                 data: {
@@ -269,10 +265,18 @@
                     }
                 }
             });
-
-            new Chart(ctx2, doughnutConfig(5, '#4fc3f7'));
-            new Chart(ctx3, doughnutConfig(20, '#4fc3f7'));
-            new Chart(ctx4, doughnutConfig(15, '#4fc3f7'));
+            
+            const courses = JSON.parse('{{ courses | tojson | safe }}');
+            courses.forEach(course => {
+                const ctx = document.getElementById(`${course.CourseCode}`).getContext('2d');
+                if (course.AttendanceRate < 33) {
+                    new Chart(ctx, doughnutConfig(course.AttendanceRate, 'red'));
+                } else if (course.AttendanceRate >= 33 && course.AttendanceRate <= 66) {
+                    new Chart(ctx, doughnutConfig(course.AttendanceRate, 'orange'));
+                } else {
+                    new Chart(ctx, doughnutConfig(course.AttendanceRate, '#4fc3f7'));
+                }
+            });
         });
 
         function toggleMenu() {
