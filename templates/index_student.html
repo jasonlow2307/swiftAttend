@@ -215,29 +215,23 @@
                 <h2>Number of Students</h2>
                 <canvas id="studentsChart"></canvas>
             </div>
+            {% for course in courses %}
             <div class="box">
-                <h2>Attendance Records - AI</h2>
-                <canvas id="attendanceAI"></canvas>
-                <p>5% late records for the past month</p>
+                <h2>Attendance Records - {{ course.CourseCode }}</h2>
+                <canvas id="{{ course.CourseCode }}"></canvas>
+                {% if course.AttendanceRate == "NA" or course.AttendanceRate is none %}
+                    <p>No records found</p>
+                {% else %}
+                    <p>{{ course.AttendanceRate }}% absence rate for the past month</p>
+                {% endif %}
             </div>
-            <div class="box">
-                <h2>Attendance Records - OOP</h2>
-                <canvas id="attendanceOOP"></canvas>
-                <p>20% absence rate for the past month</p>
-            </div>
-            <div class="box">
-                <h2>Attendance Records - SE</h2>
-                <canvas id="attendanceSE"></canvas>
-                <p>15% absence rate for the past month</p>
-            </div>
+            {% endfor %}
         </div>
     </main>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const ctx1 = document.getElementById('studentsChart').getContext('2d');
-            const ctx2 = document.getElementById('attendanceAI').getContext('2d');
-            const ctx3 = document.getElementById('attendanceOOP').getContext('2d');
-            const ctx4 = document.getElementById('attendanceSE').getContext('2d');
+            const courses = JSON.parse('{{ courses | tojson | safe }}');
 
             new Chart(ctx1, {
                 type: 'bar',
@@ -276,10 +270,17 @@
                     }
                 }
             });
-
-            new Chart(ctx2, doughnutConfig(5, '#4fc3f7'));
-            new Chart(ctx3, doughnutConfig(20, '#4fc3f7'));
-            new Chart(ctx4, doughnutConfig(15, '#4fc3f7'));
+        
+            courses.forEach(course => {
+                const ctx = document.getElementById(`${course.CourseCode}`).getContext('2d');
+                if (course.AttendanceRate < 33) {
+                    new Chart(ctx, doughnutConfig(course.AttendanceRate, 'red'));
+                } else if (course.AttendanceRate >= 33 && course.AttendanceRate <= 66) {
+                    new Chart(ctx, doughnutConfig(course.AttendanceRate, 'orange'));
+                } else {
+                    new Chart(ctx, doughnutConfig(course.AttendanceRate, '#4fc3f7'));
+                }
+            });
         });
 
         function toggleMenu() {
