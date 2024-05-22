@@ -586,15 +586,18 @@ def check_attendance_record():
 def retrieve_attendance_records():
     role = session.get('role')
     id = session.get('id')
-    course = ast.literal_eval(request.form.get('course'))
-    # Extract the course code from the course string
-    course = course ['CourseCode']
+    course = request.form.get('course')
+    # Convert the course string to a dictionary only if not default course
+    if course != "DEFAULT":
+        course = ast.literal_eval(course)
+        # Extract the course code from the course string
+        course = course ['CourseCode']
     date = request.form.get('date')
     time = request.form.get('time')
 
     if date and not time:
         return render_template('error.html', message='Time is required when date is provided.')
-
+    
     student_records = retrieve_student_records(course, date, time)
 
     if not student_records:
@@ -806,44 +809,43 @@ def retrieve_student_records(course=None, date=None, time=None):
 
     filter_expression_parts = []
 
-    if course:
-        expression_attribute_names['#C'] = 'Course'
-        expression_attribute_values[':c'] = {'S': course}
-        filter_expression_parts.append('#C = :c')
+    if course != "DEFAULT" or date:
+        if course != "DEFAULT":
+            expression_attribute_names['#C'] = 'Course'
+            expression_attribute_values[':c'] = {'S': course}
+            filter_expression_parts.append('#C = :c')
 
-    if date:
-        expression_attribute_names['#D'] = 'Date'
-        date_str = str(date)
-        expression_attribute_values[':d'] = {'S': date_str}
-        filter_expression_parts.append('begins_with(#D, :d)')
+        if date:
+            date_and_time = datetime.strptime(date + ' ' + time, '%Y-%m-%d %H:%M')
+            expression_attribute_names['#D'] = 'Date'
+            date_str = str(date_and_time)
+            expression_attribute_values[':d'] = {'S': date_str}
+            filter_expression_parts.append('begins_with(#D, :d)')
 
-    if time:
-        expression_attribute_names['#T'] = 'Time'
-        expression_attribute_values[':t'] = {'S': time}
-        filter_expression_parts.append('begins_with(#T, :t)')
+        filter_expression = ' AND '.join(filter_expression_parts)
 
-    filter_expression = ' AND '.join(filter_expression_parts)
+        response = dynamodb.scan(
+            TableName=DYNAMODB_ATTENDANCE_TABLE_NAME,
+            FilterExpression=filter_expression,
+            ExpressionAttributeNames=expression_attribute_names,
+            ExpressionAttributeValues=expression_attribute_values
+        )
 
-    response = dynamodb.scan(
-        TableName=DYNAMODB_ATTENDANCE_TABLE_NAME,
-        FilterExpression=filter_expression,
-        ExpressionAttributeNames=expression_attribute_names,
-        ExpressionAttributeValues=expression_attribute_values
-    )
+        items = response.get('Items', [])
+        students = []
+        for item in items:
+            student = {
+                'FullName': item.get('FullName', {}).get('S'),
+                'StudentId': int(item.get('StudentId', {}).get('S')),
+                'Date': item.get('Date', {}).get('S'),
+                'Attendance': item.get('Attendance', {}).get('S'),
+                'Course': item.get('Course', {}).get('S')
+            }
+            students.append(student)
 
-    items = response.get('Items', [])
-    students = []
-    for item in items:
-        student = {
-            'FullName': item.get('FullName', {}).get('S'),
-            'StudentId': int(item.get('StudentId', {}).get('S')),
-            'Date': item.get('Date', {}).get('S'),
-            'Attendance': item.get('Attendance', {}).get('S'),
-            'Course': item.get('Course', {}).get('S')
-        }
-        students.append(student)
-
-    return students
+        return students
+    
+    return None
 
 # For /check_form and /ret_form
 # Generate a presigned URL for an image in the S3 bucket

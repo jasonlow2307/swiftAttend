@@ -125,6 +125,7 @@
         <form id="retrieveForm" action="/ret_form" method="post" onsubmit="return validateForm()">
             <label for="course">Course:</label>
             <select id="course" name="course">
+                <option value="DEFAULT">Select a course</option>
                 {% for course in courses %} 
                     <option value="{{ course }}">{{ course.CourseCode + " - " + course.CourseName }}</option>
                 {% endfor %}
