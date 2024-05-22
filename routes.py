@@ -196,7 +196,6 @@ def login_required(f):
 @blueprint.route('/')
 @login_required
 def index():
-    # Can optimize after combining lecturers and students
     role = session.get('role')
     id = session.get('id')
     if role == 'student':
@@ -214,7 +213,6 @@ def index():
                         if record['Attendance'] == 'PRESENT':
                             present_counter += 1
                 attendance_rate = round(present_counter / total_records * 100, 2)
-                # Individual attendance rate
                 course['AttendanceRate'] = attendance_rate
             else:
                 course['AttendanceRate'] = "NA"
@@ -230,7 +228,6 @@ def index():
                     if record['Attendance'] == 'PRESENT':
                         present_counter += 1
                 attendance_rate = round(present_counter / len(attendance_records) * 100, 2)
-                # Overall attendance rate for class
                 course['AttendanceRate'] = attendance_rate
         students = fetch_users_from_dynamodb("students")
     else:
@@ -245,7 +242,6 @@ def index():
     else:
         return render_template('index_admin.html', welcome_message=welcome_message)
 
-# NOTE fix added students before confirming
 @blueprint.route('/courses')
 @login_required
 def list_classes():
@@ -374,7 +370,6 @@ def retrieve():
 def create_class():
     students = fetch_users_from_dynamodb("students")
     lecturers = fetch_users_from_dynamodb("lecturers")
-    print(lecturers)
     for student in students:
         student['StudentId'] = int(student['StudentId'])
     for lecturer in lecturers:
