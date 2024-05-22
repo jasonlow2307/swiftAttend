@@ -363,7 +363,7 @@ def check_attendance():
     return send_from_directory('.', 'pages/checkingAttendance.html')
 
 @blueprint.route('/ret')
-@role_required(['lecturer', 'admin'])
+@login_required
 def retrieve():
     courses = fetch_courses_from_dynamodb()
     return render_template('retrieveAttendance.html', courses=courses)
@@ -584,6 +584,8 @@ def check_attendance_record():
 
 @blueprint.route('/ret_form', methods=['POST'])
 def retrieve_attendance_records():
+    role = session.get('role')
+    id = session.get('id')
     course = ast.literal_eval(request.form.get('course'))
     # Extract the course code from the course string
     course = course ['CourseCode']
@@ -597,7 +599,10 @@ def retrieve_attendance_records():
 
     if not student_records:
         return render_template('error.html', message='No records found.')
-
+    
+    if role == 'student':
+        student_records = [record for record in student_records if record['StudentId'] == int(id)]
+    
     return render_template('attendance_records.html', attendance_records=student_records)
 
 ############################ Custom Functions ###########################
