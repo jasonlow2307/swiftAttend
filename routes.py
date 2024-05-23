@@ -242,6 +242,31 @@ def index():
     else:
         return render_template('index_admin.html', welcome_message=welcome_message)
 
+@blueprint.route('/bot')
+def bot():
+    return render_template('bot.html')
+
+@blueprint.route('/bot_form', methods=['POST'])
+def bot_send():
+    data = request.json
+    user_input = data['message']
+
+    response = lex_client.recognize_text(
+        botId='3KIS3PKPUN',  # Replace with your bot ID
+        botAliasId='TSTALIASID',  # Replace with your bot alias
+        localeId='en_US',
+        sessionId='test',  # Use a unique session ID
+        text=user_input
+    )
+
+    messages = response.get('messages', [])
+    if messages:
+        bot_message = messages[0]['content']
+    else:
+        bot_message = "Sorry, I didn't understand that."
+
+    return jsonify({'message': bot_message})
+
 @blueprint.route('/courses')
 @login_required
 def list_classes():
@@ -745,6 +770,23 @@ def save_class_record(class_record):
         )
 
 # For /check_form
+# Update attendance record in the DynamoDB table
+def update_attendance(student_id, attendance, date):
+    response = dynamodb.update_item(
+        TableName=DYNAMODB_ATTENDANCE_TABLE_NAME,
+        Key={
+            'StudentId': {'S': student_id},
+            'Date': {'S': date}
+        },
+        UpdateExpression='SET Attendance = :attendance',
+        ExpressionAttributeValues={
+            ':attendance': {'S': attendance}
+        },
+        ReturnValues='UPDATED_NEW'
+    )
+    
+
+# For /check_form
 # Fetch student records based on the initialized date and course
 def fetch_student_records():
     global initialized_date
@@ -766,22 +808,6 @@ def fetch_student_records():
         students.append(student)
     return students
 
-# For /check_form
-# Update attendance record in the DynamoDB table
-def update_attendance(student_id, attendance, date):
-    response = dynamodb.update_item(
-        TableName=DYNAMODB_ATTENDANCE_TABLE_NAME,
-        Key={
-            'StudentId': {'S': student_id},
-            'Date': {'S': date}
-        },
-        UpdateExpression='SET Attendance = :attendance',
-        ExpressionAttributeValues={
-            ':attendance': {'S': attendance}
-        },
-        ReturnValues='UPDATED_NEW'
-    )
-    
 # For /ret_form
 # Retrieve attendance records based on provided parameters
 def retrieve_student_records(course=None, date=None, time=None):

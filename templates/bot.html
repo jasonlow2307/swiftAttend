@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lex Bot</title>
+    <style>
+        #chatbox {
+            width: 300px;
+            height: 400px;
+            border: 1px solid #ccc;
+            overflow-y: scroll;
+        }
+        #user-input {
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chatbox"></div>
+    <input type="text" id="user-input" placeholder="Type a message..." />
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        function sendMessage() {
+            var userInput = document.getElementById('user-input').value;
+            if (userInput.trim() === "") return;
+
+            // Display user message
+            var chatbox = document.getElementById('chatbox');
+            chatbox.innerHTML += '<div>User: ' + userInput + '</div>';
+            document.getElementById('user-input').value = "";
+
+            fetch('/bot_form', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var botMessage = data.message;
+                chatbox.innerHTML += '<div>Bot: ' + botMessage + '</div>';
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
