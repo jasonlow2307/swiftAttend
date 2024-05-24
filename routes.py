@@ -2,7 +2,7 @@ from functools import wraps
 import re
 from flask import Blueprint, redirect, render_template_string, send_from_directory, request, jsonify, render_template, url_for, session
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import io
 from config import *
 from botocore.exceptions import ClientError
@@ -461,7 +461,7 @@ def initialize_class_record():
     matched_students = fetch_users_from_dynamodb("students", student_ids)
 
     # Calculate the TTL timestamp (30 minutes from now)
-    ttl_timestamp = int((datetime.utcnow() + timedelta(minutes=1)).timestamp())
+    ttl_timestamp = int((datetime.now(timezone.utc) + timedelta(minutes=1)).timestamp())
 
     class_record = {
         'Course': selected_course['CourseCode'],
@@ -781,7 +781,7 @@ def save_class_record(class_record):
                 'FullName': {'S': student['FullName']['S']}, 
                 'StudentId': {'S': student['StudentId']['S']},  
                 'Attendance': {'S': ''},
-                'DateExpired': {'N': str(ttl_timestamp)}
+                'TimeExpired': {'N': str(ttl_timestamp)}
             }
             
             logging.debug(f"Attempting to save item to DynamoDB: {item}")
