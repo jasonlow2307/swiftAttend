@@ -261,12 +261,17 @@ def bot_send():
     )
 
     messages = response.get('messages', [])
-    if messages:
-        bot_message = messages[0]['content']
-    else:
-        bot_message = "Sorry, I didn't understand that."
+    bot_messages = []
 
-    return jsonify({'message': bot_message})
+    if messages:
+        for message in messages:
+            bot_message = message.get('content', '')
+            bot_messages.append(bot_message)
+    else:
+        bot_messages.append("Sorry, I didn't understand that.")
+
+    return jsonify({'messages': bot_messages})
+
 
 @blueprint.route('/courses')
 @login_required

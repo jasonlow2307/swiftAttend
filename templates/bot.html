@@ -110,13 +110,13 @@
         function sendMessage() {
             var userInput = document.getElementById('user-input').value;
             if (userInput.trim() === "") return;
-
+    
             // Display user message
             var chatbox = document.getElementById('chatbox');
             chatbox.innerHTML += '<div class="message user"><div class="content">' + userInput + '</div></div>';
             chatbox.scrollTop = chatbox.scrollHeight; // Scroll to the bottom
             document.getElementById('user-input').value = "";
-
+    
             fetch('/bot_form', {
                 method: 'POST',
                 headers: {
@@ -126,20 +126,29 @@
             })
             .then(response => response.json())
             .then(data => {
-                var botMessage = data.message;
-                chatbox.innerHTML += '<div class="message bot"><div class="content">' + botMessage + '</div></div>';
+                var botMessages = data.messages;
+                botMessages.forEach(message => {
+                    // Replace newline characters with HTML line break tags
+                    var botMessage = message.replace(/\\n/g, '<br>');
+                    console.log("Replaced message:", botMessage); // Log the replaced message
+                    chatbox.innerHTML += '<div class="message bot"><div class="content">' + botMessage + '</div></div>';
+                });
                 chatbox.scrollTop = chatbox.scrollHeight; // Scroll to the bottom
             })
             .catch(error => {
                 console.error('Error:', error);
             });
         }
-
+    
         function checkEnter(event) {
             if (event.key === 'Enter') {
                 sendMessage();
             }
         }
     </script>
+    
+    
+
+    
 </body>
 </html>
