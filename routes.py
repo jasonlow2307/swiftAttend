@@ -1,7 +1,8 @@
 from functools import wraps
 import re
 from flask import Blueprint, redirect, render_template_string, send_from_directory, request, jsonify, render_template, url_for, session
-from datetime import datetime
+import logging
+from datetime import datetime, timedelta
 import io
 from config import *
 from botocore.exceptions import ClientError
@@ -459,15 +460,20 @@ def initialize_class_record():
 
     matched_students = fetch_users_from_dynamodb("students", student_ids)
 
+    # Calculate the TTL timestamp (30 minutes from now)
+    ttl_timestamp = int((datetime.utcnow() + timedelta(minutes=1)).timestamp())
+
     class_record = {
         'Course': selected_course['CourseCode'],
         'StartTime': date_and_time,
-        'Students': matched_students
+        'Students': matched_students,
+        'ExpirationTime': ttl_timestamp  # Add TTL attribute
     }
     
     save_class_record(class_record)
 
     return jsonify({'success': True, 'message': 'Class initialized successfully!'}), 200
+
 
 @blueprint.route('/regstdlec_form', methods=['POST'])
 def save_lecturer_registration():
@@ -598,10 +604,21 @@ def check_attendance_record():
     else:
         error = ""
 
+    # Remove the ExpirationTime attribute to prevent deletion
+    mark_class_as_checked(initialized_course, initialized_date)
+
     # Reset initialized global variable
     initialized = False
 
     return render_template('checked_attendance.html', attendance_records=attendance_records, error=error)
+
+def mark_class_as_checked(course_code, start_time):
+    dynamodb.update_item(
+        TableName=DYNAMODB_ATTENDANCE_TABLE_NAME,
+        Key={'Course': {'S': course_code}, 'StartTime': {'S': start_time}},
+        UpdateExpression="REMOVE ExpirationTime"
+    )
+
 
 @blueprint.route('/ret_form', methods=['POST'])
 def retrieve_attendance_records():
@@ -752,22 +769,32 @@ def create_class_record(course_code, course_name, day, time, selected_students):
 # For /init_form
 # Save initialized class record to DynamoDB
 def save_class_record(class_record):
-    course = class_record['Course']
-    students = class_record['Students']
-    
-    for student in students:
-        item = {
-            'Date': {'S': str(class_record['StartTime'])},
-            'Course': {'S': course},
-            'FullName': student['FullName'],
-            'StudentId': student['StudentId'],
-            'Attendance': {'S': ''}
-        }
+    try:
+        course = class_record['Course']
+        students = class_record['Students']
+        ttl_timestamp = class_record['ExpirationTime']
         
-        dynamodb.put_item(
-            TableName= DYNAMODB_ATTENDANCE_TABLE_NAME,
-            Item=item
-        )
+        for student in students:
+            item = {
+                'Date': {'S': str(class_record['StartTime'])},
+                'Course': {'S': course},
+                'FullName': {'S': student['FullName']['S']}, 
+                'StudentId': {'S': student['StudentId']['S']},  
+                'Attendance': {'S': ''},
+                'DateExpired': {'N': str(ttl_timestamp)}
+            }
+            
+            logging.debug(f"Attempting to save item to DynamoDB: {item}")
+
+            dynamodb.put_item(
+                TableName=DYNAMODB_ATTENDANCE_TABLE_NAME,
+                Item=item
+            )
+        
+        logging.info("Class record saved successfully.")
+        
+    except Exception as e:
+        logging.error(f"Error saving class record: {e}")
 
 # For /check_form
 # Update attendance record in the DynamoDB table
