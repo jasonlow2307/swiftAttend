@@ -609,20 +609,10 @@ def check_attendance_record():
     else:
         error = ""
 
-    # Remove the ExpirationTime attribute to prevent deletion
-    mark_class_as_checked(initialized_course, initialized_date)
-
     # Reset initialized global variable
     initialized = False
 
     return render_template('checked_attendance.html', attendance_records=attendance_records, error=error)
-
-def mark_class_as_checked(course_code, start_time):
-    dynamodb.update_item(
-        TableName=DYNAMODB_ATTENDANCE_TABLE_NAME,
-        Key={'Course': {'S': course_code}, 'StartTime': {'S': start_time}},
-        UpdateExpression="REMOVE ExpirationTime"
-    )
 
 
 @blueprint.route('/ret_form', methods=['POST'])
@@ -810,7 +800,7 @@ def update_attendance(student_id, attendance, date):
             'StudentId': {'S': student_id},
             'Date': {'S': date}
         },
-        UpdateExpression='SET Attendance = :attendance',
+        UpdateExpression='SET Attendance = :attendance REMOVE TimeExpired',
         ExpressionAttributeValues={
             ':attendance': {'S': attendance}
         },
