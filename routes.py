@@ -568,7 +568,7 @@ def check_attendance_record():
         CollectionId=REKOGNITION_COLLECTION_NAME,
         Image={'Bytes': image_bytes}
     )
-
+    
     face_ids = [face['Face']['FaceId'] for face in response_index.get('FaceRecords', [])]
     
     detected_student_id = set()
