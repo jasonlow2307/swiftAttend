@@ -109,6 +109,7 @@
         }
 
         #video {
+            max-width: 100%;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
@@ -199,7 +200,7 @@
 
         captureButton.addEventListener('click', () => {
             captureAgainButton.classList.remove('hide');
-            submitButton.classList.remove('hide');
+            submitButton.style.display = "block";
             captureButton.classList.add('hide');
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
@@ -209,15 +210,15 @@
             imageInput.value = dataURL;
             
             // Hide the video and show the preview image
-            video.classList.add('hide');
+            video.style.display = "none";
             previewImage.src = dataURL;
-            previewImage.classList.remove('hide');
+            previewImage.style.display = "block";
         });
 
         captureAgainButton.addEventListener('click', () => {
-            video.classList.remove('hide');
-            submitButton.classList.add('hide');
-            previewImage.classList.add('hide');
+            video.style.display = "block";
+            submitButton.style.display = "none";
+            previewImage.style.display = "none";
             captureButton.classList.remove('hide');
             captureAgainButton.classList.add('hide');
         });
