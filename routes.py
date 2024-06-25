@@ -561,8 +561,8 @@ def is_focused(emotion, eye_direction):
     print("EMOTION: ", emotion)
     print("EYE DIRECTION: ", eye_direction)
     focused_emotions = ["CALM", "HAPPY"]
-    yaw_threshold = 15  # Yaw angle within -15 to +15 degrees
-    pitch_threshold = 15  # Pitch angle within -15 to +15 degrees
+    yaw_threshold = 16  # Yaw angle within -15 to +15 degrees
+    pitch_threshold = 16  # Pitch angle within -15 to +15 degrees
     
     is_emotion_focused = emotion in focused_emotions
     is_looking_straight = abs(eye_direction['Yaw']) <= yaw_threshold and abs(eye_direction['Pitch']) <= pitch_threshold
@@ -667,6 +667,15 @@ def check_attendance_record():
                 emotion = face_emotions.get(face_id, 'UNKNOWN')
                 eye_direction = face_eye_directions.get(face_id, {'Yaw': 'UNKNOWN', 'Pitch': 'UNKNOWN'})
                 break
+
+        # Print debug information
+        print(f"Student ID: {student_id}")
+        print(f"Attendance Status: {attendance_status}")
+        print(f"Detected Student IDs: {detected_student_id}")
+        print(f"Face to Student Map: {face_to_student_map}")
+        print(f"Face Emotions: {face_emotions}")
+        print(f"Face Eye Directions: {face_eye_directions}")
+        print(f"Emotion: {emotion}, Eye Direction: {eye_direction}")
 
         focused = is_focused(emotion, eye_direction)
 
