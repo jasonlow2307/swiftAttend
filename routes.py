@@ -14,6 +14,7 @@ from flask_wtf import FlaskForm
 from wtforms import FileField, StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Email
 import base64
+from PIL import Image, ImageDraw
 
 blueprint = Blueprint('app', __name__)
 
@@ -549,6 +550,10 @@ def generate_id(role):
     id = year_month + random_numbers
     return id
 
+
+def generate_random_color():
+    return tuple(random.randint(0, 255) for _ in range(3))
+
 @blueprint.route('/check_form', methods=['POST'])
 def check_attendance_record():
     global initialized_course
@@ -563,6 +568,10 @@ def check_attendance_record():
     image_base64 = base64.b64encode(image_bytes).decode('utf-8')
     image_data_url = f"data:image/jpeg;base64,{image_base64}"
 
+    # Open image using Pillow
+    image = Image.open(io.BytesIO(image_bytes))
+    draw = ImageDraw.Draw(image)
+
     # Detect faces and emotions in the image
     response_faces = rekognition.detect_faces(
         Image={'Bytes': image_bytes},
@@ -571,13 +580,28 @@ def check_attendance_record():
 
     face_details = response_faces.get('FaceDetails', [])
     face_emotions = {}
+    face_eye_directions = {}
     detected_student_id = set()
     face_to_student_map = {}
 
     for face_detail in face_details:
         emotions = face_detail.get('Emotions', [])
         dominant_emotion = max(emotions, key=lambda x: x['Confidence'])['Type'] if emotions else 'UNKNOWN'
+
+        # Extract yaw and pitch for eye direction
+        yaw = face_detail.get('Pose', {}).get('Yaw', 'UNKNOWN')
+        pitch = face_detail.get('Pose', {}).get('Pitch', 'UNKNOWN')
         
+        # Draw bounding box with random color
+        bounding_box = face_detail['BoundingBox']
+        width, height = image.size
+        left = int(bounding_box['Left'] * width)
+        top = int(bounding_box['Top'] * height)
+        right = int(left + bounding_box['Width'] * width)
+        bottom = int(top + bounding_box['Height'] * height)
+        color = generate_random_color()
+        draw.rectangle([left, top, right, bottom], outline=color, width=3)
+
         # Index faces in the collection
         response_index = rekognition.index_faces(
             CollectionId=REKOGNITION_COLLECTION_NAME,
@@ -592,6 +616,7 @@ def check_attendance_record():
             face_record = response_index['FaceRecords'][0]
             face_id = face_record['Face']['FaceId']
             face_emotions[face_id] = dominant_emotion
+            face_eye_directions[face_id] = {'Yaw': yaw, 'Pitch': pitch}
 
             # Search for matches in the collection
             response_search = rekognition.search_faces(
@@ -613,6 +638,7 @@ def check_attendance_record():
                         face_to_student_map[face_id] = student_id
         else:
             face_emotions[face_id] = 'UNKNOWN'
+            face_eye_directions[face_id] = {'Yaw': 'UNKNOWN', 'Pitch': 'UNKNOWN'}
 
     student_records = fetch_student_records()
 
@@ -627,18 +653,21 @@ def check_attendance_record():
         image_key = 'index/' + student_id
         signed_url = generate_signed_url(S3_BUCKET_NAME, image_key)
         
-        # Find emotion for the student
+        # Find emotion and eye direction for the student
         emotion = 'UNKNOWN'
+        eye_direction = {'Yaw': 'UNKNOWN', 'Pitch': 'UNKNOWN'}
         for face_id, mapped_student_id in face_to_student_map.items():
             if mapped_student_id == student_id:
                 emotion = face_emotions.get(face_id, 'UNKNOWN')
+                eye_direction = face_eye_directions.get(face_id, {'Yaw': 'UNKNOWN', 'Pitch': 'UNKNOWN'})
                 break
         
         attendance_records.append({
             'FullName': student['FullName'],
             'Attendance': attendance_status,
             'SignedURL': signed_url,
-            'Emotion': emotion
+            'Emotion': emotion,
+            'EyeDirection': eye_direction
         })
         update_attendance(student_id, attendance_status, initialized_date)
 
@@ -647,10 +676,16 @@ def check_attendance_record():
     else:
         error = ""
 
+    # Convert modified image to base64
+    buffered = io.BytesIO()
+    image.save(buffered, format="JPEG")
+    modified_image_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+    modified_image_data_url = f"data:image/jpeg;base64,{modified_image_base64}"
+
     # Reset initialized global variable
     initialized = False
 
-    return render_template('checked_attendance.html', attendance_records=attendance_records, error=error, uploaded_image=image_data_url)
+    return render_template('checked_attendance.html', attendance_records=attendance_records, error=error, uploaded_image=modified_image_data_url)
 
 
 
