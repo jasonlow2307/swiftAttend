@@ -94,6 +94,13 @@
             color: #003572;
             font-weight: bold;
         }
+        #uploaded-image{
+            max-width: 400px;
+            height: auto;
+            margin: 20px auto;
+            display: block;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
@@ -101,12 +108,14 @@
         {% if attendance_records %}
             <div id="attendance">
                 <h2>Attendance Records:</h2>
+                <img id="uploaded-image" src="{{ uploaded_image }}" alt="Uploaded Image">
                 <table>
                     <thead>
                         <tr>
                             <th>Image</th>  
                             <th>Full Name</th>
                             <th>Attendance</th>
+                            <th>Emotion</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -115,6 +124,7 @@
                                 <td><img src="{{ record.SignedURL }}" alt="Student Image"></td>
                                 <td>{{ record.FullName }}</td>
                                 <td>{{ record.Attendance }}</td>
+                                <td>{{ record.Emotion }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>

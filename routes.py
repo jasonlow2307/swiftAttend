@@ -13,6 +13,7 @@ from datetime import datetime
 from flask_wtf import FlaskForm
 from wtforms import FileField, StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Email
+import base64
 
 blueprint = Blueprint('app', __name__)
 
@@ -548,26 +549,6 @@ def generate_id(role):
     id = year_month + random_numbers
     return id
 
-from PIL import Image
-
-@blueprint.route('/test', methods=['GET'])
-def test():
-    return render_template('test.html')
-
-@blueprint.route('/upload', methods=['POST'])
-def upload():
-    if 'image' not in request.files:
-        return jsonify({"error": "No image file in the request"}), 400
-    
-    image_file = request.files['image']
-    image = Image.open(image_file)
-    image.show()
-
-    
-    
-    return jsonify({"message": "Image uploaded successfully"}), 200
-    
-
 @blueprint.route('/check_form', methods=['POST'])
 def check_attendance_record():
     global initialized_course
@@ -579,32 +560,59 @@ def check_attendance_record():
 
     image_file = request.files['image']
     image_bytes = image_file.read()
+    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+    image_data_url = f"data:image/jpeg;base64,{image_base64}"
 
-    response_index = rekognition.index_faces(
-        CollectionId=REKOGNITION_COLLECTION_NAME,
-        Image={'Bytes': image_bytes}
+    # Detect faces and emotions in the image
+    response_faces = rekognition.detect_faces(
+        Image={'Bytes': image_bytes},
+        Attributes=['ALL']
     )
-    
-    face_ids = [face['Face']['FaceId'] for face in response_index.get('FaceRecords', [])]
-    
-    detected_student_id = set()
 
-    for face_id in face_ids:
-        response_search = rekognition.search_faces(
+    face_details = response_faces.get('FaceDetails', [])
+    face_emotions = {}
+    detected_student_id = set()
+    face_to_student_map = {}
+
+    for face_detail in face_details:
+        emotions = face_detail.get('Emotions', [])
+        dominant_emotion = max(emotions, key=lambda x: x['Confidence'])['Type'] if emotions else 'UNKNOWN'
+        
+        # Index faces in the collection
+        response_index = rekognition.index_faces(
             CollectionId=REKOGNITION_COLLECTION_NAME,
-            FaceId=face_id, 
-            FaceMatchThreshold=70,
-            MaxFaces=10
+            Image={'Bytes': image_bytes},
+            DetectionAttributes=['ALL'],
+            ExternalImageId='uploaded_image',
+            MaxFaces=1,
+            QualityFilter='AUTO'
         )
 
-        if 'FaceMatches' in response_search and len(response_search['FaceMatches']) > 0:
+        if 'FaceRecords' in response_index and response_index['FaceRecords']:
+            face_record = response_index['FaceRecords'][0]
+            face_id = face_record['Face']['FaceId']
+            face_emotions[face_id] = dominant_emotion
+
+            # Search for matches in the collection
+            response_search = rekognition.search_faces(
+                CollectionId=REKOGNITION_COLLECTION_NAME,
+                FaceId=face_id, 
+                FaceMatchThreshold=70,
+                MaxFaces=10
+            )
+
+            if 'FaceMatches' in response_search and response_search['FaceMatches']:
                 for match in response_search['FaceMatches']:
                     person_info = dynamodb.get_item(
                         TableName=DYNAMODB_STUDENT_TABLE_NAME,
                         Key={'RekognitionId': {'S': match['Face']['FaceId']}}
                     )
                     if 'Item' in person_info:
-                        detected_student_id.add(person_info['Item']['StudentId']['S'])
+                        student_id = person_info['Item']['StudentId']['S']
+                        detected_student_id.add(student_id)
+                        face_to_student_map[face_id] = student_id
+        else:
+            face_emotions[face_id] = 'UNKNOWN'
 
     student_records = fetch_student_records()
 
@@ -612,13 +620,27 @@ def check_attendance_record():
     present_counter = 0
 
     for student in student_records:
-        attendance_status = 'PRESENT' if student['StudentId'] in detected_student_id else 'ABSENT'
+        student_id = student['StudentId']
+        attendance_status = 'PRESENT' if student_id in detected_student_id else 'ABSENT'
         if attendance_status == 'PRESENT':
             present_counter += 1
-        image_key = 'index/' + student['StudentId']
+        image_key = 'index/' + student_id
         signed_url = generate_signed_url(S3_BUCKET_NAME, image_key)
-        attendance_records.append({'FullName': student['FullName'], 'Attendance': attendance_status, 'SignedURL': signed_url})
-        update_attendance(student['StudentId'], attendance_status, initialized_date)
+        
+        # Find emotion for the student
+        emotion = 'UNKNOWN'
+        for face_id, mapped_student_id in face_to_student_map.items():
+            if mapped_student_id == student_id:
+                emotion = face_emotions.get(face_id, 'UNKNOWN')
+                break
+        
+        attendance_records.append({
+            'FullName': student['FullName'],
+            'Attendance': attendance_status,
+            'SignedURL': signed_url,
+            'Emotion': emotion
+        })
+        update_attendance(student_id, attendance_status, initialized_date)
 
     if present_counter == 0:
         error = "The people in the image are not in the course, please check if the image is correct"
@@ -628,7 +650,9 @@ def check_attendance_record():
     # Reset initialized global variable
     initialized = False
 
-    return render_template('checked_attendance.html', attendance_records=attendance_records, error=error)
+    return render_template('checked_attendance.html', attendance_records=attendance_records, error=error, uploaded_image=image_data_url)
+
+
 
 
 @blueprint.route('/ret_form', methods=['POST'])
