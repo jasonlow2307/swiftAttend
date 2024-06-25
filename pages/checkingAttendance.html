@@ -63,7 +63,8 @@
             font-weight: bold;
             transition: background-color 0.3s, transform 0.3s;
             font-size: 16px;
-            margin: 10px 0;
+            margin: 10px auto; /* Center the button horizontally */
+            text-align: center; /* Center the button text */
         }
 
         input[type="submit"]:hover {
@@ -116,29 +117,52 @@
             margin-right: auto;
         }
 
+        input[type="file"] {
+            display: none;
+        }
+
+        .show-inline {
+            display: inline-block;
+        }
+
+        .hide {
+            display: none;
+        }
+
+        #uploadPreview {
+            max-height: 250px;
+            max-width: 90%;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Attendance Checking</h1>
-        <div id="cameraContainer">
+        <div id="initialButtons">
+            <button id="captureOption" class="file-upload">Capture Image</button>
+            <button id="uploadOption" class="file-upload">Upload Image</button>
+        </div>
+        <div id="cameraContainer" class="hide">
             <video id="video" width="320" height="240" autoplay></video>
             <img id="previewImage" src="#" alt="Image Preview">
+            <div class="button-container">
+                <button id="capture" class="file-upload">Capture Photo</button>
+                <button id="capture-again" class="file-upload hide">Capture Again</button>
+            </div>
         </div>
-        <div class="button-container">
-            <button id="capture" class="file-upload">Capture Photo</button>
-            <button id="capture-again" class="file-upload" style="display: none;">Capture Again</button>
+        <div id="uploadContainer" class="hide">
+            <input type="file" id="uploadImage" accept="image/*">
+            <img id="uploadPreview" src="#" alt="Upload Preview">
         </div>
         <form id="attendanceForm" action="/check_form" method="post" enctype="multipart/form-data">
             <input type="hidden" name="image" id="image">
             <input type="submit" value="Submit" id="submit">
         </form>
-    
-        <div id="loadingMessage">Processing...</div> <!-- Display loading message here -->
-        <div id="results"></div> <!-- Display results here -->
+        <div id="loadingMessage">Processing...</div>
+        <div id="results"></div>
         <a href="/"><p>Home</p></a>
     </div>
-</body>
     <script>
         const video = document.getElementById('video');
         const canvas = document.createElement('canvas');
@@ -148,19 +172,35 @@
         const imageInput = document.getElementById('image');
         const previewImage = document.getElementById('previewImage');
         const cameraContainer = document.getElementById('cameraContainer');
-    
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-            })
-            .catch(err => {
-                console.error("Error accessing the camera: ", err);
-            });
-    
+        const uploadContainer = document.getElementById('uploadContainer');
+        const uploadImage = document.getElementById('uploadImage');
+        const uploadPreview = document.getElementById('uploadPreview');
+        const initialButtons = document.getElementById('initialButtons');
+        const captureOption = document.getElementById('captureOption');
+        const uploadOption = document.getElementById('uploadOption');
+
+        captureOption.addEventListener('click', () => {
+            initialButtons.classList.add('hide');
+            cameraContainer.classList.remove('hide');
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                })
+                .catch(err => {
+                    console.error("Error accessing the camera: ", err);
+                });
+        });
+
+        uploadOption.addEventListener('click', () => {
+            initialButtons.classList.add('hide');
+            uploadContainer.classList.remove('hide');
+            uploadImage.click(); // Trigger the file input click
+        });
+
         captureButton.addEventListener('click', () => {
-            captureAgainButton.style.display = 'inline-block';
-            submitButton.style.display = 'inline-block';
-            captureButton.style.display = 'none';
+            captureAgainButton.classList.remove('hide');
+            submitButton.classList.remove('hide');
+            captureButton.classList.add('hide');
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -169,32 +209,34 @@
             imageInput.value = dataURL;
             
             // Hide the video and show the preview image
-            video.style.display = 'none';
+            video.classList.add('hide');
             previewImage.src = dataURL;
-            previewImage.style.display = 'block';
+            previewImage.classList.remove('hide');
         });
-    
+
         captureAgainButton.addEventListener('click', () => {
-            // Show the video and hide the preview image
-            video.style.display = 'block';
-            submitButton.style.display = 'none';
-            previewImage.style.display = 'none';
-            captureButton.style.display = 'inline-block';
-            captureAgainButton.style.display = 'none';
+            video.classList.remove('hide');
+            submitButton.classList.add('hide');
+            previewImage.classList.add('hide');
+            captureButton.classList.remove('hide');
+            captureAgainButton.classList.add('hide');
         });
-    
-        function dataURLtoBlob(dataurl) {
-            const arr = dataurl.split(',');
-            const mime = arr[0].match(/:(.*?);/)[1];
-            const bstr = atob(arr[1]);
-            let n = bstr.length;
-            const u8arr = new Uint8Array(n);
-            while (n--) {
-                u8arr[n] = bstr.charCodeAt(n);
+
+        uploadImage.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadPreview.src = e.target.result;
+                    uploadPreview.classList.remove('hide');
+                    submitButton.classList.remove('hide');
+                    imageInput.value = e.target.result;
+                };
+                reader.readAsDataURL(file);
+                submitButton.style.display = "block";
             }
-            return new Blob([u8arr], { type: mime });
-        }
-    
+        });
+
         document.getElementById("attendanceForm").addEventListener("submit", function(event) {
             event.preventDefault(); // Prevent default form submission
             
@@ -225,5 +267,18 @@
                 document.getElementById("loadingMessage").style.display = "none";
             });
         });
+
+        function dataURLtoBlob(dataurl) {
+            const arr = dataurl.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], { type: mime });
+        }
     </script>
-    
+</body>
+</html>
