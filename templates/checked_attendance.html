@@ -116,6 +116,8 @@
                             <th>Full Name</th>
                             <th>Attendance</th>
                             <th>Emotion</th>
+                            <th>Eye Direction</th>
+                            <th>Focus</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -126,6 +128,7 @@
                                 <td>{{ record.Attendance }}</td>
                                 <td>{{ record.Emotion }}</td>
                                 <td>{{ record.EyeDirection.Yaw }}, {{ record.EyeDirection.Pitch }}</td>
+                                <td>{{ record.Focused }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>

@@ -554,6 +554,21 @@ def generate_id(role):
 def generate_random_color():
     return tuple(random.randint(0, 255) for _ in range(3))
 
+def is_focused(emotion, eye_direction):
+    if emotion == 'UNKNOWN' or eye_direction['Yaw'] == 'UNKNOWN' or eye_direction['Pitch'] == 'UNKNOWN':
+        return False
+    
+    print("EMOTION: ", emotion)
+    print("EYE DIRECTION: ", eye_direction)
+    focused_emotions = ["CALM", "HAPPY"]
+    yaw_threshold = 15  # Yaw angle within -15 to +15 degrees
+    pitch_threshold = 15  # Pitch angle within -15 to +15 degrees
+    
+    is_emotion_focused = emotion in focused_emotions
+    is_looking_straight = abs(eye_direction['Yaw']) <= yaw_threshold and abs(eye_direction['Pitch']) <= pitch_threshold
+    
+    return is_emotion_focused and is_looking_straight
+
 @blueprint.route('/check_form', methods=['POST'])
 def check_attendance_record():
     global initialized_course
@@ -569,10 +584,10 @@ def check_attendance_record():
     image_data_url = f"data:image/jpeg;base64,{image_base64}"
 
     # Open image using Pillow
-    image = Image.open(io.BytesIO(image_bytes))
+    image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
     draw = ImageDraw.Draw(image)
 
-    # Detect faces and emotions in the image
+    # Detect faces and attributes in the image
     response_faces = rekognition.detect_faces(
         Image={'Bytes': image_bytes},
         Attributes=['ALL']
@@ -581,52 +596,46 @@ def check_attendance_record():
     face_details = response_faces.get('FaceDetails', [])
     face_emotions = {}
     face_eye_directions = {}
+    bounding_boxes = {}
+
+    # Index faces in the collection
+    response_index = rekognition.index_faces(
+        CollectionId=REKOGNITION_COLLECTION_NAME,
+        Image={'Bytes': image_bytes}
+    )
+
+    face_ids = [face['Face']['FaceId'] for face in response_index.get('FaceRecords', [])]
     detected_student_id = set()
     face_to_student_map = {}
 
+    for face_record in response_index.get('FaceRecords', []):
+        face_id = face_record['Face']['FaceId']
+        bounding_box = face_record['FaceDetail']['BoundingBox']
+        bounding_boxes[face_id] = bounding_box
+
     for face_detail in face_details:
+        bounding_box = face_detail['BoundingBox']
         emotions = face_detail.get('Emotions', [])
         dominant_emotion = max(emotions, key=lambda x: x['Confidence'])['Type'] if emotions else 'UNKNOWN'
+        pose = face_detail.get('Pose', {})
+        yaw = pose.get('Yaw', 'UNKNOWN')
+        pitch = pose.get('Pitch', 'UNKNOWN')
 
-        # Extract yaw and pitch for eye direction
-        yaw = face_detail.get('Pose', {}).get('Yaw', 'UNKNOWN')
-        pitch = face_detail.get('Pose', {}).get('Pitch', 'UNKNOWN')
-        
-        # Draw bounding box with random color
-        bounding_box = face_detail['BoundingBox']
-        width, height = image.size
-        left = int(bounding_box['Left'] * width)
-        top = int(bounding_box['Top'] * height)
-        right = int(left + bounding_box['Width'] * width)
-        bottom = int(top + bounding_box['Height'] * height)
-        color = generate_random_color()
-        draw.rectangle([left, top, right, bottom], outline=color, width=3)
-
-        # Index faces in the collection
-        response_index = rekognition.index_faces(
-            CollectionId=REKOGNITION_COLLECTION_NAME,
-            Image={'Bytes': image_bytes},
-            DetectionAttributes=['ALL'],
-            ExternalImageId='uploaded_image',
-            MaxFaces=1,
-            QualityFilter='AUTO'
-        )
-
-        if 'FaceRecords' in response_index and response_index['FaceRecords']:
-            face_record = response_index['FaceRecords'][0]
-            face_id = face_record['Face']['FaceId']
+        # Find the face ID for this face by matching the bounding boxes
+        face_id = next((fid for fid, box in bounding_boxes.items() if box == bounding_box), None)
+        if face_id:
             face_emotions[face_id] = dominant_emotion
             face_eye_directions[face_id] = {'Yaw': yaw, 'Pitch': pitch}
 
             # Search for matches in the collection
             response_search = rekognition.search_faces(
                 CollectionId=REKOGNITION_COLLECTION_NAME,
-                FaceId=face_id, 
+                FaceId=face_id,
                 FaceMatchThreshold=70,
                 MaxFaces=10
             )
 
-            if 'FaceMatches' in response_search and response_search['FaceMatches']:
+            if 'FaceMatches' in response_search and len(response_search['FaceMatches']) > 0:
                 for match in response_search['FaceMatches']:
                     person_info = dynamodb.get_item(
                         TableName=DYNAMODB_STUDENT_TABLE_NAME,
@@ -636,9 +645,6 @@ def check_attendance_record():
                         student_id = person_info['Item']['StudentId']['S']
                         detected_student_id.add(student_id)
                         face_to_student_map[face_id] = student_id
-        else:
-            face_emotions[face_id] = 'UNKNOWN'
-            face_eye_directions[face_id] = {'Yaw': 'UNKNOWN', 'Pitch': 'UNKNOWN'}
 
     student_records = fetch_student_records()
 
@@ -652,7 +658,7 @@ def check_attendance_record():
             present_counter += 1
         image_key = 'index/' + student_id
         signed_url = generate_signed_url(S3_BUCKET_NAME, image_key)
-        
+
         # Find emotion and eye direction for the student
         emotion = 'UNKNOWN'
         eye_direction = {'Yaw': 'UNKNOWN', 'Pitch': 'UNKNOWN'}
@@ -661,15 +667,28 @@ def check_attendance_record():
                 emotion = face_emotions.get(face_id, 'UNKNOWN')
                 eye_direction = face_eye_directions.get(face_id, {'Yaw': 'UNKNOWN', 'Pitch': 'UNKNOWN'})
                 break
-        
+
+        focused = is_focused(emotion, eye_direction)
+
         attendance_records.append({
             'FullName': student['FullName'],
             'Attendance': attendance_status,
             'SignedURL': signed_url,
             'Emotion': emotion,
-            'EyeDirection': eye_direction
+            'EyeDirection': eye_direction,
+            'Focused': focused
         })
         update_attendance(student_id, attendance_status, initialized_date)
+
+    # Draw bounding boxes around detected faces
+    for face_id, bounding_box in bounding_boxes.items():
+        color = generate_random_color()
+        width, height = image.size
+        left = int(bounding_box['Left'] * width)
+        top = int(bounding_box['Top'] * height)
+        right = int(left + bounding_box['Width'] * width)
+        bottom = int(top + bounding_box['Height'] * height)
+        draw.rectangle([left, top, right, bottom], outline=color, width=3)
 
     if present_counter == 0:
         error = "The people in the image are not in the course, please check if the image is correct"
@@ -686,8 +705,6 @@ def check_attendance_record():
     initialized = False
 
     return render_template('checked_attendance.html', attendance_records=attendance_records, error=error, uploaded_image=modified_image_data_url)
-
-
 
 
 @blueprint.route('/ret_form', methods=['POST'])
