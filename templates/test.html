@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Capture</title>
+</head>
+<body>
+    <h1>Take a Photo and Submit</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="capture">Capture Photo</button>
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+    <form id="photoForm" method="POST" action="/upload" enctype="multipart/form-data">
+        <input type="hidden" name="image" id="image">
+        <button type="submit">Submit Photo</button>
+    </form>
+
+    <script>
+        // Access the camera and stream to the video element
+        const video = document.getElementById('video');
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error accessing the camera: ", err);
+            });
+
+        // Capture the photo
+        const captureButton = document.getElementById('capture');
+        const canvas = document.getElementById('canvas');
+        const imageInput = document.getElementById('image');
+
+        captureButton.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/png');
+            imageInput.value = dataURL;
+            console.log('captured!')
+        });
+
+        // Convert dataURL to Blob for submission
+        function dataURLtoBlob(dataurl) {
+            const arr = dataurl.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], { type: mime });
+        }
+
+        document.getElementById('photoForm').addEventListener('submit', function (event) {
+            event.preventDefault();  // Prevent the default form submission
+
+            const dataURL = imageInput.value;
+            const blob = dataURLtoBlob(dataURL);
+            const formData = new FormData();
+            formData.append('image', blob, 'photo.png');
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

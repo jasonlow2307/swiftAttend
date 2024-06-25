@@ -548,8 +548,24 @@ def generate_id(role):
     id = year_month + random_numbers
     return id
 
-    
+from PIL import Image
 
+@blueprint.route('/test', methods=['GET'])
+def test():
+    return render_template('test.html')
+
+@blueprint.route('/upload', methods=['POST'])
+def upload():
+    if 'image' not in request.files:
+        return jsonify({"error": "No image file in the request"}), 400
+    
+    image_file = request.files['image']
+    image = Image.open(image_file)
+    image.show()
+
+    
+    
+    return jsonify({"message": "Image uploaded successfully"}), 200
     
 
 @blueprint.route('/check_form', methods=['POST'])
