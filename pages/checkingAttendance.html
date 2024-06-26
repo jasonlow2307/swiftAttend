@@ -22,7 +22,8 @@
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            width: 400px;
+            width: 90%;
+            max-width: 400px;
             text-align: center;
         }
 
@@ -63,8 +64,8 @@
             font-weight: bold;
             transition: background-color 0.3s, transform 0.3s;
             font-size: 16px;
-            margin: 10px auto; /* Center the button horizontally */
-            text-align: center; /* Center the button text */
+            margin: 10px auto;
+            text-align: center;
         }
 
         input[type="submit"]:hover {
@@ -183,7 +184,7 @@
         captureOption.addEventListener('click', () => {
             initialButtons.classList.add('hide');
             cameraContainer.classList.remove('hide');
-            navigator.mediaDevices.getUserMedia({ video: true })
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }) // Use facingMode for mobile
                 .then(stream => {
                     video.srcObject = stream;
                 })
