@@ -458,36 +458,59 @@
 
 
         function sendMessage() {
-            const messageInput = document.getElementById("chatInput");
-            const messageText = messageInput.value.trim();
+        const messageInput = document.getElementById("chatInput");
+        const messageText = messageInput.value.trim();
 
-            if (messageText !== "") {
-                const chatBody = document.getElementById("chatBody");
-                
-                // Create message element
-                const messageElement = document.createElement("div");
-                messageElement.classList.add("message", "user"); // Add appropriate classes
-                messageElement.innerHTML = `<div class="content">${messageText}</div>`;
-                
-                // Append message to chat body
-                chatBody.appendChild(messageElement);
+        if (messageText !== "") {
+            const chatBody = document.getElementById("chatBody");
 
-                // Scroll to the bottom of the chat body
+            // Create user message element
+            const userMessageElement = document.createElement("div");
+            userMessageElement.classList.add("message", "user");
+            userMessageElement.innerHTML = `<div class="content">${messageText}</div>`;
+            chatBody.appendChild(userMessageElement);
+
+            // Scroll to the bottom of the chat body
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            // Send message to Lex bot backend
+            fetch('/bot_form', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: messageText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const botMessages = data.messages;
+
+                botMessages.forEach(message => {
+                    // Create bot response message element
+                    var botMessage = message.replace(/\\n/g, '<br>');
+                    const botMessageElement = document.createElement("div");
+                    botMessageElement.classList.add("message", "bot");
+                    botMessageElement.innerHTML = `<div class="content">${botMessage}</div>`;
+                    chatBody.appendChild(botMessageElement);
+                });
+
+                // Scroll to the bottom of the chat body after bot responds
                 chatBody.scrollTop = chatBody.scrollHeight;
-
-                // Example: Simulate bot response (replace with actual bot interaction)
-                setTimeout(() => {
-                    const botResponse = document.createElement("div");
-                    botResponse.classList.add("message", "bot");
-                    botResponse.innerHTML = `<div class="content">This is a bot response.</div>`;
-                    chatBody.appendChild(botResponse);
-                    chatBody.scrollTop = chatBody.scrollHeight;
-                }, 1000); // Example delay for simulating bot response
-            }
-
-            // Clear input field after sending message
-            messageInput.value = "";
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
+
+        // Clear input field after sending message
+        messageInput.value = "";
+    }
+
+    function checkEnter(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
 
     </script>
 </body>
