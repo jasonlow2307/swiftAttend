@@ -17,6 +17,8 @@
         body {
             background-color: #f9f9f9;
             color: #333;
+            position: relative; /* Ensure position relative for absolute positioning */
+            min-height: 100vh; /* Ensure full viewport height */
         }
 
         header {
@@ -26,6 +28,7 @@
             justify-content: space-between;
             align-items: center;
             position: relative;
+            z-index: 100; /* Ensure header stays above other content */
         }
 
         .logo img {
@@ -74,6 +77,7 @@
                 top: 60px;
                 right: 0;
                 border-radius: 0 0 8px 8px;
+                z-index: 50; /* Ensure nav menu stays above other content */
             }
 
             nav ul li {
@@ -156,17 +160,144 @@
             text-align: center;
         }
 
-        @media (max-width: 1200px) {
-            .box {
-                flex: 1 1 calc(50% - 2rem);
-            }
+        /* Chat icon style */
+        .chat-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000; /* Ensure icon stays above other content */
+            cursor: pointer;
+        }
+
+        /* Chat popup style */
+        .chat-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            max-height: 400px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            display: none;
+            z-index: 1000;
+            overflow: hidden; /* Ensure scrollbars appear when needed */
+        }
+
+        .chat-popup-header {
+            background-color: #003572;
+            color: white;
+            padding: 0.5rem;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .close-btn:hover {
+            background-color: #002b4c;
+        }
+
+        .chat-popup-body {
+            padding: 1rem;
+            height: calc(100% - 110px); /* Adjust height */
+            overflow-y: auto;
+        }
+
+        .chat-popup-footer {
+            padding: 1rem;
+            border-top: 1px solid #ccc;
+            text-align: center;
+            display: flex; /* Ensure items are displayed in a row */
+            align-items: center; /* Center items vertically */
+        }
+
+        .chat-popup-footer input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .chat-popup-footer button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            background-color: #003572;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .chat-popup-footer button:hover {
+            background-color: #002b4c;
+        }
+
+
+        .chat-popup-body {
+            padding: 1rem;
+            height: 300px;
+            overflow-y: auto;
         }
 
         @media (max-width: 768px) {
             .box {
                 flex: 1 1 100%;
             }
+
+            .chat-popup {
+                width: 90%;
+                right: 5%;
+            }
         }
+
+        .message {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+            align-items: flex-end;
+        }
+
+        .message .content {
+            background-color: #e0f7fa;
+            color: #00796b;
+            border-radius: 15px;
+            padding: 10px 15px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message.bot .content {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+
     </style>
 </head>
 <body>
@@ -225,6 +356,30 @@
             {% endfor %}
         </div>
     </main>
+
+    <!-- Chat icon -->
+    <div class="chat-icon" onclick="toggleChat()">
+        <img src="../static/logo.png" alt="Chat Icon" width="50">
+    </div>
+
+    <!-- Chat popup -->
+    <div class="chat-popup" id="chatPopup">
+        <div class="chat-popup-header">
+            Chat with Swift Bot
+            <button class="close-btn" onclick="toggleChat()">Close</button>
+        </div>
+        <div class="chat-popup-body" id="chatBody">
+            <!-- Chat messages go here -->
+        </div>
+        <div class="chat-popup-footer">
+            <input type="text" id="chatInput" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+
+
+
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const ctx1 = document.getElementById('studentsChart').getContext('2d');
@@ -290,6 +445,50 @@
             const navLinks = document.getElementById("nav-links");
             navLinks.classList.toggle("show");
         }
+
+        function toggleChat() {
+            const chatPopup = document.getElementById("chatPopup");
+            chatPopup.style.display = chatPopup.style.display === "block" ? "none" : "block";
+            // Clear chat messages when closing
+            if (chatPopup.style.display === "none") {
+                const chatBody = document.getElementById("chatBody");
+                chatBody.innerHTML = ""; // Clear chat messages
+            }
+        }
+
+
+        function sendMessage() {
+            const messageInput = document.getElementById("chatInput");
+            const messageText = messageInput.value.trim();
+
+            if (messageText !== "") {
+                const chatBody = document.getElementById("chatBody");
+                
+                // Create message element
+                const messageElement = document.createElement("div");
+                messageElement.classList.add("message", "user"); // Add appropriate classes
+                messageElement.innerHTML = `<div class="content">${messageText}</div>`;
+                
+                // Append message to chat body
+                chatBody.appendChild(messageElement);
+
+                // Scroll to the bottom of the chat body
+                chatBody.scrollTop = chatBody.scrollHeight;
+
+                // Example: Simulate bot response (replace with actual bot interaction)
+                setTimeout(() => {
+                    const botResponse = document.createElement("div");
+                    botResponse.classList.add("message", "bot");
+                    botResponse.innerHTML = `<div class="content">This is a bot response.</div>`;
+                    chatBody.appendChild(botResponse);
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                }, 1000); // Example delay for simulating bot response
+            }
+
+            // Clear input field after sending message
+            messageInput.value = "";
+        }
+
     </script>
 </body>
 </html>
