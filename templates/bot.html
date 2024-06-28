@@ -23,6 +23,9 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             text-align: center;
         }
 
@@ -35,14 +38,18 @@
 
         #chatbox {
             width: 100%;
-            height: 300px;
+            flex: 1;
             border: 1px solid #ccc;
             border-radius: 5px;
             padding: 10px;
             overflow-y: scroll;
             background-color: #f9f9f9;
-            margin-bottom: 20px;
-            text-align: left;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column-reverse; /* Start displaying messages from the bottom */
+            gap: 10px;
+            min-height: 300px;
         }
 
         #user-input {
@@ -51,6 +58,7 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             margin-bottom: 10px;
+            box-sizing: border-box;
         }
 
         .send-button {
@@ -63,6 +71,7 @@
             transition: background-color 0.3s;
             width: 100%;
             font-weight: bold;
+            box-sizing: border-box;
         }
 
         .send-button:hover {
@@ -96,18 +105,60 @@
             background-color: #e0e0e0;
             color: #333;
         }
+
+        .suggested-options {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-top: 10px;
+            align-items: center;
+        }
+
+        .suggested-option button {
+            background-color: #003572;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            box-sizing: border-box;
+            width: 100%;
+            text-align: center;
+        }
+
+        .suggested-option button:hover {
+            background-color: #001d44;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Lex Bot</h1>
-        <div id="chatbox"></div>
+        <h1>Swift Bot</h1>
+        <div id="chatbox">
+            <!-- Chat messages will be displayed here -->
+            <div class="suggested-options" id="suggestedOptions">
+                <div class="suggested-option">
+                    <button onclick="sendMessage('List enrolled courses')">List enrolled courses</button>
+                </div>
+                <div class="suggested-option">
+                    <button onclick="sendMessage('Get attendance summary')">Get attendance summary</button>
+                </div>
+                <div class="suggested-option">
+                    <button onclick="sendMessage('Get course details')">Get course details</button>
+                </div>
+            </div>
+        </div>
         <input type="text" id="user-input" placeholder="Type a message..." onkeypress="checkEnter(event)" />
         <button class="send-button" onclick="sendMessage()">Send</button>
     </div>
 
     <script>
-        function sendMessage() {
+        function sendMessage(message) {
+            if (message) {
+                document.getElementById('user-input').value = message;
+            }
             var userInput = document.getElementById('user-input').value;
             if (userInput.trim() === "") return;
     
@@ -116,6 +167,10 @@
             chatbox.innerHTML += '<div class="message user"><div class="content">' + userInput + '</div></div>';
             chatbox.scrollTop = chatbox.scrollHeight; // Scroll to the bottom
             document.getElementById('user-input').value = "";
+    
+            // Remove suggested options after user sends a message
+            var suggestedOptions = document.getElementById('suggestedOptions');
+            suggestedOptions.style.display = 'none';
     
             fetch('/bot_form', {
                 method: 'POST',
@@ -134,6 +189,11 @@
                     chatbox.innerHTML += '<div class="message bot"><div class="content">' + botMessage + '</div></div>';
                 });
                 chatbox.scrollTop = chatbox.scrollHeight; // Scroll to the bottom
+    
+                // Show suggested options again if needed
+                if (botMessages.length === 0) {
+                    suggestedOptions.style.display = 'flex';
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -146,9 +206,5 @@
             }
         }
     </script>
-    
-    
-
-    
 </body>
 </html>
