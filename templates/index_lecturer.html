@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <link rel="icon" type="image/png" href="../static/logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Swift Attend Dashboard</title>
@@ -297,7 +298,44 @@
             color: #333;
         }
 
+        .typing-indicator {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 10px;
+            align-items: flex-end;
+        }
 
+        .typing-indicator .content {
+            background-color: #e0e0e0;
+            color: #333;
+            border-radius: 15px;
+            padding: 10px 15px;
+            max-width: 70%;
+            word-wrap: break-word;
+            font-style: italic;
+            display: inline-block;
+        }
+
+        .typing-indicator .content::after {
+            content: '';
+            display: inline-block;
+            animation: ellipsis 1.25s infinite;
+        }
+
+        @keyframes ellipsis {
+            0% {
+                content: '';
+            }
+            33% {
+                content: '.';
+            }
+            66% {
+                content: '..';
+            }
+            100% {
+                content: '...';
+            }
+        }
     </style>
 </head>
 <body>
@@ -366,19 +404,32 @@
     <div class="chat-popup" id="chatPopup">
         <div class="chat-popup-header">
             Chat with Swift Bot
-            <button class="close-btn" onclick="toggleChat()">Close</button>
+            <button class="close-btn" onclick="toggleChat()"><i class="fas fa-times"></i></button>
         </div>
         <div class="chat-popup-body" id="chatBody">
             <!-- Chat messages go here -->
+            <div class="suggested-options" id="suggestedOptions">
+                <div class="suggested-option">
+                    <button onclick="sendMessage('List enrolled courses')">List enrolled courses</button>
+                </div>
+                <div class="suggested-option">
+                    <button onclick="sendMessage('Get attendance summary')">Get attendance summary</button>
+                </div>
+                <div class="suggested-option">
+                    <button onclick="sendMessage('Get course details')">Get course details</button>
+                </div>
+            </div>
         </div>
         <div class="chat-popup-footer">
-            <input type="text" id="chatInput" placeholder="Type a message...">
-            <button onclick="sendMessage()">Send</button>
+            <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="checkEnter(event)">
+            <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
 
-
+TODO 
+- ADD SUGGESTIONS
+- CHANGE CLOSE AND SEND TO MORE MODERN ICONS
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -457,60 +508,56 @@
         }
 
 
-        function sendMessage() {
-        const messageInput = document.getElementById("chatInput");
-        const messageText = messageInput.value.trim();
+        function sendMessage(message) {
+            if (message) {
+                document.getElementById('chatInput').value = message;
+            }
+            var userInput = document.getElementById('chatInput').value;
+            if (userInput.trim() === "") return;
 
-        if (messageText !== "") {
-            const chatBody = document.getElementById("chatBody");
+            // Display user message
+            var chatbox = document.getElementById('chatBody');
+            chatbox.innerHTML += '<div class="message user"><div class="content">' + userInput + '</div></div>';
+            chatbox.scrollTop = chatbox.scrollHeight; // Scroll to the bottom
+            document.getElementById('chatInput').value = "";
 
-            // Create user message element
-            const userMessageElement = document.createElement("div");
-            userMessageElement.classList.add("message", "user");
-            userMessageElement.innerHTML = `<div class="content">${messageText}</div>`;
-            chatBody.appendChild(userMessageElement);
+            // Remove suggested options after user sends a message
+            var suggestedOptions = document.getElementById('suggestedOptions');
+            suggestedOptions.style.display = 'none';
 
-            // Scroll to the bottom of the chat body
-            chatBody.scrollTop = chatBody.scrollHeight;
-
-            // Send message to Lex bot backend
             fetch('/bot_form', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ message: messageText })
+                body: JSON.stringify({ message: userInput })
             })
             .then(response => response.json())
             .then(data => {
-                const botMessages = data.messages;
-
+                var botMessages = data.messages;
                 botMessages.forEach(message => {
-                    // Create bot response message element
+                    // Replace newline characters with HTML line break tags
                     var botMessage = message.replace(/\\n/g, '<br>');
-                    const botMessageElement = document.createElement("div");
-                    botMessageElement.classList.add("message", "bot");
-                    botMessageElement.innerHTML = `<div class="content">${botMessage}</div>`;
-                    chatBody.appendChild(botMessageElement);
+                    chatbox.innerHTML += '<div class="message bot"><div class="content">' + botMessage + '</div></div>';
                 });
+                chatbox.scrollTop = chatbox.scrollHeight; // Scroll to the bottom
 
-                // Scroll to the bottom of the chat body after bot responds
-                chatBody.scrollTop = chatBody.scrollHeight;
+                // Show suggested options again if needed
+                if (botMessages.length === 0) {
+                    suggestedOptions.style.display = 'flex';
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
             });
         }
 
-        // Clear input field after sending message
-        messageInput.value = "";
-    }
-
-    function checkEnter(event) {
-        if (event.key === 'Enter') {
-            sendMessage();
+        function checkEnter(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
         }
-    }
+
 
     </script>
 </body>
