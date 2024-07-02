@@ -170,25 +170,46 @@
             cursor: pointer;
         }
 
-        /* Chat popup style */
+        .chat-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+            flex: 1;
+            text-align: center;
+        }
+
         .chat-popup {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            width: 300px;
-            max-height: 400px;
-            background-color: white;
+            width: 35%;
+            max-height: 500px;
+            background-color: #ffffff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             display: none;
             z-index: 1000;
-            overflow: hidden; /* Ensure scrollbars appear when needed */
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
         }
 
+        .chat-popup.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .chat-popup.closed {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+
         .chat-popup-header {
-            background-color: #003572;
+            background-color: #0056b3; /* Updated color */
             color: white;
-            padding: 0.5rem;
+            padding: 1rem;
             text-align: center;
             border-radius: 8px 8px 0 0;
             position: relative;
@@ -209,12 +230,13 @@
         }
 
         .close-btn:hover {
-            background-color: #002b4c;
+            background-color: #004884; /* Darker hover color */
         }
+
 
         .chat-popup-body {
             padding: 1rem;
-            height: calc(100% - 110px); /* Adjust height */
+            height: calc(100% - 120px); /* Adjust height */
             overflow-y: auto;
         }
 
@@ -224,6 +246,7 @@
             text-align: center;
             display: flex; /* Ensure items are displayed in a row */
             align-items: center; /* Center items vertically */
+            justify-content: space-between;
         }
 
         .chat-popup-footer input[type="text"] {
@@ -336,6 +359,38 @@
                 content: '...';
             }
         }
+
+        .suggested-options {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f0f0; /* Light background */
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .suggested-option {
+            margin-bottom: 10px;
+        }
+
+        .suggested-option button {
+            background-color: #003572; /* Dark blue */
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s, transform 0.2s;
+            box-sizing: border-box;
+        }
+
+        .suggested-option button:hover {
+            background-color: #001d44; /* Darker blue on hover */
+            transform: translateY(-2px); /* Lift effect */
+        }
+
+
     </style>
 </head>
 <body>
@@ -403,7 +458,7 @@
     <!-- Chat popup -->
     <div class="chat-popup" id="chatPopup">
         <div class="chat-popup-header">
-            Chat with Swift Bot
+            <span class="chat-title">Swift Bot</span>
             <button class="close-btn" onclick="toggleChat()"><i class="fas fa-times"></i></button>
         </div>
         <div class="chat-popup-body" id="chatBody">
@@ -424,12 +479,7 @@
             <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="checkEnter(event)">
             <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
         </div>
-    </div>
-
-
-TODO 
-- ADD SUGGESTIONS
-- CHANGE CLOSE AND SEND TO MORE MODERN ICONS
+    </div>    
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -499,11 +549,18 @@ TODO
 
         function toggleChat() {
             const chatPopup = document.getElementById("chatPopup");
-            chatPopup.style.display = chatPopup.style.display === "block" ? "none" : "block";
-            // Clear chat messages when closing
-            if (chatPopup.style.display === "none") {
-                const chatBody = document.getElementById("chatBody");
-                chatBody.innerHTML = ""; // Clear chat messages
+            if (chatPopup.classList.contains("open")) {
+                chatPopup.classList.remove("open");
+                chatPopup.classList.add("closed");
+                setTimeout(() => {
+                    chatPopup.style.display = "none";
+                }, 500); // Match the transition duration
+            } else {
+                chatPopup.style.display = "block";
+                setTimeout(() => {
+                    chatPopup.classList.remove("closed");
+                    chatPopup.classList.add("open");
+                }, 10); // Small delay to trigger transition
             }
         }
 
@@ -562,3 +619,4 @@ TODO
     </script>
 </body>
 </html>
+
