@@ -584,6 +584,32 @@ def check_attendance_record():
 
     image_file = request.files['image']
     image_bytes = image_file.read()
+
+    # Check image size
+    MAX_IMAGE_SIZE = 5242880  # 5 MB in bytes
+    if len(image_bytes) > MAX_IMAGE_SIZE:
+        # Resize the image if it exceeds the size limit
+        image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+        # Example calculation to preserve aspect ratio
+        original_width, original_height = image.size
+        max_dimension = 1024  # Example maximum dimension
+
+        if original_width > original_height:
+            # Landscape orientation
+            new_width = max_dimension
+            new_height = int(original_height * (max_dimension / original_width))
+        else:
+            # Portrait or square orientation
+            new_height = max_dimension
+            new_width = int(original_width * (max_dimension / original_height))
+        resized_image = image.resize((new_width, new_height))  # Adjust new_width and new_height
+        buffered = io.BytesIO()
+        resized_image.save(buffered, format="JPEG")  # Change format as needed
+        image_bytes = buffered.getvalue()
+    else:
+        # Use original image bytes
+        image_bytes = image_bytes
+
     image_base64 = base64.b64encode(image_bytes).decode('utf-8')
     image_data_url = f"data:image/jpeg;base64,{image_base64}"
 
