@@ -15,6 +15,7 @@ from wtforms import FileField, StringField, PasswordField, SubmitField, SelectFi
 from wtforms.validators import DataRequired, Email
 import base64
 from PIL import Image, ImageDraw
+import time
 
 blueprint = Blueprint('app', __name__)
 
@@ -571,6 +572,9 @@ def is_focused(emotion, eye_direction):
 
 @blueprint.route('/check_form', methods=['POST'])
 def check_attendance_record():
+    # Start timer
+    start_time = time.time()
+
     global initialized_course
     global initialized_date
     global initialized
@@ -706,11 +710,18 @@ def check_attendance_record():
     # Reset initialized global variable
     initialized = False
 
+    # End the timer and print the elapsed time
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Time taken to run check_attendance_record function: {elapsed_time} seconds")
+
     return render_template('checked_attendance.html', attendance_records=attendance_records, error=error, uploaded_image=modified_image_data_url)
 
 
 @blueprint.route('/ret_form', methods=['POST'])
 def retrieve_attendance_records():
+    start_time = time.time()
+
     role = session.get('role')
     id = session.get('id')
     course = request.form.get('course')
@@ -720,18 +731,23 @@ def retrieve_attendance_records():
         # Extract the course code from the course string
         course = course ['CourseCode']
     date = request.form.get('date')
-    time = request.form.get('time')
+    time_form = request.form.get('time')
 
-    if date and not time:
+    if date and not time_form:
         return render_template('error.html', message='Time is required when date is provided.')
     
-    student_records = retrieve_student_records(course, date, time)
+    student_records = retrieve_student_records(course, date, time_form)
 
     if not student_records:
         return render_template('error.html', message='No records found.')
     
     if role == 'student':
         student_records = [record for record in student_records if record['StudentId'] == int(id)]
+
+    # End the timer and print the elapsed time
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Time taken to run retrieve_attendance_records function: {elapsed_time} seconds")
     
     return render_template('attendance_records.html', attendance_records=student_records)
 
