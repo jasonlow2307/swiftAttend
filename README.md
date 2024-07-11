@@ -92,10 +92,12 @@ There will be fewer selections in the student’s navigation bar, as students’
 </figure>
 When a class is being created, a course name, course code, the day of the class, and the class time will be required. For example, a class could have the following information:
 <br>
+
 - Course Name: Capstone 1
 - Course Code: CP1
 - Day: Wednesday
 - Time: 5 pm
+<br>
 Then, students will need to be selected to enroll in the class, and a lecturer will be selected to be in charge of the class.  
 
 ### Class Initialization and Attendance Taking
