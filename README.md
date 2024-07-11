@@ -51,7 +51,9 @@ The project aims to deliver a modern and efficient attendance tracking system th
 
 ## <a name="🚧 Architecture"></a>🚧 Architecture
 <figure>
-  <img src="imgs/architecture.png">
+<div align="center">
+    <img src="imgs/architecture.png">
+</div>
 </figure>
 Every time a lecturer or student wants to perform an action, they must be authorized through AWS Cognito. Additionally, Fargate and Lambda each have their respective IAM roles, which control their access to other AWS services. This architecture is designed to follow a typical three-tier structure, standard for web-native applications hosted on cloud platforms. It includes a frontend, a processing backend, and a database backend. As shown in the figure below, the two dashed lines separate the three tiers in this architecture.
 <br>
@@ -101,13 +103,13 @@ Then, students will need to be selected to enroll in the class, and a lecturer w
   <img src="imgs/class_initialization.png">
 </figure>
 Before a lecturer can add attendance records, they must initialize a class session. A class session will require a date, and a list of created classes to be selected from.
-<br>
+<br><br>
 <figure>
   <img src="imgs/attendance_taking.png">
 </figure>
 There are currently two ways a lecturer can take attendance: they could either use their device camera to capture an image of the students present in the class or upload an image that has been taken during the class. 
 After submitting the image, the attendance records will be displayed to the lecturer, as shown below.
-<br>
+<br><br>
 <figure>
   <img src="imgs/attendance_taking2.png">
 </figure>
@@ -123,7 +125,7 @@ When a lecturer wants to retrieve past attendance records, they can search for r
   <img src="imgs/course_browsing.png">
 </figure>
 Each course will be displayed on its card with basic information when browsing through courses. To retrieve more information on each class, the user can click on the card to get more information and add or remove students, as shown in the image below.
-<br>
+<br><br>
 <figure>
   <img src="imgs/course_browsing2.png">
 </figure>
@@ -139,7 +141,7 @@ Each course will be displayed on its card with basic information when browsing t
 - flask_wtf 1.2.1 or later
 - Pillow 10.4.0 or later
 - WTForms 3.1.2 or later
-
+<br>
 1. Repository cloning and dependency installation
 ```bash
 git clone https://github.com/jasonlow2307/swiftAttend.git
@@ -150,7 +152,7 @@ pip install -r requirements.txt
 ```bash
 python3 app.py
 ```
-3. Visit local ip at port **5000** to view web page
+3. Visit local IP address at port **5000** to view web page
 <br><br>
 
 ### Contact Me
