@@ -90,7 +90,9 @@ There will be fewer selections in the student’s navigation bar, as students’
 <figure>
   <img src="imgs/class_creation.png">
 </figure>
+
 When a class is being created, a course name, course code, the day of the class, and the class time will be required. For example, a class could have the following information:
+
 <br>
 
 - Course Name: Capstone 1
@@ -144,6 +146,7 @@ Each course will be displayed on its card with basic information when browsing t
 - Pillow 10.4.0 or later
 - WTForms 3.1.2 or later
 <br>
+
 1. Repository cloning and dependency installation
 ```bash
 git clone https://github.com/jasonlow2307/swiftAttend.git
