@@ -141,13 +141,15 @@ Each course will be displayed on its card with basic information when browsing t
 - WTForms 3.1.2 or later
 
 1. Repository cloning and dependency installation
-bash
+```bash
 git clone https://github.com/jasonlow2307/swiftAttend.git
 cd swiftAttend
 pip install -r requirements.txt
+```
 2. Starting web server
-bash
+```bash
 python3 app.py
+```
 3. Visit local ip at port **5000** to view web page
 <br><br>
 
