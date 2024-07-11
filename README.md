@@ -49,12 +49,15 @@ The project aims to deliver a modern and efficient attendance tracking system th
 - **Employs Cloud Computing:** 
 <br><br>
 
-## <a name="🚧 Architecture"></a>🚧 Architecture
+## <a name="Architecture"></a>🚧 Architecture
 <figure>
 <div align="center">
     <img src="imgs/architecture.png">
 </div>
 </figure>
+
+<br>
+
 Every time a lecturer or student wants to perform an action, they must be authorized through AWS Cognito. Additionally, Fargate and Lambda each have their respective IAM roles, which control their access to other AWS services. This architecture is designed to follow a typical three-tier structure, standard for web-native applications hosted on cloud platforms. It includes a frontend, a processing backend, and a database backend. As shown in the figure below, the two dashed lines separate the three tiers in this architecture.
 <br>
 - **Frontend:** Hosted on AWS Fargate, allowing users to access the web page seamlessly.
@@ -63,7 +66,7 @@ Every time a lecturer or student wants to perform an action, they must be author
 This separation of concerns ensures a scalable, efficient, and maintainable architecture for Swift Attend.
 <br><br>
 
-## <a name="🖼️ Screenshots"></a>🖼️ Screenshots
+## <a name="Screenshots"></a>🖼️ Screenshots
 
 ### Login/Register
 <figure>
