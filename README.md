@@ -39,7 +39,7 @@
 ### Limitations of traditional attendance systems:
 - Inefficient and prone to inaccuracies
 - Can be easily manipulated 
-<br>
+
 SwiftAttend addresses these issues by leveraging advanced AI and cloud technologies to streamline and secure the attendance tracking process.
 
 The project aims to deliver a modern and efficient attendance tracking system that:
@@ -89,7 +89,7 @@ There will be fewer selections in the student’s navigation bar, as students’
   <img src="imgs/class_creation.png">
 </figure>
 When a class is being created, a course name, course code, the day of the class, and the class time will be required. For example, a class could have the following information:
-
+<br>
 - Course Name: Capstone 1
 - Course Code: CP1
 - Day: Wednesday
@@ -101,11 +101,13 @@ Then, students will need to be selected to enroll in the class, and a lecturer w
   <img src="imgs/class_initialization.png">
 </figure>
 Before a lecturer can add attendance records, they must initialize a class session. A class session will require a date, and a list of created classes to be selected from.
+<br>
 <figure>
   <img src="imgs/attendance_taking.png">
 </figure>
 There are currently two ways a lecturer can take attendance: they could either use their device camera to capture an image of the students present in the class or upload an image that has been taken during the class. 
 After submitting the image, the attendance records will be displayed to the lecturer, as shown below.
+<br>
 <figure>
   <img src="imgs/attendance_taking2.png">
 </figure>
@@ -121,6 +123,7 @@ When a lecturer wants to retrieve past attendance records, they can search for r
   <img src="imgs/course_browsing.png">
 </figure>
 Each course will be displayed on its card with basic information when browsing through courses. To retrieve more information on each class, the user can click on the card to get more information and add or remove students, as shown in the image below.
+<br>
 <figure>
   <img src="imgs/course_browsing2.png">
 </figure>
@@ -128,10 +131,28 @@ Each course will be displayed on its card with basic information when browsing t
 <br><br>
 
 ## <a name="Usage"></a>🛠️ Usage
+### Requirements
+- Python 
+- boto3 1.34.91 or later
+- botocore 1.34.91 or later
+- Flask 3.0.3 or later
+- flask_wtf 1.2.1 or later
+- Pillow 10.4.0 or later
+- WTForms 3.1.2 or later
 
-*Leave this section for me*
+1. Repository cloning and dependency installation
+bash
+git clone https://github.com/jasonlow2307/swiftAttend.git
+cd swiftAttend
+pip install -r requirements.txt
+2. Starting web server
+bash
+python3 app.py
+3. Visit local ip at port **5000** to view web page
 <br><br>
 
 ### Contact Me
 If you would like to contact me, you can drop me an email at jason.lowjx@gmail.com
+
+Thank you for reading! 💫
 
