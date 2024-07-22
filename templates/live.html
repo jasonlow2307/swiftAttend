@@ -1,18 +1,88 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Camera Feed</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            color: #003572;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #camera-feed-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        #camera-feed {
+            width: 80%;
+            max-width: 800px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #studentsTableContainer {
+            display: none;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
+            border-spacing: 0;
         }
-        table, th, td {
-            border: 1px solid black;
-        }
+
         th, td {
-            padding: 8px;
+            padding: 12px 15px;
             text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #003572;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        img {
+            max-width: 200px;
+            height: auto;
+            border-radius: 5px;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #003572;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            color: #001d44;
         }
     </style>
     <script>
@@ -34,7 +104,7 @@
                             let cell1 = row.insertCell(0);
                             let cell2 = row.insertCell(1);
                             let cell3 = row.insertCell(2);
-                            cell1.innerHTML = `<img src="${student.image}" width="50" height="50">`;
+                            cell1.innerHTML = `<img src="${student.image}" width="150">`;
                             cell2.innerHTML = student_id;
                             cell3.innerHTML = student.name;
                         }
@@ -45,17 +115,19 @@
     </script>
 </head>
 <body>
-    <h1>Live Camera Feed</h1>
-    <img src="{{ url_for('video_feed') }}" width="100%">
-    <h2>Detected Students</h2>
-    <div id="studentsTableContainer" style="display: none;">
-        <table id="studentsTable">
-            <tr>
-                <th>Image</th>
-                <th>ID</th>
-                <th>Name</th>
-            </tr>
-        </table>
+    <div id="camera-feed-container">
+        <h1>Live Camera Feed</h1>
+        <img id="camera-feed" src="{{ url_for('app.video_feed') }}" alt="Live Feed">
+        <div id="studentsTableContainer">
+            <h2>Detected Students</h2>
+            <table id="studentsTable">
+                <tr>
+                    <th>Image</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                </tr>
+            </table>
+        </div>
     </div>
 </body>
 </html>
