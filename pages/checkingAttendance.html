@@ -144,6 +144,7 @@
         <div id="initialButtons">
             <button id="captureOption" class="file-upload">Capture Image</button>
             <button id="uploadOption" class="file-upload">Upload Image</button>
+            <button id="liveOption" class="file-upload">Live Mode</button>
         </div>
         <div id="cameraContainer" class="hide">
             <video id="video" width="320" height="240" autoplay></video>
@@ -180,6 +181,11 @@
         const initialButtons = document.getElementById('initialButtons');
         const captureOption = document.getElementById('captureOption');
         const uploadOption = document.getElementById('uploadOption');
+        const liveOption = document.getElementById('liveOption');
+
+        liveOption.addEventListener('click', () => {
+            window.location.href = "/live";
+        });
 
         captureOption.addEventListener('click', () => {
             initialButtons.classList.add('hide');

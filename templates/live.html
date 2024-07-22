@@ -90,8 +90,27 @@
             font-size: 18px;
             margin-top: 20px;
         }
+        
+        #endSessionButton {
+            background-color: #003572;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #endSessionButton:hover {
+            background-color: #001d44;
+        }
     </style>
     <script>
+        let fetchInterval;
+        let videoElement;
+        let statusElement;
+
         function fetchDetectedStudents() {
             fetch('/detected_students')
                 .then(response => response.json())
@@ -120,7 +139,43 @@
                     }
                 });
         }
-        setInterval(fetchDetectedStudents, 3000); // Fetch detected students every 3 seconds
+
+        function endSession() {
+            // Clear the fetch interval
+            if (fetchInterval) {
+                clearInterval(fetchInterval);
+            }
+
+            // Stop the video feed
+            if (videoElement) {
+                videoElement.src = '';
+                videoElement.style.display = 'none';
+            }
+
+            statusElement.innerText = 'Session Ended';
+
+            fetch('/detected_students')
+                .then(response => response.json())
+                .then(data => {
+                    let students = Object.keys(data.detected_students);
+                    fetch('/end_session', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ students: students }),
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        alert(result.message); // Display server response
+                    });
+                });
+        }
+
+        window.onload = function() {
+            videoElement = document.getElementById('camera-feed');
+            fetchInterval = setInterval(fetchDetectedStudents, 3000); // Fetch detected students every 3 seconds
+        };
     </script>
 </head>
 <body>
@@ -138,6 +193,8 @@
                 </tr>
             </table>
         </div>
+        <button id="endSessionButton" onclick="endSession()">End Session</button> <!-- End session button -->
+        <a id="homeButton" href="/">Home</a> <!-- Home button -->
     </div>
 </body>
 </html>

@@ -139,7 +139,26 @@ def get_detected_students():
 
 @blueprint.route('/live')
 def live():
+    global initialized
+
+    if not initialized:
+        return render_template_string('''
+                <script>
+                    alert("You need to initialize the class first.");
+                    window.location.href = "{{ url_for('app.initialize') }}";
+                </script>
+            ''')
+    
     return render_template('live.html')
+
+@blueprint.route('/end_session', methods=['POST'])
+def end_session():
+    data = request.get_json()
+    students = data.get('students', [])
+    for student_id in students:
+        update_attendance(student_id, 'PRESENT', initialized_date)
+        print(f"Attendance updated for {student_id}")
+    return jsonify({'success': True, 'message': 'Attendance updated successfully!'}), 200
 
 @blueprint.route('/logout', methods=['GET', 'POST'])
 def logout():
