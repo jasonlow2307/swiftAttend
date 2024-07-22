@@ -153,6 +153,7 @@
             }
 
             statusElement.innerText = 'Session Ended';
+            document.getElementById("endSessionButton").style.display = 'none';
 
             fetch('/detected_students')
                 .then(response => response.json())
