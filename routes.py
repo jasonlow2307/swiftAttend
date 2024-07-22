@@ -43,30 +43,66 @@ class LoginForm(FlaskForm):
 
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
+# To store face detection timestamps and student IDs
+face_timestamps = {}
+face_to_student_map = {}
+detected_student_id = set()
+
 def generate_frames():
     camera = cv2.VideoCapture(0)  # Capture video from the first camera device
 
     while True:
-        # Read the frame from the camera
         success, frame = camera.read()
         if not success:
             break
         else:
-            # Convert the frame to grayscale
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-            # Detect faces in the frame
             faces = face_cascade.detectMultiScale(gray, 1.1, 4)
 
-            # Draw rectangles around the faces
+            current_time = time.time()
+
             for (x, y, w, h) in faces:
+                face_id = f"{x}_{y}_{w}_{h}"
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                
+                if face_id in face_timestamps:
+                    if current_time - face_timestamps[face_id] > 3:
+                        if face_id not in face_to_student_map:
+                            # Convert the detected face region to the required format for Rekognition
+                            face_region = frame[y:y+h, x:x+w]
+                            _, face_buffer = cv2.imencode('.jpg', face_region)
+                            face_bytes = face_buffer.tobytes()
+
+                            # Call Rekognition to search for the face
+                            response_search = rekognition.search_faces_by_image(
+                                CollectionId=REKOGNITION_COLLECTION_NAME,
+                                Image={'Bytes': face_bytes},
+                                FaceMatchThreshold=70,
+                                MaxFaces=10
+                            )
+
+                            if 'FaceMatches' in response_search and len(response_search['FaceMatches']) > 0:
+                                for match in response_search['FaceMatches']:
+                                    person_info = dynamodb.get_item(
+                                        TableName=DYNAMODB_STUDENT_TABLE_NAME,
+                                        Key={'RekognitionId': {'S': match['Face']['FaceId']}}
+                                    )
+                                    if 'Item' in person_info:
+                                        student_id = person_info['Item']['StudentId']['S']
+                                        student_name = person_info['Item']['FullName']['S']
+                                        student_image = generate_signed_url(S3_BUCKET_NAME, 'index/' + student_id)
+                                        detected_student_id.add(student_id)
+                                        face_to_student_map[face_id] = student_id
+                                        print(f"Detected student_id: {student_id} Name: {student_name}")
+                                        print(student_image)
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                else:
+                    face_timestamps[face_id] = current_time
 
             # Encode the frame in JPEG format
             ret, buffer = cv2.imencode('.jpg', frame)
             frame = buffer.tobytes()
 
-            # Yield the frame as a byte array
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
