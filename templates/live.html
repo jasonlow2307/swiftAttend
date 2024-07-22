@@ -141,6 +141,7 @@
         }
 
         function endSession() {
+            statusElement = document.getElementById("status");
             // Clear the fetch interval
             if (fetchInterval) {
                 clearInterval(fetchInterval);
