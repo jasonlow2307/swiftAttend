@@ -2,9 +2,60 @@
 <html>
 <head>
     <title>Live Camera Feed</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+    <script>
+        function fetchDetectedStudents() {
+            fetch('/detected_students')
+                .then(response => response.json())
+                .then(data => {
+                    let table = document.getElementById("studentsTable");
+                    let tableContainer = document.getElementById("studentsTableContainer");
+                    table.innerHTML = "<tr><th>Image</th><th>ID</th><th>Name</th></tr>";
+                    
+                    if (Object.keys(data).length === 0) {
+                        tableContainer.style.display = 'none';
+                    } else {
+                        tableContainer.style.display = 'block';
+                        for (let student_id in data) {
+                            let student = data[student_id];
+                            let row = table.insertRow();
+                            let cell1 = row.insertCell(0);
+                            let cell2 = row.insertCell(1);
+                            let cell3 = row.insertCell(2);
+                            cell1.innerHTML = `<img src="${student.image}" width="50" height="50">`;
+                            cell2.innerHTML = student_id;
+                            cell3.innerHTML = student.name;
+                        }
+                    }
+                });
+        }
+        setInterval(fetchDetectedStudents, 3000); // Fetch detected students every 3 seconds
+    </script>
 </head>
 <body>
     <h1>Live Camera Feed</h1>
-    <img src="{{ url_for('app.video_feed') }}" width="100%">
+    <img src="{{ url_for('video_feed') }}" width="100%">
+    <h2>Detected Students</h2>
+    <div id="studentsTableContainer" style="display: none;">
+        <table id="studentsTable">
+            <tr>
+                <th>Image</th>
+                <th>ID</th>
+                <th>Name</th>
+            </tr>
+        </table>
+    </div>
 </body>
 </html>

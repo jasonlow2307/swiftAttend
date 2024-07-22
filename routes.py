@@ -46,9 +46,10 @@ face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fronta
 # To store face detection timestamps and student IDs
 face_timestamps = {}
 face_to_student_map = {}
-detected_student_id = set()
+detected_students = {}
 
 def generate_frames():
+    global detected_students
     camera = cv2.VideoCapture(0)  # Capture video from the first camera device
 
     while True:
@@ -91,7 +92,10 @@ def generate_frames():
                                         student_id = person_info['Item']['StudentId']['S']
                                         student_name = person_info['Item']['FullName']['S']
                                         student_image = generate_signed_url(S3_BUCKET_NAME, 'index/' + student_id)
-                                        detected_student_id.add(student_id)
+                                        detected_students[student_id] = {
+                                            'name': student_name,
+                                            'image': student_image
+                                        }
                                         face_to_student_map[face_id] = student_id
                                         print(f"Detected student_id: {student_id} Name: {student_name}")
                                         print(student_image)
@@ -114,9 +118,12 @@ def video_feed():
     return Response(generate_frames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@blueprint.route('/detected_students')
+def get_detected_students():
+    return jsonify(detected_students)
+
 @blueprint.route('/live')
-def test():
-    # Render the HTML page
+def live():
     return render_template('live.html')
 
 @blueprint.route('/logout', methods=['GET', 'POST'])
