@@ -84,6 +84,12 @@
         a:hover {
             color: #001d44;
         }
+        
+        #status {
+            color: #003572;
+            font-size: 18px;
+            margin-top: 20px;
+        }
     </style>
     <script>
         function fetchDetectedStudents() {
@@ -92,14 +98,17 @@
                 .then(data => {
                     let table = document.getElementById("studentsTable");
                     let tableContainer = document.getElementById("studentsTableContainer");
+                    let statusElement = document.getElementById("status");
+
                     table.innerHTML = "<tr><th>Image</th><th>ID</th><th>Name</th></tr>";
+                    statusElement.innerText = `Status: ${data.status}`;
                     
-                    if (Object.keys(data).length === 0) {
+                    if (Object.keys(data.detected_students).length === 0) {
                         tableContainer.style.display = 'none';
                     } else {
                         tableContainer.style.display = 'block';
-                        for (let student_id in data) {
-                            let student = data[student_id];
+                        for (let student_id in data.detected_students) {
+                            let student = data.detected_students[student_id];
                             let row = table.insertRow();
                             let cell1 = row.insertCell(0);
                             let cell2 = row.insertCell(1);
@@ -118,6 +127,7 @@
     <div id="camera-feed-container">
         <h1>Live Camera Feed</h1>
         <img id="camera-feed" src="{{ url_for('app.video_feed') }}" alt="Live Feed">
+        <div id="status">Status: Loading...</div> <!-- Status will be updated here -->
         <div id="studentsTableContainer">
             <h2>Detected Students</h2>
             <table id="studentsTable">

@@ -47,9 +47,12 @@ face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fronta
 face_timestamps = {}
 face_to_student_map = {}
 detected_students = {}
+matched_faces = []
+status = ""
 
 def generate_frames():
     global detected_students
+    global status
     camera = cv2.VideoCapture(0)  # Capture video from the first camera device
 
     while True:
@@ -65,6 +68,8 @@ def generate_frames():
             for (x, y, w, h) in faces:
                 face_id = f"{x}_{y}_{w}_{h}"
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                if (status == ""):
+                    status = "Face detected"
                 
                 if face_id in face_timestamps:
                     if current_time - face_timestamps[face_id] > 3:
@@ -89,17 +94,24 @@ def generate_frames():
                                         Key={'RekognitionId': {'S': match['Face']['FaceId']}}
                                     )
                                     if 'Item' in person_info:
-                                        student_id = person_info['Item']['StudentId']['S']
-                                        student_name = person_info['Item']['FullName']['S']
-                                        student_image = generate_signed_url(S3_BUCKET_NAME, 'index/' + student_id)
-                                        detected_students[student_id] = {
-                                            'name': student_name,
-                                            'image': student_image
-                                        }
-                                        face_to_student_map[face_id] = student_id
-                                        print(f"Detected student_id: {student_id} Name: {student_name}")
-                                        print(student_image)
-                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                                        if (person_info['Item']['RekognitionId']['S'] not in matched_faces):
+                                            student_id = person_info['Item']['StudentId']['S']
+                                            student_name = person_info['Item']['FullName']['S']
+                                            student_image = generate_signed_url(S3_BUCKET_NAME, 'index/' + student_id)
+                                            detected_students[student_id] = {
+                                                'name': student_name,
+                                                'image': student_image
+                                            }
+                                            face_to_student_map[face_id] = student_id
+                                            print(f"Detected student_id: {student_id} Name: {student_name}")
+                                            print(student_image)
+                                            matched_faces.append(person_info['Item']['RekognitionId']['S'])
+                                            status = "Student matched"
+                                            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                                        else:
+                                            print("Student already detected")
+                                            status = "Student already detected"
+                                            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
                 else:
                     face_timestamps[face_id] = current_time
 
@@ -120,7 +132,10 @@ def video_feed():
 
 @blueprint.route('/detected_students')
 def get_detected_students():
-    return jsonify(detected_students)
+    return jsonify({
+        'detected_students': detected_students,
+        'status': status
+    })
 
 @blueprint.route('/live')
 def live():
