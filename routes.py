@@ -1,6 +1,6 @@
 from functools import wraps
 import re
-from flask import Blueprint, redirect, render_template_string, send_from_directory, request, jsonify, render_template, url_for, session
+from flask import Blueprint, redirect, render_template_string, send_from_directory, request, jsonify, render_template, url_for, session, Response
 import logging
 from datetime import datetime, timedelta, timezone
 import io
@@ -16,6 +16,7 @@ from wtforms.validators import DataRequired, Email
 import base64
 from PIL import Image, ImageDraw
 import time
+import cv2
 
 blueprint = Blueprint('app', __name__)
 
@@ -39,6 +40,48 @@ class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
+
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+def generate_frames():
+    camera = cv2.VideoCapture(0)  # Capture video from the first camera device
+
+    while True:
+        # Read the frame from the camera
+        success, frame = camera.read()
+        if not success:
+            break
+        else:
+            # Convert the frame to grayscale
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+            # Detect faces in the frame
+            faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+
+            # Draw rectangles around the faces
+            for (x, y, w, h) in faces:
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+            # Encode the frame in JPEG format
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+
+            # Yield the frame as a byte array
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+    camera.release()
+
+@blueprint.route('/video_feed')
+def video_feed():
+    # Video streaming route
+    return Response(generate_frames(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@blueprint.route('/live')
+def test():
+    # Render the HTML page
+    return render_template('live.html')
 
 @blueprint.route('/logout', methods=['GET', 'POST'])
 def logout():
