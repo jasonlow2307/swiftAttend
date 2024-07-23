@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.12
+FROM python:3.12-slim
 
 # Set the working directory
 WORKDIR /app
@@ -7,14 +7,23 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    cmake \
+    build-essential \
+    libopenblas-dev \
+    liblapack-dev \
+    libx11-dev \
+    libgtk-3-dev \
+    libboost-python-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dlib and face_recognition
-RUN apt-get update && apt-get install -y cmake
-RUN pip install dlib face_recognition
+# Install pre-built dlib wheel and face_recognition
+RUN pip install --no-cache-dir \
+    dlib-19.24.99-cp312-cp312-win_amd64.whl \
+    face_recognition
 
-# Make port 80 available to the world outside this container
+# Expose port 80
 EXPOSE 80
 
 # Define environment variable
