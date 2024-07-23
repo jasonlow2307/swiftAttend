@@ -50,6 +50,8 @@ detected_students = {}
 matched_faces = []
 status = ""
 
+known_face_encodings = []  # List to store face encodings of known faces
+
 def generate_frames():
     global detected_students
     global status
@@ -80,6 +82,7 @@ def generate_frames():
                             face_bytes = face_buffer.tobytes()
 
                             try:
+                                print("REKOGNITION")
                                 # Call Rekognition to search for the face
                                 response_search = rekognition.search_faces_by_image(
                                     CollectionId=REKOGNITION_COLLECTION_NAME,
@@ -138,7 +141,6 @@ def generate_frames():
 
     camera.release()
 
-
 @blueprint.route('/video_feed')
 def video_feed():
     # Video streaming route
@@ -174,6 +176,36 @@ def end_session():
         update_attendance(student_id, 'PRESENT', initialized_date)
         print(f"Attendance updated for {student_id}")
     return jsonify({'success': True, 'message': 'Attendance updated successfully!'}), 200
+
+@blueprint.route('/show_attendance', methods=['GET'])
+def show_attendance():
+    attendance_records = []
+    detected_student_id = detected_students.keys()
+
+    student_records = fetch_student_records()
+
+    attendance_records = []
+    present_counter = 0
+
+    for student in student_records:
+        student_id = student['StudentId']
+        attendance_status = 'PRESENT' if student_id in detected_student_id else 'ABSENT'
+        if attendance_status == 'PRESENT':
+            present_counter += 1
+        image_key = 'index/' + student_id
+        signed_url = generate_signed_url(S3_BUCKET_NAME, image_key)
+
+        # Find emotion and eye direction for the student
+        emotion = 'UNKNOWN'
+        eye_direction = {'Yaw': 'UNKNOWN', 'Pitch': 'UNKNOWN'}
+
+        attendance_records.append({
+            'FullName': student['FullName'],
+            'Attendance': attendance_status,
+            'SignedURL': signed_url,
+        })
+    return render_template('checked_attendance.html', attendance_records=attendance_records)
+    #TODO - Implement this function
 
 @blueprint.route('/logout', methods=['GET', 'POST'])
 def logout():

@@ -108,16 +108,24 @@
         {% if attendance_records %}
             <div id="attendance">
                 <h2>Attendance Records:</h2>
-                <img id="uploaded-image" src="{{ uploaded_image }}" alt="Uploaded Image">
+                {% if uploaded_image %}
+                    <img id="uploaded-image" src="{{ uploaded_image }}" alt="Uploaded Image">
+                {% endif %}
                 <table>
                     <thead>
                         <tr>
                             <th>Image</th>  
                             <th>Full Name</th>
                             <th>Attendance</th>
-                            <th>Emotion</th>
-                            <th>Eye Direction</th>
-                            <th>Focus</th>
+                            {% if attendance_records[0].Emotion %}
+                                <th>Emotion</th>
+                            {% endif %}
+                            {% if attendance_records[0].EyeDirection %}
+                                <th>Eye Direction</th>
+                            {% endif %}
+                            {% if attendance_records[0].Focused %}
+                                <th>Focus</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -126,9 +134,15 @@
                                 <td><img src="{{ record.SignedURL }}" alt="Student Image"></td>
                                 <td>{{ record.FullName }}</td>
                                 <td>{{ record.Attendance }}</td>
-                                <td>{{ record.Emotion }}</td>
-                                <td>{{ record.EyeDirection.Yaw }}, {{ record.EyeDirection.Pitch }}</td>
-                                <td>{{ record.Focused }}</td>
+                                {% if record.Emotion %}
+                                    <td>{{ record.Emotion }}</td>
+                                {% endif %}
+                                {% if record.EyeDirection %}
+                                    <td>{{ record.EyeDirection.Yaw }}, {{ record.EyeDirection.Pitch }}</td>
+                                {% endif %}
+                                {% if record.Focused %}
+                                    <td>{{ record.Focused }}</td>
+                                {% endif %}
                             </tr>
                         {% endfor %}
                     </tbody>

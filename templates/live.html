@@ -174,13 +174,21 @@
                 });
         }
 
+        function showAttendance() {
+            fetch('/show_attendance')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("body").innerHTML = data;
+            });
+        }
+
         window.onload = function() {
             videoElement = document.getElementById('camera-feed');
             fetchInterval = setInterval(fetchDetectedStudents, 3000); // Fetch detected students every 3 seconds
         };
     </script>
 </head>
-<body>
+<body id="body">
     <div id="camera-feed-container">
         <h1>Live Camera Feed</h1>
         <img id="camera-feed" src="{{ url_for('app.video_feed') }}" alt="Live Feed">
@@ -196,6 +204,7 @@
             </table>
         </div>
         <button id="endSessionButton" onclick="endSession()">End Session</button> <!-- End session button -->
+        <button id="showAttendanceButton" onclick="showAttendance()">Show Attendance</button>
         <a id="homeButton" href="/">Home</a> <!-- Home button -->
     </div>
 </body>
