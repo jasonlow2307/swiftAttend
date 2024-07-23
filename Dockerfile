@@ -1,33 +1,14 @@
-# Use an official Python runtime as a parent image
-FROM python:3.12-slim
+# Use the pre-built face_recognition Docker image
+FROM animcogn/face_recognition:cpu
 
 # Set the working directory
-WORKDIR /app
+WORKDIR /root/face_recognition
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Copy your application code into the container
+COPY . /root/face_recognition
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    cmake \
-    build-essential \
-    libopenblas-dev \
-    liblapack-dev \
-    libx11-dev \
-    libgtk-3-dev \
-    libboost-python-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Install any additional Python packages
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Python packages
-RUN pip install --no-cache-dir \
-    dlib \
-    face_recognition
-
-# Expose port 80
-EXPOSE 80
-
-# Define environment variable
-ENV NAME World
-
-# Run app.py when the container launches
+# Define the command to run your application
 CMD ["python", "app.py"]
