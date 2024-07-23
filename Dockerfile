@@ -18,9 +18,9 @@ RUN apt-get update && apt-get install -y \
     libboost-python-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pre-built dlib wheel and face_recognition
+# Install Python packages
 RUN pip install --no-cache-dir \
-    dlib-19.24.99-cp312-cp312-win_amd64.whl \
+    dlib \
     face_recognition
 
 # Expose port 80
