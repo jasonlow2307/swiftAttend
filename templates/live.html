@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="icon" type="image/png" href="../static/logo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Camera Feed</title>
@@ -110,6 +111,7 @@
         let fetchInterval;
         let videoElement;
         let statusElement;
+        let showAttendanceButton;
 
         function fetchDetectedStudents() {
             fetch('/detected_students')
@@ -142,6 +144,10 @@
 
         function endSession() {
             statusElement = document.getElementById("status");
+            showAttendanceButton = document.getElementById("showAttendanceButton");
+
+            showAttendanceButton.style.display = 'block';
+
             // Clear the fetch interval
             if (fetchInterval) {
                 clearInterval(fetchInterval);
@@ -204,7 +210,7 @@
             </table>
         </div>
         <button id="endSessionButton" onclick="endSession()">End Session</button> <!-- End session button -->
-        <button id="showAttendanceButton" onclick="showAttendance()">Show Attendance</button>
+        <button id="showAttendanceButton" style="display: none;" onclick="showAttendance()">Show Attendance</button>
         <a id="homeButton" href="/">Home</a> <!-- Home button -->
     </div>
 </body>

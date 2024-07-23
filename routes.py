@@ -206,7 +206,6 @@ def get_detected_students():
 
 @blueprint.route('/live')
 def live():
-    return render_template('live.html')
     global initialized
     if not initialized:
         return render_template_string('''
@@ -215,6 +214,7 @@ def live():
                     window.location.href = "{{ url_for('app.initialize') }}";
                 </script>
         ''')
+    return render_template('live.html')
     
 
 
