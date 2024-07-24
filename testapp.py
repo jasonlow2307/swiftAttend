@@ -175,11 +175,8 @@ def process_frame(frame):
                             print("Error calling Rekognition:", e)
                             status = "Error with Rekognition"
                             cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-            else:
-                face_timestamps[face_id] = current_time
-
-
-
+        else:
+            face_timestamps[face_id] = current_time
 
     return frame
 
