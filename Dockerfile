@@ -25,4 +25,4 @@ RUN pip install numpy==1.24.4
 EXPOSE 5000
 
 # Define the command to run your application
-CMD ["python", "app.py"]
+CMD ["python", "testapp.py"]
