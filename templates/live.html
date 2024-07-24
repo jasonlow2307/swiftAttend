@@ -217,10 +217,11 @@
         window.onload = function() {
             videoElement = document.getElementById('processed-stream');
             fetchInterval = setInterval(fetchDetectedStudents, 3000);
+            // Start sending frames to server
             active = true;
         }
 
-        const socket = io.connect('http://localhost:5000');
+        const socket = io.connect(`http://localhost:5000`);
 
         socket.on('connect', () => {
             console.log('Connected to server');
