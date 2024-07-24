@@ -21,7 +21,7 @@ RUN pip install --upgrade pip && \
 RUN pip install --upgrade numpy
 
 # Make port 80 available to the world outside this container
-EXPOSE 80
+EXPOSE 5000
 
 # Define the command to run your application
 CMD ["python", "app.py"]
