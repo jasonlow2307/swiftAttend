@@ -19,7 +19,7 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Ensure the correct version of numpy is installed
-RUN pip install numpy==1.26.4
+RUN pip install numpy==1.24.4
 
 # Make port 80 available to the world outside this container
 EXPOSE 5000
