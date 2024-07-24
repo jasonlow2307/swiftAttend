@@ -7,8 +7,15 @@ WORKDIR /root/face_recognition
 # Copy your application code into the container
 COPY . /root/face_recognition
 
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install any additional Python packages
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Ensure the correct version of numpy is installed
 RUN pip install --upgrade numpy
