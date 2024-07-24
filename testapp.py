@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 from flask_socketio import SocketIO, emit
 import cv2
 import numpy as np
@@ -85,7 +85,6 @@ def process_frame(frame):
             print(status)
         
         if face_id in face_timestamps:
-            print(face_timestamps[face_id])
             if current_time - face_timestamps[face_id] > 3:
                 if face_id not in face_to_student_map:
                     # Check face encoding against known faces
@@ -180,6 +179,12 @@ def process_frame(frame):
 
     return frame
 
+@app.route('/detected_students')
+def get_detected_students():
+    return jsonify({
+        'detected_students': detected_students,
+        'status': status
+    })
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)

@@ -1,18 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/png" href="../static/logo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Stream</title>
+    <title>Live Attendance Taking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            color: #003572;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #camera-feed-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        #processed-stream {
+            width: 80%;
+            max-width: 800px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #studentsTableContainer {
+            display: none;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #003572;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        img {
+            max-width: 200px;
+            height: auto;
+            border-radius: 5px;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #003572;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            color: #001d44;
+        }
+        
+        #status {
+            color: #003572;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        
+        #endSessionButton, #showAttendanceButton {
+            background-color: #003572;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #endSessionButton:hover, #showAttendanceButton:hover {
+            background-color: #001d44;
+        }
+    </style>
 </head>
 <body>
-    <h1>Live Attendance Taking</h1>
-    <video id="video-stream" autoplay width="640" height="480" style="display: none;"></video>
-    <img id="processed-stream" src="" alt="Processed Stream" width="640" height="480">
-    
-
+    <div id="camera-feed-container">
+        <h1>Live Attendance Taking</h1>
+        <video id="video-stream" autoplay width="640" height="480" style="display: none;"></video>
+        <img id="processed-stream" src="" alt="Processed Stream" width="640" height="480">
+        <div id="status">Status: Loading...</div> <!-- Status will be updated here -->
+        <div id="studentsTableContainer">
+            <h2>Detected Students</h2>
+            <table id="studentsTable">
+                <tr>
+                    <th>Image</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                </tr>
+            </table>
+        </div>
+        <button id="endSessionButton" onclick="endSession()">End Session</button> <!-- End session button -->
+        <button id="showAttendanceButton" style="display: none;" onclick="showAttendance()">Show Attendance</button>
+        <a id="homeButton" href="/">Home</a> <!-- Home button -->
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
     <script>
+        let fetchInterval;
+        let statusElement;
+        let showAttendanceButton;
+
+        function fetchDetectedStudents() {
+            fetch('/detected_students')
+                .then(response => response.json())
+                .then(data => {
+                    let table = document.getElementById("studentsTable");
+                    let tableContainer = document.getElementById("studentsTableContainer");
+                    let statusElement = document.getElementById("status");
+
+                    table.innerHTML = "<tr><th>Image</th><th>ID</th><th>Name</th></tr>";
+                    statusElement.innerText = `Status: ${data.status}`;
+                    
+                    if (Object.keys(data.detected_students).length === 0) {
+                        tableContainer.style.display = 'none';
+                    } else {
+                        tableContainer.style.display = 'block';
+                        for (let student_id in data.detected_students) {
+                            let student = data.detected_students[student_id];
+                            let row = table.insertRow();
+                            let cell1 = row.insertCell(0);
+                            let cell2 = row.insertCell(1);
+                            let cell3 = row.insertCell(2);
+                            cell1.innerHTML = `<img src="${student.image}" width="150">`;
+                            cell2.innerHTML = student_id;
+                            cell3.innerHTML = student.name;
+                        }
+                    }
+                });
+        }
+
+        function endSession() {
+            statusElement = document.getElementById("status");
+            showAttendanceButton = document.getElementById("showAttendanceButton");
+
+            showAttendanceButton.style.display = 'block';
+
+            // Clear the fetch interval
+            if (fetchInterval) {
+                clearInterval(fetchInterval);
+            }
+
+            // Stop the video feed
+            if (videoElement) {
+                videoElement.src = '';
+                videoElement.style.display = 'none';
+            }
+
+            statusElement.innerText = 'Session Ended';
+            document.getElementById("endSessionButton").style.display = 'none';
+
+            fetch('/detected_students')
+                .then(response => response.json())
+                .then(data => {
+                    let students = Object.keys(data.detected_students);
+                    fetch('/end_session', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ students: students }),
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        alert(result.message); // Display server response
+                    });
+                });
+        }
+
+        function showAttendance() {
+            fetch('/show_attendance')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("body").innerHTML = data;
+            });
+        }
+
+        window.onload = function() {
+            fetchInterval = setInterval(fetchDetectedStudents, 3000);
+        }
+
         const socket = io.connect('http://localhost:5000');
 
         socket.on('connect', () => {
