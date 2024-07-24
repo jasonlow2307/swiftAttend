@@ -5,6 +5,9 @@ import numpy as np
 import base64
 import face_recognition
 import time
+from common import *
+from config import *
+from routes import generate_signed_url
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -43,6 +46,16 @@ known_face_encodings = []  # List to store face encodings of known faces
 known_face_ids = []  # List to store face encodings of known faces
 
 
+# Parameters
+RESIZE_SCALE = 0.5  # Scale to reduce the resolution
+
+def resize_frame(frame, scale=RESIZE_SCALE):
+    width = int(frame.shape[1] * scale)
+    height = int(frame.shape[0] * scale)
+    dimensions = (width, height)
+    resized_frame = cv2.resize(frame, dimensions, interpolation=cv2.INTER_AREA)
+    return resized_frame
+
 def process_frame(frame):
     global detected_students
     global status
@@ -51,6 +64,7 @@ def process_frame(frame):
 
     # Convert the frame to grayscale
     # Detect face locations in the frame
+    frame = resize_frame(frame)
     try:
         face_locations = face_recognition.face_locations(frame)
     except Exception as e:
@@ -71,6 +85,7 @@ def process_frame(frame):
             print(status)
         
         if face_id in face_timestamps:
+            print(face_timestamps[face_id])
             if current_time - face_timestamps[face_id] > 3:
                 if face_id not in face_to_student_map:
                     # Check face encoding against known faces
@@ -83,7 +98,85 @@ def process_frame(frame):
                         status = "Student has already been matched"
                         print(status)
                         cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+                        if known_face_id not in matched_faces:
+                            # Process recognized face
+                            person_info = dynamodb.get_item(
+                                TableName=DYNAMODB_STUDENT_TABLE_NAME,
+                                Key={'RekognitionId': {'S': known_face_id}}
+                            )
+                            if 'Item' in person_info:
+                                student_id = person_info['Item']['StudentId']['S']
+                                student_name = person_info['Item']['FullName']['S']
+                                student_image = generate_signed_url(S3_BUCKET_NAME, 'index/' + student_id)
+                                detected_students[student_id] = {
+                                    'name': student_name,
+                                    'image': student_image
+                                }
+                                face_to_student_map[face_id] = student_id
+                                print(f"Detected student_id: {student_id} Name: {student_name}")
+                                print(student_image)
+                                matched_faces.append(known_face_id)
+                                status = "Student matched"
+                                print(status)
+                                cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+                    else:
+                        # New face detected, process with Rekognition
+                        try:
+                            print("REKOGNITION")
+                            # Convert the detected face region to the required format for Rekognition
+                            face_region = frame[top:bottom, left:right]
+                            _, face_buffer = cv2.imencode('.jpg', face_region)
+                            face_bytes = face_buffer.tobytes()
 
+                            # Call Rekognition to search for the face
+                            response_search = rekognition.search_faces_by_image(
+                                CollectionId=REKOGNITION_COLLECTION_NAME,
+                                Image={'Bytes': face_bytes},
+                                FaceMatchThreshold=70,
+                                MaxFaces=10
+                            )
+
+                            # Process the search response
+                            face_matches = response_search.get('FaceMatches', [])
+                            if face_matches:
+                                for match in face_matches:
+                                    face_id_from_rekognition = match['Face']['FaceId']
+                                    person_info = dynamodb.get_item(
+                                        TableName=DYNAMODB_STUDENT_TABLE_NAME,
+                                        Key={'RekognitionId': {'S': face_id_from_rekognition}}
+                                    )
+                                    if 'Item' in person_info:
+                                        if (person_info['Item']['RekognitionId']['S'] not in matched_faces):
+                                            student_id = person_info['Item']['StudentId']['S']
+                                            student_name = person_info['Item']['FullName']['S']
+                                            student_image = generate_signed_url(S3_BUCKET_NAME, 'index/' + student_id)
+                                            detected_students[student_id] = {
+                                                'name': student_name,
+                                                'image': student_image
+                                            }
+                                            face_to_student_map[face_id] = student_id
+                                            print(f"Detected student_id: {student_id} Name: {student_name}")
+                                            print(student_image)
+                                            matched_faces.append(person_info['Item']['RekognitionId']['S'])
+                                            status = "Student matched"
+                                            print(status)
+                                            cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+                                            
+                                            # Save the new face encoding and ID
+                                            known_face_encodings.append(face_encoding)
+                                            known_face_ids.append(face_id_from_rekognition)
+                        except rekognition.exceptions.InvalidParameterException as e:
+                            # Handle cases where Rekognition throws InvalidParameterException
+                            print("InvalidParameterException:", e)
+                            status = "Invalid face image"
+                            cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+                        except Exception as e:
+                            # Handle other potential exceptions
+                            print("Error calling Rekognition:", e)
+                            status = "Error with Rekognition"
+                            cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+            else:
+                face_timestamps[face_id] = current_time
 
 
 
