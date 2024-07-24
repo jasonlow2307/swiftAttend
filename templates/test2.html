@@ -3,32 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Camera Access</title>
+    <title>Live Camera Feed</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            color: #003572;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #camera-feed-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        #video {
+            width: 80%;
+            max-width: 800px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #studentsTableContainer {
+            display: none;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #003572;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        img {
+            max-width: 200px;
+            height: auto;
+            border-radius: 5px;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #003572;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            color: #001d44;
+        }
+        
+        #status {
+            color: #003572;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        
+        #endSessionButton, #showAttendanceButton {
+            background-color: #003572;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #endSessionButton:hover, #showAttendanceButton:hover {
+            background-color: #001d44;
+        }
+    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.3/socket.io.min.js"></script>
 </head>
 <body>
-    <h1>Camera Access</h1>
-    <video id="video" width="640" height="480" autoplay></video>
+    <div id="camera-feed-container">
+        <h1>Live Camera Feed</h1>
+        <video id="video" width="640" height="480" autoplay></video>
+        <div id="status">Status: Loading...</div>
+        <div id="studentsTableContainer">
+            <h2>Detected Students</h2>
+            <table id="studentsTable">
+                <tr>
+                    <th>Image</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                </tr>
+            </table>
+        </div>
+        <button id="endSessionButton" onclick="endSession()">End Session</button>
+        <button id="showAttendanceButton" style="display: none;" onclick="showAttendance()">Show Attendance</button>
+        <a id="homeButton" href="/">Home</a>
+    </div>
+
     <script>
         const video = document.getElementById('video');
         const socket = io.connect('http://' + document.domain + ':' + location.port);
 
-        // Access the camera
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
+        // Handle incoming video frames
+        socket.on('video_frame', (data) => {
+            const image = new Image();
+            image.src = 'data:image/jpeg;base64,' + data.frame;
+            image.onload = () => {
+                // Create a canvas to draw the image
                 const canvas = document.createElement('canvas');
+                canvas.width = video.width;
+                canvas.height = video.height;
                 const context = canvas.getContext('2d');
+                context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                // Update the video element with the canvas data
+                video.srcObject = null;
+                video.src = canvas.toDataURL('image/jpeg');
+            };
+        });
 
-                setInterval(() => {
-                    context.drawImage(video, 0, 0, 640, 480);
-                    const data = canvas.toDataURL('image/jpeg');
-                    socket.emit('video_frame', data);
-                }, 100);  // Send frame every 100 ms
-            })
-            .catch(err => {
-                console.error("Error accessing the camera: " + err);
+        function fetchDetectedStudents() {
+            fetch('/detected_students')
+                .then(response => response.json())
+                .then(data => {
+                    let table = document.getElementById("studentsTable");
+                    let tableContainer = document.getElementById("studentsTableContainer");
+                    let statusElement = document.getElementById("status");
+
+                    table.innerHTML = "<tr><th>Image</th><th>ID</th><th>Name</th></tr>";
+                    statusElement.innerText = `Status: ${data.status}`;
+                    
+                    if (Object.keys(data.detected_students).length === 0) {
+                        tableContainer.style.display = 'none';
+                    } else {
+                        tableContainer.style.display = 'block';
+                        for (let student_id in data.detected_students) {
+                            let student = data.detected_students[student_id];
+                            let row = table.insertRow();
+                            let cell1 = row.insertCell(0);
+                            let cell2 = row.insertCell(1);
+                            let cell3 = row.insertCell(2);
+                            cell1.innerHTML = `<img src="${student.image}" width="150">`;
+                            cell2.innerHTML = student_id;
+                            cell3.innerHTML = student.name;
+                        }
+                    }
+                });
+        }
+
+        function endSession() {
+            let showAttendanceButton = document.getElementById("showAttendanceButton");
+
+            showAttendanceButton.style.display = 'block';
+
+            // Stop the video feed
+            if (video.srcObject) {
+                let stream = video.srcObject;
+                let tracks = stream.getTracks();
+
+                tracks.forEach(track => track.stop());
+                video.srcObject = null;
+            }
+
+            document.getElementById("status").innerText = 'Session Ended';
+            document.getElementById("endSessionButton").style.display = 'none';
+
+            fetch('/detected_students')
+                .then(response => response.json())
+                .then(data => {
+                    let students = Object.keys(data.detected_students);
+                    fetch('/end_session', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ students: students }),
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        alert(result.message); // Display server response
+                    });
+                });
+        }
+
+        function showAttendance() {
+            fetch('/show_attendance')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("body").innerHTML = data;
             });
+        }
+
+        window.onload = function() {
+            fetchInterval = setInterval(fetchDetectedStudents, 3000); // Fetch detected students every 3 seconds
+        };
     </script>
 </body>
 </html>
