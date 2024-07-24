@@ -403,8 +403,6 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-import requests
-
 @blueprint.route('/')
 @login_required
 def index():
