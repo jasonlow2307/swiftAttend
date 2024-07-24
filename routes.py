@@ -190,10 +190,6 @@ def generate_frames():
 
     camera.release()
 
-@blueprint.route('/test')
-def test():
-    return render_template('test.html')
-
 @blueprint.route('/video_feed')
 def video_feed():
     # Video streaming route

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Access</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.3/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Camera Access</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <script>
+        const video = document.getElementById('video');
+        const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        // Access the camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+
+                setInterval(() => {
+                    context.drawImage(video, 0, 0, 640, 480);
+                    const data = canvas.toDataURL('image/jpeg');
+                    socket.emit('video_frame', data);
+                }, 100);  // Send frame every 100 ms
+            })
+            .catch(err => {
+                console.error("Error accessing the camera: " + err);
+            });
+    </script>
+</body>
+</html>
