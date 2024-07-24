@@ -7,11 +7,13 @@ WORKDIR /root/face_recognition
 # Copy your application code into the container
 COPY . /root/face_recognition
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+# Install necessary packages using yum
+RUN yum update -y && \
+    yum install -y \
+    mesa-libGL \
+    libGLU \
+    glib2 \
+    && yum clean all
 
 # Install any additional Python packages
 RUN pip install --upgrade pip && \
