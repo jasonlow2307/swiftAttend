@@ -124,7 +124,7 @@
         <h1>Create Class</h1>
         <form id="classForm" action="/create_form" method="POST">
             <label for="courseName">Course Name:</label>
-            <input type="text" id="courseName" name="courseName" required><br><br>
+            <input type="text" id="courseName" name="courseName" pattern="[A-Za-z0-9\s]+" required><br><br>
             
             <label for="courseName">Course Code:</label>
             <input type="text" id="courseCode" name="courseCode" required><br><br>
