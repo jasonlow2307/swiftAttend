@@ -6,6 +6,8 @@ import base64
 import cv2
 import numpy as np
 from auth import auth
+from main import main
+from browse import browse
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -34,7 +36,9 @@ def handle_frame(data):
 
 app.secret_key = 'secret'
 app.register_blueprint(blueprint)
+app.register_blueprint(main)
 app.register_blueprint(auth)
+app.register_blueprint(browse)
 
 app.jinja_env.filters['escapejs'] = escapejs
 

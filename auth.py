@@ -150,7 +150,7 @@ def login():
                 session['id'] = id
                 print("ID")
                 print(id)
-                return redirect(url_for('app.index'))
+                return redirect(url_for('main.index'))
             else:
                 error = response.get('ChallengeName', 'Authentication failed. Please check your email and password.')
                 return render_template('login.html', form=form, error=error)

@@ -17,7 +17,7 @@ def role_required(roles):
                 return render_template_string('''
                     <script>
                         alert("You do not have permission to access this page.");
-                        window.location.href = "{{ url_for('app.index') }}";
+                        window.location.href = "{{ url_for('main.index') }}";
                     </script>
                 ''')
             return f(*args, **kwargs)
