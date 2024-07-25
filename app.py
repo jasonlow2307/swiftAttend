@@ -1,13 +1,13 @@
 from flask import Flask, request, jsonify, send_from_directory, Response, render_template, session
-from routes import blueprint, process_frame
 import json
 from flask_socketio import SocketIO, emit
 import base64
 import cv2
 import numpy as np
-from auth import auth
-from main import main
-from browse import browse
+from routes.attendance import attendance, process_frame
+from routes.auth import auth
+from routes.main import main
+from routes.browse import browse
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -35,10 +35,10 @@ def handle_frame(data):
     emit('processed_frame', frame_bytes)
 
 app.secret_key = 'secret'
-app.register_blueprint(blueprint)
 app.register_blueprint(main)
 app.register_blueprint(auth)
 app.register_blueprint(browse)
+app.register_blueprint(attendance)
 
 app.jinja_env.filters['escapejs'] = escapejs
 

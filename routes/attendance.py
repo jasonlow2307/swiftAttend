@@ -1,11 +1,8 @@
 from functools import wraps
-import re
 from flask import Blueprint, redirect, render_template_string, send_from_directory, request, jsonify, render_template, url_for, session, Response
-import logging
 from datetime import datetime, timedelta, timezone
 import io
 from config import *
-from botocore.exceptions import ClientError
 from common import *
 import ast
 import random
@@ -18,13 +15,125 @@ import face_recognition
 from wrapper import *
 from functions import *
 
-blueprint = Blueprint('app', __name__)
+attendance = Blueprint('attendance', __name__)
 
 # Global variables
 initialized_date = ''
 initialized_course = ''
 initialized = False
 
+@attendance.route('/init')
+@role_required(['lecturer', 'admin'])
+def initialize():
+    courses = fetch_courses_from_dynamodb()
+    return render_template('initializeAttendance.html', courses=courses)
+
+@attendance.route('/check')
+@role_required(['lecturer', 'admin'])
+def check_attendance():
+    global initialized
+
+    if not initialized:
+        return render_template_string('''
+                <script>
+                    alert("You need to initialize the class first.");
+                    window.location.href = "{{ url_for('app.initialize') }}";
+                </script>
+            ''')
+
+    return send_from_directory('.', 'pages/checkingAttendance.html')
+
+@attendance.route('/ret')
+@login_required
+def retrieve():
+    courses = fetch_courses_from_dynamodb()
+    return render_template('retrieveAttendance.html', courses=courses)
+
+@attendance.route('/create')
+@role_required(['lecturer', 'admin'])
+def create_class():
+    students = fetch_users_from_dynamodb("students")
+    lecturers = fetch_users_from_dynamodb("lecturers")
+    for student in students:
+        student['StudentId'] = int(student['StudentId'])
+    for lecturer in lecturers:
+        lecturer['LecturerId'] = int(lecturer['LecturerId'])
+    return render_template('createClass.html', students=students, lecturers = lecturers)
+
+@attendance.route('/create_form', methods=['POST'])
+def create_class_record():
+    course_name = request.form['courseName']
+    course_code = request.form['courseCode']
+    day = request.form['day']
+    time = request.form['time']
+    # Getting list of students and lecturers in string 
+    selected_students = request.form.getlist('students')
+    selected_lecturer = request.form['lecturer']
+    # List to store converted students and lecrturer in proper dictionary format
+    selected_students_dic = []
+    for student in selected_students:
+        student = ast.literal_eval(student)
+        student['StudentId'] = str(student['StudentId'])
+        selected_students_dic.append(student)
+
+    # Convert selected lecturer to dictionary
+    selected_lecturer = ast.literal_eval(selected_lecturer)
+    selected_lecturer['LecturerId'] = str(selected_lecturer['LecturerId'])
+    
+    # Join all student ids of selected students with | separator
+    selected_student_ids = "|".join(student['StudentId'] for student in selected_students_dic)
+
+    item = {
+        'CourseCode': {'S': course_code},
+        'CourseName': {'S': course_name},
+        'Day': {'S': day},
+        'Time': {'S': time},
+        'Students': {'S': selected_student_ids},
+        'Lecturer': {'S': selected_lecturer['LecturerId']}
+    }
+        
+    dynamodb.put_item(
+        TableName= DYNAMODB_CLASSES_TABLE_NAME,
+        Item=item
+    )
+    
+    return jsonify({'success': True, 'message': 'Class created successfully!'}), 200
+
+@attendance.route('/init_form', methods=['POST'])
+def initialize_class_record():
+    global initialized_date
+    global initialized_course
+    global initialized
+
+    date = request.form['date']
+    selected_course = request.form['course']
+    selected_course = ast.literal_eval(selected_course)
+
+    date_and_time = datetime.strptime(date + ' ' + selected_course['Time'], '%Y-%m-%d %H:%M')
+    initialized_date = str(date_and_time)
+    initialized_course = selected_course['CourseCode']
+    initialized = True                           
+
+    student_ids = selected_course['Students'].split('|')
+
+    matched_students = fetch_users_from_dynamodb("students", student_ids)
+
+    # Calculate the TTL timestamp (30 minutes from now)
+    ttl_timestamp = int((datetime.now(timezone.utc) + timedelta(minutes=1)).timestamp())
+
+    class_record = {
+        'Course': selected_course['CourseCode'],
+        'StartTime': date_and_time,
+        'Students': matched_students,
+        'ExpirationTime': ttl_timestamp  # Add TTL attribute
+    }
+    
+    save_class_record(class_record)
+
+    return jsonify({'success': True, 'message': 'Class initialized successfully!'}), 200
+
+
+# LIVE ATTENDANCE MODE
 # To store face detection timestamps and student IDs
 face_timestamps = {}
 face_to_student_map = {}
@@ -168,14 +277,14 @@ def process_frame(frame):
 
     return frame
 
-@blueprint.route('/detected_students')
+@attendance.route('/detected_students')
 def get_detected_students():
     return jsonify({
         'detected_students': detected_students,
         'status': status
     })
 
-@blueprint.route('/live')
+@attendance.route('/live')
 def live():
     global initialized
     if not initialized:
@@ -187,9 +296,7 @@ def live():
         ''')
     return render_template('live.html')
     
-
-
-@blueprint.route('/end_session', methods=['POST'])
+@attendance.route('/end_session', methods=['POST'])
 def end_session():
     data = request.get_json()
     students = data.get('students', [])
@@ -198,7 +305,7 @@ def end_session():
         print(f"Attendance updated for {student_id}")
     return jsonify({'success': True, 'message': 'Attendance updated successfully!'}), 200
 
-@blueprint.route('/show_attendance', methods=['GET'])
+@attendance.route('/show_attendance', methods=['GET'])
 def show_attendance():
     attendance_records = []
     detected_student_id = detected_students.keys()
@@ -227,226 +334,8 @@ def show_attendance():
         })
     return render_template('checked_attendance.html', attendance_records=attendance_records)
 
-
-
-
-@blueprint.route('/courses')
-@login_required
-def list_classes():
-    role = session.get('role')
-    print(role)
-    if role == "lecturer" or role == "admin":
-        courses = fetch_courses_from_dynamodb()
-    else:
-        courses = fetch_courses_from_dynamodb(student_id=session.get('id'))
-    
-    for course in courses:
-        course['StudentCount'] = len(course['Students'].split('|'))
-
-        course_students = fetch_users_from_dynamodb("students", course['Students'].split('|'))
-        course_lecturer = fetch_users_from_dynamodb("lecturers", [course['Lecturer']])[0]
-        
-        # Convert course lecturer's name to string
-        course['Lecturer'] = course_lecturer
-        course_lecturer['FullName'] = course_lecturer['FullName']['S']
-        
-        # Extract LecturerId as string
-        lecturer_id = course_lecturer['LecturerId']['S']
-        image_key = 'index/' + lecturer_id
-        course['Lecturer']['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
-
-        students = []
-        for item in course_students:
-            student = {
-                'FullName': item.get('FullName', {}).get('S'),
-                'StudentId': item.get('StudentId', {}).get('S')
-            }
-            students.append(student)
-
-        course['Lecturer'] = course_lecturer
-        course['Students'] = students
-
-        for student in course['Students']:
-            student_id = student['StudentId']
-            image_key = 'index/' + student_id
-            student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
-
-        all_students = fetch_users_from_dynamodb("students")
-        for student in all_students:
-            student_id = student['StudentId']
-            image_key = 'index/' + student_id
-            student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
-
-        course_students_ids = [int(student['StudentId']['S']) for student in course_students]
-        new_students = []
-        for student in all_students:
-            for student_id in course_students_ids:
-                if student['StudentId'] != str(student_id):
-                    new_students.append(student)
-    
-        course['NewStudents'] = new_students
-    
-    if role == "lecturer" or role == "admin":
-        return render_template('courses_lecturer.html', courses=courses, all_students=all_students)
-    else:
-        return render_template('courses_student.html', courses=courses)
-
-# For adding students to course
-@blueprint.route('/add_student', methods=['POST'])
-def add_student():
-    data = request.get_json()
-    student_id = data['studentId']
-    course_code = data['courseCode']
-
-    print(student_id)
-
-    edit_student_in_course(student_id, course_code, True)
-    return jsonify({'success': True, 'message': 'Student added successfully!'}), 200
-
-# For removing students from course
-@blueprint.route('/remove_student', methods=['POST'])
-def remove_student():
-    data = request.get_json()
-    student_id = data['studentId']
-    course_code = data['courseCode']
-
-    print(student_id)
-
-    edit_student_in_course(student_id, course_code, False)
-
-    return jsonify({'success': True, 'message': 'Student removed successfully!'}), 200
-
-@blueprint.route('/init')
-@role_required(['lecturer', 'admin'])
-def initialize():
-    courses = fetch_courses_from_dynamodb()
-    return render_template('initializeAttendance.html', courses=courses)
-
-@blueprint.route('/check')
-@role_required(['lecturer', 'admin'])
-def check_attendance():
-    global initialized
-
-    if not initialized:
-        return render_template_string('''
-                <script>
-                    alert("You need to initialize the class first.");
-                    window.location.href = "{{ url_for('app.initialize') }}";
-                </script>
-            ''')
-
-    return send_from_directory('.', 'pages/checkingAttendance.html')
-
-@blueprint.route('/ret')
-@login_required
-def retrieve():
-    courses = fetch_courses_from_dynamodb()
-    return render_template('retrieveAttendance.html', courses=courses)
-
-@blueprint.route('/create')
-@role_required(['lecturer', 'admin'])
-def create_class():
-    students = fetch_users_from_dynamodb("students")
-    lecturers = fetch_users_from_dynamodb("lecturers")
-    for student in students:
-        student['StudentId'] = int(student['StudentId'])
-    for lecturer in lecturers:
-        lecturer['LecturerId'] = int(lecturer['LecturerId'])
-    return render_template('createClass.html', students=students, lecturers = lecturers)
-
-@blueprint.route('/create_form', methods=['POST'])
-def create_class_record():
-    course_name = request.form['courseName']
-    course_code = request.form['courseCode']
-    day = request.form['day']
-    time = request.form['time']
-    # Getting list of students and lecturers in string 
-    selected_students = request.form.getlist('students')
-    selected_lecturer = request.form['lecturer']
-    # List to store converted students and lecrturer in proper dictionary format
-    selected_students_dic = []
-    for student in selected_students:
-        student = ast.literal_eval(student)
-        student['StudentId'] = str(student['StudentId'])
-        selected_students_dic.append(student)
-
-    # Convert selected lecturer to dictionary
-    selected_lecturer = ast.literal_eval(selected_lecturer)
-    selected_lecturer['LecturerId'] = str(selected_lecturer['LecturerId'])
-    
-    # Join all student ids of selected students with | separator
-    selected_student_ids = "|".join(student['StudentId'] for student in selected_students_dic)
-
-    item = {
-        'CourseCode': {'S': course_code},
-        'CourseName': {'S': course_name},
-        'Day': {'S': day},
-        'Time': {'S': time},
-        'Students': {'S': selected_student_ids},
-        'Lecturer': {'S': selected_lecturer['LecturerId']}
-    }
-        
-    dynamodb.put_item(
-        TableName= DYNAMODB_CLASSES_TABLE_NAME,
-        Item=item
-    )
-    
-    return jsonify({'success': True, 'message': 'Class created successfully!'}), 200
-
-@blueprint.route('/init_form', methods=['POST'])
-def initialize_class_record():
-    global initialized_date
-    global initialized_course
-    global initialized
-
-    date = request.form['date']
-    selected_course = request.form['course']
-    selected_course = ast.literal_eval(selected_course)
-
-    date_and_time = datetime.strptime(date + ' ' + selected_course['Time'], '%Y-%m-%d %H:%M')
-    initialized_date = str(date_and_time)
-    initialized_course = selected_course['CourseCode']
-    initialized = True                           
-
-    student_ids = selected_course['Students'].split('|')
-
-    matched_students = fetch_users_from_dynamodb("students", student_ids)
-
-    # Calculate the TTL timestamp (30 minutes from now)
-    ttl_timestamp = int((datetime.now(timezone.utc) + timedelta(minutes=1)).timestamp())
-
-    class_record = {
-        'Course': selected_course['CourseCode'],
-        'StartTime': date_and_time,
-        'Students': matched_students,
-        'ExpirationTime': ttl_timestamp  # Add TTL attribute
-    }
-    
-    save_class_record(class_record)
-
-    return jsonify({'success': True, 'message': 'Class initialized successfully!'}), 200
-
-
-
-def generate_random_color():
-    return tuple(random.randint(0, 255) for _ in range(3))
-
-def is_focused(emotion, eye_direction):
-    if emotion == 'UNKNOWN' or eye_direction['Yaw'] == 'UNKNOWN' or eye_direction['Pitch'] == 'UNKNOWN':
-        return False
-    
-    print("EMOTION: ", emotion)
-    print("EYE DIRECTION: ", eye_direction)
-    focused_emotions = ["CALM", "HAPPY"]
-    yaw_threshold = 16  # Yaw angle within -15 to +15 degrees
-    pitch_threshold = 25  # Pitch angle within -15 to +15 degrees
-    
-    is_emotion_focused = emotion in focused_emotions
-    is_looking_straight = abs(eye_direction['Yaw']) <= yaw_threshold and abs(eye_direction['Pitch']) <= pitch_threshold
-    
-    return is_emotion_focused and is_looking_straight
-
-@blueprint.route('/check_form', methods=['POST'])
+# UPLOAD AND CAPTURE MODE
+@attendance.route('/check_form', methods=['POST'])
 def check_attendance_record():
     # Start timer
     start_time = time.time()
@@ -620,7 +509,7 @@ def check_attendance_record():
     return render_template('checked_attendance.html', attendance_records=attendance_records, error=error, uploaded_image=modified_image_data_url)
 
 
-@blueprint.route('/ret_form', methods=['POST'])
+@attendance.route('/ret_form', methods=['POST'])
 def retrieve_attendance_records():
     start_time = time.time()
 
@@ -653,3 +542,21 @@ def retrieve_attendance_records():
     
     return render_template('attendance_records.html', attendance_records=student_records)
 
+######################### HELPER FUNCTION #########################
+def generate_random_color():
+    return tuple(random.randint(0, 255) for _ in range(3))
+
+def is_focused(emotion, eye_direction):
+    if emotion == 'UNKNOWN' or eye_direction['Yaw'] == 'UNKNOWN' or eye_direction['Pitch'] == 'UNKNOWN':
+        return False
+    
+    print("EMOTION: ", emotion)
+    print("EYE DIRECTION: ", eye_direction)
+    focused_emotions = ["CALM", "HAPPY"]
+    yaw_threshold = 16  # Yaw angle within -15 to +15 degrees
+    pitch_threshold = 25  # Pitch angle within -15 to +15 degrees
+    
+    is_emotion_focused = emotion in focused_emotions
+    is_looking_straight = abs(eye_direction['Yaw']) <= yaw_threshold and abs(eye_direction['Pitch']) <= pitch_threshold
+    
+    return is_emotion_focused and is_looking_straight
