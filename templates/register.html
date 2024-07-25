@@ -165,7 +165,7 @@
             {{ error }}
         </div>
         {% endif %}
-        <form method="POST" action="{{ url_for('app.register') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('auth.register') }}" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
             <p>
                 {{ form.email.label }}<br>
@@ -214,7 +214,7 @@
         </form>
         <p style="display: none;">{{ error }}</p>
         <p>Already have an account?</p>
-        <a href="{{ url_for('app.login') }}"><p>Log In</p></a>
+        <a href="{{ url_for('auth.login') }}"><p>Log In</p></a>
     </div>
     <script>
         // Function to preview image before upload
