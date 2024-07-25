@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <link rel="icon" type="image/png" href="../static/logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Swift Attend Dashboard</title>
@@ -178,6 +179,236 @@
         .courses{
             margin-bottom: 5px;
         }
+
+                /* Chat icon style */
+                .chat-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000; /* Ensure icon stays above other content */
+            cursor: pointer;
+        }
+
+        .chat-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+            flex: 1;
+            text-align: center;
+        }
+
+        .chat-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 35%;
+            max-height: 500px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            display: none;
+            z-index: 1000;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .chat-popup.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .chat-popup.closed {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+
+        .chat-popup-header {
+            background-color: #0056b3; /* Updated color */
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .close-btn:hover {
+            background-color: #004884; /* Darker hover color */
+        }
+
+
+        .chat-popup-body {
+            padding: 1rem;
+            height: calc(100% - 120px); /* Adjust height */
+            overflow-y: auto;
+        }
+
+        .chat-popup-footer {
+            padding: 1rem;
+            border-top: 1px solid #ccc;
+            text-align: center;
+            display: flex; /* Ensure items are displayed in a row */
+            align-items: center; /* Center items vertically */
+            justify-content: space-between;
+        }
+
+        .chat-popup-footer input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .chat-popup-footer button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            background-color: #003572;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .chat-popup-footer button:hover {
+            background-color: #002b4c;
+        }
+
+
+        .chat-popup-body {
+            padding: 1rem;
+            height: 300px;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 768px) {
+            .box {
+                flex: 1 1 100%;
+            }
+
+            .chat-popup {
+                width: 90%;
+                right: 5%;
+            }
+        }
+
+        .message {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+            align-items: flex-end;
+        }
+
+        .message .content {
+            background-color: #e0f7fa;
+            color: #00796b;
+            border-radius: 15px;
+            padding: 10px 15px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message.bot .content {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .typing-indicator {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 10px;
+            align-items: flex-end;
+        }
+
+        .typing-indicator .content {
+            background-color: #e0e0e0;
+            color: #333;
+            border-radius: 15px;
+            padding: 10px 15px;
+            max-width: 70%;
+            word-wrap: break-word;
+            font-style: italic;
+            display: inline-block;
+        }
+
+        .typing-indicator .content::after {
+            content: '';
+            display: inline-block;
+            animation: ellipsis 1.25s infinite;
+        }
+
+        @keyframes ellipsis {
+            0% {
+                content: '';
+            }
+            33% {
+                content: '.';
+            }
+            66% {
+                content: '..';
+            }
+            100% {
+                content: '...';
+            }
+        }
+
+        .suggested-options {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f0f0; /* Light background */
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .suggested-option {
+            margin-bottom: 10px;
+        }
+
+        .suggested-option button {
+            background-color: #003572; /* Dark blue */
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s, transform 0.2s;
+            box-sizing: border-box;
+        }
+
+        .suggested-option button:hover {
+            background-color: #001d44; /* Darker blue on hover */
+            transform: translateY(-2px); /* Lift effect */
+        }
+
     </style>
 </head>
 <body>
@@ -236,6 +467,38 @@
             {% endfor %}
         </div>
     </main>
+
+    <!-- Chat icon -->
+    <div class="chat-icon" onclick="toggleChat()">
+        <img src="../static/logo.png" alt="Chat Icon" width="50">
+    </div>
+
+    <!-- Chat popup -->
+    <div class="chat-popup" id="chatPopup">
+        <div class="chat-popup-header">
+            <span class="chat-title">Swift Bot</span>
+            <button class="close-btn" onclick="toggleChat()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="chat-popup-body" id="chatBody">
+            <!-- Chat messages go here -->
+            <div class="suggested-options" id="suggestedOptions">
+                <div class="suggested-option">
+                    <button onclick="sendMessage('List enrolled courses')">List enrolled courses</button>
+                </div>
+                <div class="suggested-option">
+                    <button onclick="sendMessage('Get attendance summary')">Get attendance summary</button>
+                </div>
+                <div class="suggested-option">
+                    <button onclick="sendMessage('Get course details')">Get course details</button>
+                </div>
+            </div>
+        </div>
+        <div class="chat-popup-footer">
+            <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="checkEnter(event)">
+            <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>  
+
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const ctx1 = document.getElementById('studentsChart').getContext('2d');
@@ -300,6 +563,74 @@
         function toggleMenu() {
             const navLinks = document.getElementById("nav-links");
             navLinks.classList.toggle("show");
+        }
+
+        function toggleChat() {
+            const chatPopup = document.getElementById("chatPopup");
+            if (chatPopup.classList.contains("open")) {
+                chatPopup.classList.remove("open");
+                chatPopup.classList.add("closed");
+                setTimeout(() => {
+                    chatPopup.style.display = "none";
+                }, 500); // Match the transition duration
+            } else {
+                chatPopup.style.display = "block";
+                setTimeout(() => {
+                    chatPopup.classList.remove("closed");
+                    chatPopup.classList.add("open");
+                }, 10); // Small delay to trigger transition
+            }
+        }
+
+
+        function sendMessage(message) {
+            if (message) {
+                document.getElementById('chatInput').value = message;
+            }
+            var userInput = document.getElementById('chatInput').value;
+            if (userInput.trim() === "") return;
+
+            // Display user message
+            var chatbox = document.getElementById('chatBody');
+            chatbox.innerHTML += '<div class="message user"><div class="content">' + userInput + '</div></div>';
+            chatbox.scrollTop = chatbox.scrollHeight; // Scroll to the bottom
+            document.getElementById('chatInput').value = "";
+
+            // Remove suggested options after user sends a message
+            var suggestedOptions = document.getElementById('suggestedOptions');
+            suggestedOptions.style.display = 'none';
+
+            fetch('/bot_form', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var botMessages = data.messages;
+                botMessages.forEach(message => {
+                    // Replace newline characters with HTML line break tags
+                    var botMessage = message.replace(/\\n/g, '<br>');
+                    chatbox.innerHTML += '<div class="message bot"><div class="content">' + botMessage + '</div></div>';
+                });
+                chatbox.scrollTop = chatbox.scrollHeight; // Scroll to the bottom
+
+                // Show suggested options again if needed
+                if (botMessages.length === 0) {
+                    suggestedOptions.style.display = 'flex';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function checkEnter(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
         }
     </script>
 </body>
