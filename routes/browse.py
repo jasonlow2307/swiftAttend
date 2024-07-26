@@ -1,3 +1,4 @@
+import os
 from flask import Blueprint, jsonify, render_template, request
 from common import *
 from config import *
@@ -147,3 +148,4 @@ def profile():
             course['CourseName'] = f"{random_emoji} {course['CourseName']}"
 
     return render_template('profile.html', profile=profile, courses=courses)
+
