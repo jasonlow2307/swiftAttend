@@ -67,11 +67,11 @@ def fetch_courses_from_dynamodb(course_code=None, lecturer_id=None, student_id=N
 # For /create and /create_form
 # Return all students from registration table
 def fetch_users_from_dynamodb(target, user_ids=None):
-    if target == "students":
+    if target == "students" or target == "student":
         table_name = DYNAMODB_STUDENT_TABLE_NAME
         id_key = 'StudentId'
         name_key = 'FullName'
-    elif target == "lecturers":
+    elif target == "lecturers" or target == "lecturer":
         table_name = DYNAMODB_LECTURER_TABLE_NAME
         id_key = 'LecturerId'
         name_key = 'FullName'

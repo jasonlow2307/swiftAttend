@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .banner {
+            background-color: #003572;
+            color: #fff;
+            position: relative;
+            padding: 50px 20px;
+            text-align: center;
+        }
+        .banner img.profile-picture {
+            position: absolute;
+            bottom: -100px;
+            left: 20px;
+            border: 5px solid #fff;
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+        }
+        .content {
+            padding: 0px 20px 20px 30px;
+            text-align: left;
+        }
+        .info {
+            margin: 10px 0;
+            margin-left: 210px;
+            margin-top: 30px;
+            color: #003572;
+        }
+        .content p {
+            margin: 5px 0;
+            line-height: 1.6;
+        }
+        .courses {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .course-box {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            width: calc(50% - 20px); /* 2 columns */
+            box-sizing: border-box;
+        }
+        .course-box:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 20px rgba(0, 0, 0, 0.2);
+        }
+        .course-box h3 {
+            margin-top: 0;
+        }
+
+        hr{
+            margin-left: 25px;
+            margin-right: 25px;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="banner">
+            <img src="{{ profile.image }}" alt="Profile Picture" class="profile-picture">
+        </div>
+        <div class="info">
+            <h1>{{ profile.FullName }}</h1>
+            <h2>{{ profile.LecturerId | default(profile.StudentId) }}</h2>
+        </div>
+        <hr>
+        <div class="content">
+            <h2>Courses</h2>
+            <div class="courses">
+                {% for course in courses %}
+                <div class="course-box">
+                    <h3>{{ course.CourseName }}</h3>
+                    <p><strong>Course Code:</strong> {{ course.CourseCode }}</p>
+                    <p><strong>Day:</strong> {{ course.Day }}</p>
+                    <p><strong>Time:</strong> {{ course.Time }}</p>
+                    <p><strong>Lecturer:</strong> {{ course.Lecturer }}</p>
+                    <p><strong>Student Count:</strong> {{ course.StudentCount }}</p>
+                    {% if course.AttendanceRate %}
+                        <p><strong>Attendance Rate:</strong> {{ course.AttendanceRate }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

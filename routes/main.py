@@ -83,3 +83,4 @@ def bot_send():
         bot_messages.append("Sorry, I didn't understand that.")
 
     return jsonify({'messages': bot_messages})
+

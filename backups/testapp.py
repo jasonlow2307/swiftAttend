@@ -7,7 +7,7 @@ import face_recognition
 import time
 from common import *
 from config import *
-from routes import generate_signed_url
+from attendance import generate_signed_url
 
 app = Flask(__name__)
 socketio = SocketIO(app)

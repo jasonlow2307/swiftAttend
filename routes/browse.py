@@ -3,6 +3,7 @@ from common import *
 from config import *
 from wrapper import *
 from functions import *
+import random
 
 browse = Blueprint('browse', __name__)
 
@@ -91,3 +92,58 @@ def remove_student():
     edit_student_in_course(student_id, course_code, False)
 
     return jsonify({'success': True, 'message': 'Student removed successfully!'}), 200
+
+emojis = [
+    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '😊', '😇', '🙂', '🙃', '😉', '😌',
+    '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😜', '🤪', '😝', '🤑', '🤗', '🤭',
+    '🤓', '😎', '🥳', '😺', '😸', '😹', '😻', '😽', '🙀', '🤖', '🎃', '👻', '🎉',
+    '🎊', '🎁', '🎈', '🎄', '🎇', '🌟', '🌞', '🌝', '🌸', '🌺', '🌼', '🌷', '🍀'
+]
+
+# Profile page
+@browse.route('/profile', methods=['GET'])
+def profile():
+    profile = fetch_users_from_dynamodb(session.get('role'), [session.get('id')])[0]
+    image = generate_signed_url(S3_BUCKET_NAME, 'index/' + session.get('id'))
+    profile['FullName'] = profile['FullName']['S']
+    if 'LecturerId' in profile:
+        profile['LecturerId'] = profile['LecturerId']['S']
+    else:
+        profile['StudentId'] = profile['StudentId']['S']
+    profile['image'] = image
+    # Find classes enrolled in and attendance rate
+    if session.get('role') == 'student':
+        courses = fetch_courses_from_dynamodb(student_id=session.get('id'))
+        for course in courses:
+            present_counter = 0
+            total_records = 0
+            attendance_records = retrieve_student_records(course=course['CourseCode'])
+            if len(attendance_records) != 0:
+                for record in attendance_records:
+                    if str(record['StudentId']) == session.get('id'):
+                        total_records += 1
+                        if record['Attendance'] == 'PRESENT':
+                            present_counter += 1
+                attendance_rate = round(present_counter / total_records * 100, 2)
+                course['AttendanceRate'] = attendance_rate
+            else:
+                course['AttendanceRate'] = "NA"
+            # Setting Lecturer Name
+            lecturer = fetch_users_from_dynamodb("lecturer", user_ids=[course['Lecturer']])[0]
+            course['Lecturer'] = f"{lecturer['FullName']['S']} ({course['Lecturer']})"
+
+            random_emoji = random.choice(emojis)
+            course['CourseName'] = f"{random_emoji} {course['CourseName']}"
+
+            course['StudentCount'] = course['Students'].count('|') + 1
+        print(courses)
+    else:
+        courses = fetch_courses_from_dynamodb(lecturer_id=session.get('id'))
+        for course in courses:
+            course['Lecturer'] = f"{profile['FullName']} ({course['Lecturer']})"
+            course['StudentCount'] = course['Students'].count('|') + 1
+            # Add a random emoji to the course name
+            random_emoji = random.choice(emojis)
+            course['CourseName'] = f"{random_emoji} {course['CourseName']}"
+
+    return render_template('profile.html', profile=profile, courses=courses)
