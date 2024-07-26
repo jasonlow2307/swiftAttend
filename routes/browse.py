@@ -171,8 +171,13 @@ def set_banner():
     student_id = session.get('id')
     selected_banner = request.form['selected_banner']
     
+    if session['role'] == "lecturer":
+        table_name = DYNAMODB_LECTURER_TABLE_NAME
+    else:
+        table_name = DYNAMODB_STUDENT_TABLE_NAME
+
     dynamodb.update_item(
-        TableName='swiftAttendStudents',
+        TableName = table_name,
         Key={'RekognitionId': {'S': session['RekognitionId']}},
         UpdateExpression='SET BannerImg = :val',
         ExpressionAttributeValues={':val': {'S': selected_banner}}

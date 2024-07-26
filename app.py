@@ -42,5 +42,23 @@ app.register_blueprint(attendance)
 
 app.jinja_env.filters['escapejs'] = escapejs
 
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+    '''
+    # Scan the table to get all items
+    response = dynamodb.scan(
+        TableName='swiftAttendStudents',
+        ProjectionExpression='RekognitionId'
+    )
+
+    # Update each item to set BannerImg to 'NA'
+    for item in response['Items']:
+        rekognition_id = item['RekognitionId']['S']
+        dynamodb.update_item(
+            TableName='swiftAttendStudents',
+            Key={'RekognitionId': {'S': rekognition_id}},
+            UpdateExpression='SET BannerImg = :val',
+            ExpressionAttributeValues={':val': {'S': 'NA'}}
+        )
+    '''
