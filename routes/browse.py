@@ -107,11 +107,18 @@ def profile():
     profile = fetch_users_from_dynamodb(session.get('role'), [session.get('id')])[0]
     image = generate_signed_url(S3_BUCKET_NAME, 'index/' + session.get('id'))
     profile['FullName'] = profile['FullName']['S']
+    profile['BannerImg'] = profile['BannerImg']['S']
+    
+    # Save RekognitionId to session
+    session['RekognitionId'] = profile['RekognitionId']['S']
+    print(profile)
+
     if 'LecturerId' in profile:
         profile['LecturerId'] = profile['LecturerId']['S']
     else:
         profile['StudentId'] = profile['StudentId']['S']
     profile['image'] = image
+
     # Find classes enrolled in and attendance rate
     if session.get('role') == 'student':
         courses = fetch_courses_from_dynamodb(student_id=session.get('id'))
@@ -147,5 +154,29 @@ def profile():
             random_emoji = random.choice(emojis)
             course['CourseName'] = f"{random_emoji} {course['CourseName']}"
 
-    return render_template('profile.html', profile=profile, courses=courses)
+    banners = []
+    # Load banners
+    for filename in os.listdir('static/banners'):
+        if filename.endswith('.jpg') or filename.endswith('.png') or filename.endswith('.jpeg'):
+            banners.append('static/banners/' + filename)
+    
+    banners = random.sample(banners, 3)
+
+    print(banners)
+
+    return render_template('profile.html', profile=profile, courses=courses, banners=banners)
+
+@browse.route('/set_banner', methods=['POST'])
+def set_banner():
+    student_id = session.get('id')
+    selected_banner = request.form['selected_banner']
+    
+    dynamodb.update_item(
+        TableName='swiftAttendStudents',
+        Key={'RekognitionId': {'S': session['RekognitionId']}},
+        UpdateExpression='SET BannerImg = :val',
+        ExpressionAttributeValues={':val': {'S': selected_banner}}
+    )
+    return jsonify({'status': 'success', 'banner': selected_banner})
+
 

@@ -21,7 +21,6 @@
             overflow: hidden;
         }
         .banner {
-            background-image: url('https://th.bing.com/th/id/OIG1.isoReq_uiBoyO_toKmic?pid=ImgGn'); /* Replace with your image URL */
             background-size: cover; /* Ensure the image covers the entire banner area */
             background-position: center; /* Center the image */
             color: #fff;
@@ -75,22 +74,80 @@
             margin-top: 0;
         }
 
-        hr{
+        hr {
             margin-left: 25px;
             margin-right: 25px;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+
+        .modal h2 {
+            color: #003572;
+            text-align: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            border-radius: 15px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .banner-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .banner-options img {
+            cursor: pointer;
+            width: 30%;
+            margin: 10px;
+            border-radius: 15px;
+        }
+        .banner-options img:hover {
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+        }
 
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="banner">
+        {% if profile.BannerImg == 'NA' %}
+            <div class="banner" style="background-image: url('/static/banners/music.jpeg');">
+        {% else %}
+            <div class="banner" style="background-image: url('{{ profile.BannerImg }}');">
+        {% endif %}
             <img src="{{ profile.image }}" alt="Profile Picture" class="profile-picture">
         </div>
         <div class="info">
             <h1>{{ profile.FullName }}</h1>
-            <h2>{{ profile.LecturerId | default(profile.StudentId) }}</h2>
+            <h2>{{ profile.StudentId }}</h2>
         </div>
         <hr>
         <div class="content">
@@ -110,8 +167,71 @@
                 </div>
                 {% endfor %}
             </div>
+        </div>
+    </div>
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Select a Banner Image</h2>
+            <div class="banner-options">
+                {% for banner in banners %}
+                    <img src="{{ banner }}" alt="Banner Option" class="banner-option" data-banner="{{ banner }}">
+                {% endfor %}
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var bannerImg = '{{ profile.BannerImg }}';
+            if (bannerImg === 'NA') {
+                openModal()
+            }
+        });
+
+        function openModal() {
+            var modal = document.getElementById("myModal");
+            var span = document.getElementsByClassName("close")[0];
+            var bannerOptions = document.getElementsByClassName("banner-option");
+
+            modal.style.display = "block";
+
+            span.onclick = function() {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+
+            for (var i = 0; i < bannerOptions.length; i++) {
+                bannerOptions[i].onclick = function () {
+                    var selectedBanner = this.getAttribute('data-banner');
+                    var studentId = '{{ profile.StudentId }}';
+                    fetch('/set_banner', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                            'student_id': studentId,
+                            'selected_banner': selectedBanner
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            document.querySelector('.banner').style.backgroundImage = 'url(' + this.src + ')';
+                            modal.style.display = "none";
+                        }
+                    });
+                }
+            }
+        }        
+    </script>
 </body>
 </html>
