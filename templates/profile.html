@@ -136,6 +136,25 @@
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
         }
 
+        #more-banners {
+            margin-top: 10px;
+            padding: 10px 16px;
+            background-color: #003572; /* Dark blue background */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* Smooth transition for background color */
+            align-self: center;
+            margin: 0 auto;
+            display: block;
+            margin-top: 10px
+        }
+
+        #more-banners:hover {
+            background-color: #6699CC; /* Light blue background on hover */
+        }
+
     </style>
 </head>
 <body>
@@ -187,6 +206,7 @@
     </div>
 
     <script>
+        let current_banners = JSON.stringify({{ banners | tojson }});;
         document.addEventListener('DOMContentLoaded', function () {
             var bannerImg = '{{ profile.BannerImg }}';
             if (bannerImg === 'NA') {
@@ -239,7 +259,7 @@
         }
 
         function fetchMoreBanners(){
-            var current_banners = '{{ banners | tojson }}';
+            console.log(current_banners);
             fetch('/get_more_banners', {
                 method: 'POST',
                 headers: {
@@ -253,6 +273,10 @@
             .then(data => {
                 var bannerOptionsContainer = document.getElementById('banner-options');
                 bannerOptionsContainer.innerHTML = ''; 
+
+                current_banners = JSON.stringify(data.banners); // Update current_banners with new banners and convert to string
+                console.log(current_banners);
+
                 data.banners.forEach(function (banner) {
                     var img = document.createElement('img');
                     img.src = banner;

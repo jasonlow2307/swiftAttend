@@ -197,7 +197,10 @@ def get_more_banners():
 
     print("BANNERS", current_banners_list)
 
-    random_banners = random.sample(new_banners, 3)
+    # Ensure new_banners has at least 3 unique objects
+    unique_banners = list(set(new_banners))
+
+    random_banners = random.sample(unique_banners, 3)
 
     print("RANDOM NEW BANNERS", random_banners)
     return jsonify({'banners': random_banners})
