@@ -5,6 +5,7 @@ from config import *
 from wrapper import *
 from functions import *
 import random
+import json
 
 browse = Blueprint('browse', __name__)
 
@@ -101,9 +102,12 @@ emojis = [
     '🎊', '🎁', '🎈', '🎄', '🎇', '🌟', '🌞', '🌝', '🌸', '🌺', '🌼', '🌷', '🍀'
 ]
 
+banners = []
+
 # Profile page
 @browse.route('/profile', methods=['GET'])
 def profile():
+    global banners
     profile = fetch_users_from_dynamodb(session.get('role'), [session.get('id')])[0]
     image = generate_signed_url(S3_BUCKET_NAME, 'index/' + session.get('id'))
     profile['FullName'] = profile['FullName']['S']
@@ -154,17 +158,16 @@ def profile():
             random_emoji = random.choice(emojis)
             course['CourseName'] = f"{random_emoji} {course['CourseName']}"
 
-    banners = []
     # Load banners
     for filename in os.listdir('static/banners'):
         if filename.endswith('.jpg') or filename.endswith('.png') or filename.endswith('.jpeg'):
             banners.append('static/banners/' + filename)
     
-    banners = random.sample(banners, 3)
+    random_banners = random.sample(banners, 3)
 
-    print(banners)
+    # TODO implement animation for more banners
 
-    return render_template('profile.html', profile=profile, courses=courses, banners=banners)
+    return render_template('profile.html', profile=profile, courses=courses, banners=random_banners)
 
 @browse.route('/set_banner', methods=['POST'])
 def set_banner():
@@ -183,5 +186,22 @@ def set_banner():
         ExpressionAttributeValues={':val': {'S': selected_banner}}
     )
     return jsonify({'status': 'success', 'banner': selected_banner})
+
+@browse.route('/get_more_banners', methods=['POST'])
+def get_more_banners():
+    global banners 
+    current_banners = request.form['current_banners']
+    current_banners_list = json.loads(current_banners)
+    
+    new_banners = [banner for banner in banners if banner not in current_banners_list]
+
+    print("BANNERS", current_banners_list)
+
+    random_banners = random.sample(new_banners, 3)
+
+    print("RANDOM NEW BANNERS", random_banners)
+    return jsonify({'banners': random_banners})
+
+
 
 

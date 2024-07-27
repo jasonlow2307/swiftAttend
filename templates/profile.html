@@ -177,11 +177,12 @@
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Select a Banner Image</h2>
-            <div class="banner-options">
+            <div class="banner-options" id="banner-options">
                 {% for banner in banners %}
                     <img src="{{ banner }}" alt="Banner Option" class="banner-option" data-banner="{{ banner }}">
                 {% endfor %}
             </div>
+            <button id="more-banners">More Banners</button>
         </div>
     </div>
 
@@ -233,7 +234,57 @@
                     });
                 }
             }
-        }        
+
+            document.getElementById('more-banners').onclick = fetchMoreBanners;
+        }
+
+        function fetchMoreBanners(){
+            var current_banners = '{{ banners | tojson }}';
+            fetch('/get_more_banners', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    'current_banners': current_banners
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var bannerOptionsContainer = document.getElementById('banner-options');
+                bannerOptionsContainer.innerHTML = ''; 
+                data.banners.forEach(function (banner) {
+                    var img = document.createElement('img');
+                    img.src = banner;
+                    img.alt = 'Banner Option';
+                    img.className = 'banner-option';
+                    img.setAttribute('data-banner', banner);
+                    bannerOptionsContainer.appendChild(img);
+
+                    img.onclick = function () {
+                        var selectedBanner = this.getAttribute('data-banner');
+                        var studentId = '{{ profile.StudentId }}';
+                        fetch('/set_banner', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: new URLSearchParams({
+                                'student_id': studentId,
+                                'selected_banner': selectedBanner
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                document.querySelector('.banner').style.backgroundImage = 'url(' + this.src + ')';
+                                document.getElementById("myModal").style.display = "none";
+                            }
+                        });
+                    }
+                });
+            });
+        }
     </script>
 </body>
 </html>

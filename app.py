@@ -42,6 +42,8 @@ app.register_blueprint(attendance)
 
 app.jinja_env.filters['escapejs'] = escapejs
 
+import boto3
+dynamodb = boto3.client('dynamodb')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
