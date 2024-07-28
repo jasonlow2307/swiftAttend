@@ -81,7 +81,25 @@
             margin-right: 25px;
         }
 
-        /* Modal Styles */
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .gradient-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(270deg, blue, purple, pink);
+            background-size: 600% 600%;
+            animation: gradientAnimation 5s ease infinite;
+            display: none;
+            z-index: 1000;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -94,6 +112,7 @@
             background-color: rgb(0,0,0);
             background-color: rgba(0,0,0,0.4);
             padding-top: 60px;
+            z-index: 1001;
         }
 
         .modal h2 {
@@ -125,6 +144,10 @@
             flex-wrap: wrap;
             gap: 20px;
             justify-content: center;
+            background: linear-gradient(270deg, blue, purple, pink);
+            background-size: 600% 600%;
+            animation: gradientAnimation 5s ease infinite;
+            border-radius: 15px;
         }
         .banner-options img {
             cursor: pointer;
@@ -158,6 +181,7 @@
     </style>
 </head>
 <body>
+    <div class="gradient-container" id="gradientContainer"></div>
     <div class="container">
         {% if profile.BannerImg == 'NA' %}
             <div class="banner" style="background-image: url('/static/banners/music.jpeg');">
@@ -198,7 +222,7 @@
             <h2>Select a Banner Image</h2>
             <div class="banner-options" id="banner-options">
                 {% for banner in banners %}
-                    <img src="{{ banner }}" alt="Banner Option" class="banner-option" data-banner="{{ banner }}">
+                    <img class="banner-option" data-banner="{{ banner }}">
                 {% endfor %}
             </div>
             <button id="more-banners">More Banners</button>
@@ -210,17 +234,30 @@
         document.addEventListener('DOMContentLoaded', function () {
             var bannerImg = '{{ profile.BannerImg }}';
             if (bannerImg === 'NA') {
-                openModal()
+                showGradientAnimation()
             }
         });
 
-        function openModal() {
+        function showGradientAnimation() {
             var modal = document.getElementById("myModal");
-            var span = document.getElementsByClassName("close")[0];
-            var bannerOptions = document.getElementsByClassName("banner-option");
+            var bannerOptions = document.getElementById('banner-options');
 
             modal.style.display = "block";
+            bannerOptions.style.display = "flex";
 
+            setTimeout(function() {
+                bannerOptions.style.animation = 'none';
+                bannerOptions.style.background = 'none';
+
+                var bannerImgElements = document.getElementsByClassName("banner-option");
+                for (var i = 0; i < bannerImgElements.length; i++) {
+                    var bannerSrc = bannerImgElements[i].getAttribute('data-banner');
+                    bannerImgElements[i].src = bannerSrc;
+                    bannerImgElements[i].style.display = 'block';
+                }
+            }, 5000); // Display gradient animation for 5 seconds
+
+            var span = document.getElementsByClassName("close")[0];
             span.onclick = function() {
                 modal.style.display = "none";
             }
@@ -231,8 +268,9 @@
                 }
             }
 
-            for (var i = 0; i < bannerOptions.length; i++) {
-                bannerOptions[i].onclick = function () {
+            var bannerImgElements = document.getElementsByClassName("banner-option");
+            for (var i = 0; i < bannerImgElements.length; i++) {
+                bannerImgElements[i].onclick = function () {
                     var selectedBanner = this.getAttribute('data-banner');
                     var studentId = '{{ profile.StudentId }}';
                     fetch('/set_banner', {

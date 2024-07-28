@@ -46,8 +46,6 @@ import boto3
 dynamodb = boto3.client('dynamodb')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
-    '''
     # Scan the table to get all items
     response = dynamodb.scan(
         TableName='swiftAttendStudents',
@@ -63,4 +61,8 @@ if __name__ == '__main__':
             UpdateExpression='SET BannerImg = :val',
             ExpressionAttributeValues={':val': {'S': 'NA'}}
         )
-    '''
+
+
+
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
