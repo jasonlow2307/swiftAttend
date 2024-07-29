@@ -60,6 +60,8 @@
             gap: 20px;
         }
         .course-box {
+            display: flex;
+            align-items: flex-start;
             background-color: #fff;
             padding: 20px;
             border-radius: 10px;
@@ -67,6 +69,15 @@
             transition: transform 0.3s, box-shadow 0.3s;
             width: calc(50% - 20px); /* 2 columns */
             box-sizing: border-box;
+        }
+        .course-info {
+            flex: 1;
+        }
+        .chart-container {
+            width: 125px; /* Adjust width as needed */
+            height: 150px; /* Adjust height as needed */
+            margin-left: 20px;
+            
         }
         .course-box:hover {
             transform: translateY(-10px);
@@ -198,17 +209,22 @@
             <div class="courses">
                 {% for course in courses %}
                 <div class="course-box">
-                    <h3>{{ course.CourseName }}</h3>
-                    <p><strong>Course Code:</strong> {{ course.CourseCode }}</p>
-                    <p><strong>Day:</strong> {{ course.Day }}</p>
-                    <p><strong>Time:</strong> {{ course.Time }}</p>
-                    <p><strong>Lecturer:</strong> {{ course.Lecturer }}</p>
-                    <p><strong>Student Count:</strong> {{ course.StudentCount }}</p>
-                    {% if course.AttendanceRate %}
-                        <p><strong>Attendance Rate:</strong> {{ course.AttendanceRate }}</p>
-                    {% endif %}
+                    <div class="course-info">
+                        <h3>{{ course.CourseName }}</h3>
+                        <p><strong>Course Code:</strong> {{ course.CourseCode }}</p>
+                        <p><strong>Day:</strong> {{ course.Day }}</p>
+                        <p><strong>Time:</strong> {{ course.Time }}</p>
+                        <p><strong>Lecturer:</strong> {{ course.Lecturer }}</p>
+                        <p><strong>Student Count:</strong> {{ course.StudentCount }}</p>
+                        {% if course.AttendanceRate %}
+                            <p><strong>Attendance Rate:</strong> {{ course.AttendanceRate }}</p>
+                        {% endif %}
+                    </div>
+                <div class="chart-container">
+                    <canvas id="chart-{{ loop.index }}"></canvas>
                 </div>
                 {% endfor %}
+            </div>
             </div>
         </div>
     </div>
@@ -226,7 +242,7 @@
             <button id="more-banners">More Banners</button>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         let current_banners = JSON.stringify({{ banners | tojson }});;
         document.addEventListener('DOMContentLoaded', function () {
@@ -371,6 +387,62 @@
                 }, 3000); // Display gradient animation for 2 seconds
             });
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Serialize and parse the courses data
+            let courses = JSON.parse('{{ courses | tojson | safe }}');
+            console.log(courses);
+
+            // Iterate over the courses to create a pie chart for each
+            courses.forEach(function(course, index) {
+                var ctx = document.getElementById('chart-' + (index + 1)).getContext('2d');
+                console.log(course.AttendanceRate);
+
+                // Convert the AttendanceRate percentage to a fraction
+                let attendanceRateFraction = (course.AttendanceRate || 0) / 100;
+
+                // Determine the color based on the attendance rate thresholds
+                let color;
+                if (attendanceRateFraction <= 0.33) {
+                    color = '#FF0000'; // Red for attendance rate <= 33%
+                } else if (attendanceRateFraction <= 0.66) {
+                    color = '#FFA500'; // Orange for attendance rate > 33% and <= 66%
+                } else {
+                    color = '#008000'; // Green for attendance rate > 66%
+                }
+
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Attendance Rate'], // Single label for the pie slice
+                        datasets: [{
+                            data: [attendanceRateFraction, 1 - attendanceRateFraction], // Attendance and absence data
+                            backgroundColor: [color, '#cccccc'], // Colors for the pie slices
+                            borderColor: [color, '#cccccc'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false // Hide legend
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function() { return ''; } // Hide tooltip label
+                                }
+                            }
+                        },
+                        layout: {
+                            padding: 0
+                        }
+                    }
+                });
+            });
+        });
+
     </script>
 </body>
 </html>
