@@ -163,7 +163,12 @@ def profile():
         if filename.endswith('.jpg') or filename.endswith('.png') or filename.endswith('.jpeg'):
             banners.append('static/banners/' + filename)
     
-    random_banners = random.sample(banners, 3)
+    random_banners = []
+    
+    for i in range(3):
+        random_banner = random.choice(banners)
+        if random_banner not in random_banners:
+            random_banners.append(random_banner)
 
     # TODO implement animation for more banners
 

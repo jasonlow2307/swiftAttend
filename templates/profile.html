@@ -262,7 +262,7 @@
                     bannerElements[i].style.backgroundSize = 'cover';
                     bannerElements[i].style.animation = 'none';
                 }
-            }, 5000); // Display gradient animation for 5 seconds
+            }, 3000); // Display gradient animation for 5 seconds
 
             var span = document.getElementsByClassName("close")[0];
             span.onclick = function() {
@@ -366,6 +366,7 @@
                         bannerImgElements[i].style.background = 'none';
                         bannerImgElements[i].style.animation = 'none';
                         bannerImgElements[i].style.display = 'block';
+                        bannerImgElements[i].style.objectFit = 'cover';
                     }
                 }, 3000); // Display gradient animation for 2 seconds
             });
