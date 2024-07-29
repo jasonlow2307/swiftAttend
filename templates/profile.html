@@ -4,6 +4,7 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <title>Profile Page</title>
     <style>
         body {
@@ -19,6 +20,7 @@
             border-radius: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             overflow: hidden;
+            position: relative;
         }
         .banner {
             background-size: cover; /* Ensure the image covers the entire banner area */
@@ -49,6 +51,7 @@
             margin-left: 210px;
             margin-top: 30px;
             color: #003572;
+            position: relative;
         }
         .content p {
             margin: 5px 0;
@@ -187,10 +190,24 @@
             background-color: #6699CC; /* Light blue background on hover */
         }
 
-    </style>
+        .qr-button {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: #003572;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 20px;
+        }
+
+        .qr-button:hover {
+            background-color: #6699CC;
+        }
+</style>
 </head>
 <body>
-    <div class="gradient-container" id="gradientContainer"></div>
     <div class="container">
         {% if profile.BannerImg == 'NA' %}
             <div class="banner" style="background-image: url('/static/banners/music.jpeg');">
@@ -202,6 +219,9 @@
         <div class="info">
             <h1>{{ profile.FullName }}</h1>
             <h2>{{ profile.StudentId }}</h2>
+            <div class="qr-button">
+                <i class="fas fa-qrcode"></i>
+            </div>
         </div>
         <hr>
         <div class="content">
@@ -220,9 +240,11 @@
                             <p><strong>Attendance Rate:</strong> {{ course.AttendanceRate }}</p>
                         {% endif %}
                     </div>
+                {% if course.AttendanceRate %}
                 <div class="chart-container">
                     <canvas id="chart-{{ loop.index }}"></canvas>
                 </div>
+                {% endif %}
                 {% endfor %}
             </div>
             </div>
