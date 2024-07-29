@@ -95,7 +95,7 @@
             height: 100%;
             background: linear-gradient(270deg, blue, purple, pink);
             background-size: 600% 600%;
-            animation: gradientAnimation 5s ease infinite;
+            animation: gradientAnimation 2s ease infinite;
             display: none;
             z-index: 1000;
         }
@@ -144,18 +144,16 @@
             flex-wrap: wrap;
             gap: 20px;
             justify-content: center;
-            background: linear-gradient(270deg, blue, purple, pink);
-            background-size: 600% 600%;
-            animation: gradientAnimation 5s ease infinite;
-            border-radius: 15px;
         }
-        .banner-options img {
+
+        .banner-option {
             cursor: pointer;
-            width: 30%;
+            width: 30%; 
             margin: 10px;
             border-radius: 15px;
         }
-        .banner-options img:hover {
+
+        .banner-option:hover {
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
         }
 
@@ -222,7 +220,7 @@
             <h2>Select a Banner Image</h2>
             <div class="banner-options" id="banner-options">
                 {% for banner in banners %}
-                    <img class="banner-option" data-banner="{{ banner }}">
+                    <div class="banner-option" data-banner="{{ banner }}"></div>
                 {% endfor %}
             </div>
             <button id="more-banners">More Banners</button>
@@ -245,15 +243,24 @@
             modal.style.display = "block";
             bannerOptions.style.display = "flex";
 
-            setTimeout(function() {
-                bannerOptions.style.animation = 'none';
-                bannerOptions.style.background = 'none';
+            var bannerElements = document.getElementsByClassName("banner-option");
+            for (var i = 0; i < bannerElements.length; i++) {
+                bannerElements[i].style.background = 'linear-gradient(270deg, blue, purple, pink)';
+                bannerElements[i].style.backgroundSize = '600% 600%';
+                bannerElements[i].style.animation = 'gradientAnimation 5s ease infinite';
+                bannerElements[i].style.width = '40%'; 
+                bannerElements[i].style.height = '250px'; 
+                bannerElements[i].style.borderRadius = '15px';
+                bannerElements[i].style.margin = '10px';
+                bannerElements[i].style.display = 'block';
+            }
 
-                var bannerImgElements = document.getElementsByClassName("banner-option");
-                for (var i = 0; i < bannerImgElements.length; i++) {
-                    var bannerSrc = bannerImgElements[i].getAttribute('data-banner');
-                    bannerImgElements[i].src = bannerSrc;
-                    bannerImgElements[i].style.display = 'block';
+            setTimeout(function() {
+                for (var i = 0; i < bannerElements.length; i++) {
+                    var bannerSrc = bannerElements[i].getAttribute('data-banner');
+                    bannerElements[i].style.background = 'url(' + bannerSrc + ')';
+                    bannerElements[i].style.backgroundSize = 'cover';
+                    bannerElements[i].style.animation = 'none';
                 }
             }, 5000); // Display gradient animation for 5 seconds
 
@@ -268,9 +275,8 @@
                 }
             }
 
-            var bannerImgElements = document.getElementsByClassName("banner-option");
-            for (var i = 0; i < bannerImgElements.length; i++) {
-                bannerImgElements[i].onclick = function () {
+            for (var i = 0; i < bannerElements.length; i++) {
+                bannerElements[i].onclick = function () {
                     var selectedBanner = this.getAttribute('data-banner');
                     var studentId = '{{ profile.StudentId }}';
                     fetch('/set_banner', {
@@ -286,7 +292,7 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            document.querySelector('.banner').style.backgroundImage = 'url(' + this.src + ')';
+                            document.querySelector('.banner').style.backgroundImage = 'url(' + selectedBanner + ')';
                             modal.style.display = "none";
                         }
                     });
