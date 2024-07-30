@@ -266,20 +266,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
-        function showQRCode(qrText) {
-            var qrModal = document.getElementById("qrModal");
-            qrModal.style.display = "block";
-            
-            var qrCodeContainer = document.getElementById("qrcode");
-            qrCodeContainer.innerHTML = ""; // Clear any previous QR code
-            new QRCode(qrCodeContainer, {
-                text: qrText,
-                width: 128,
-                height: 128
-            });
-        }
-
         var qrButton = document.getElementById("qr-button");
+        var id = '{{ profile.StudentId }}' || '{{ profile.LecturerId }}';
         qrButton.onclick = function() {
             var qrModal = document.getElementById("qrModal");
             qrModal.style.display = "block";
@@ -287,7 +275,7 @@
             var qrCodeContainer = document.getElementById("qrCode");
             qrCodeContainer.innerHTML = ""; // Clear any previous QR code
             new QRCode(qrCodeContainer, {
-                text: '{{profile.RekognitionId}}',
+                text: `{{profile.RekognitionId}}//${id}`,
                 width: 128,
                 height: 128
             });
