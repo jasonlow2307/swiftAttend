@@ -208,6 +208,7 @@
 
         #qrCode {
             text-align: center;
+            margin: 0 auto;
         }
 </style>
 </head>
@@ -222,8 +223,13 @@
         </div>
         <div class="info">
             <h1>{{ profile.FullName }}</h1>
+            {% if profile.StudentId %}
             <h2>{{ profile.StudentId }}</h2>
-            <div class="qr-button" onclick="showQRCode('{{ profile.RekognitionId | tojson | safe }}')">
+            {% endif %}
+            {% if profile.LecturerId %}
+            <h2>{{ profile.LecturerId }}</h2>
+            {% endif %}
+            <div id="qr-button" class="qr-button">
                 <i class="fas fa-qrcode"></i>
             </div>
         </div>
@@ -253,7 +259,7 @@
             {% endfor %}
             </div>
         </div>
-        <div id="qrCodeModal" class="modal">
+        <div id="qrModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <div id="qrCode"></div>
@@ -285,6 +291,20 @@
             qrCodeContainer.innerHTML = ""; // Clear any previous QR code
             new QRCode(qrCodeContainer, {
                 text: qrText,
+                width: 128,
+                height: 128
+            });
+        }
+
+        var qrButton = document.getElementById("qr-button");
+        qrButton.onclick = function() {
+            var qrModal = document.getElementById("qrModal");
+            qrModal.style.display = "block";
+
+            var qrCodeContainer = document.getElementById("qrCode");
+            qrCodeContainer.innerHTML = ""; // Clear any previous QR code
+            new QRCode(qrCodeContainer, {
+                text: '{{profile.RekognitionId}}',
                 width: 128,
                 height: 128
             });
