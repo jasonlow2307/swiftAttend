@@ -114,7 +114,8 @@ def profile():
     profile['BannerImg'] = profile['BannerImg']['S']
     
     # Save RekognitionId to session
-    session['RekognitionId'] = profile['RekognitionId']['S']
+    profile['RekognitionId'] = profile['RekognitionId']['S']
+    session['RekognitionId'] = profile['RekognitionId']
     print(profile)
 
     if 'LecturerId' in profile:

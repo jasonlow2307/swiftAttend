@@ -205,6 +205,10 @@
         .qr-button:hover {
             background-color: #6699CC;
         }
+
+        #qrCode {
+            text-align: center;
+        }
 </style>
 </head>
 <body>
@@ -219,7 +223,7 @@
         <div class="info">
             <h1>{{ profile.FullName }}</h1>
             <h2>{{ profile.StudentId }}</h2>
-            <div class="qr-button">
+            <div class="qr-button" onclick="showQRCode('{{ profile.RekognitionId | tojson | safe }}')">
                 <i class="fas fa-qrcode"></i>
             </div>
         </div>
@@ -249,6 +253,12 @@
             </div>
             </div>
         </div>
+        <div id="qrCodeModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="qrCode"></div>
+            </div>
+        </div>
     </div>
 
     <!-- The Modal -->
@@ -265,7 +275,35 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
+        function showQRCode(qrText) {
+            var qrModal = document.getElementById("qrModal");
+            qrModal.style.display = "block";
+            
+            var qrCodeContainer = document.getElementById("qrcode");
+            qrCodeContainer.innerHTML = ""; // Clear any previous QR code
+            new QRCode(qrCodeContainer, {
+                text: qrText,
+                width: 128,
+                height: 128
+            });
+        }
+
+        // Close modal functionality
+        var span = document.getElementsByClassName("close")[0];
+        span.onclick = function() {
+            var qrModal = document.getElementById("qrModal");
+            qrModal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            var qrModal = document.getElementById("qrModal");
+            if (event.target == qrModal) {
+                qrModal.style.display = "none";
+            }
+        }
+
         let current_banners = JSON.stringify({{ banners | tojson }});;
         document.addEventListener('DOMContentLoaded', function () {
             var bannerImg = '{{ profile.BannerImg }}';
