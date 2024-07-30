@@ -211,6 +211,47 @@ def get_more_banners():
     print("RANDOM NEW BANNERS", random_banners)
     return jsonify({'banners': random_banners})
 
+@browse.route('/view_profile', methods=['POST'])
+def view_profile():
+    data = request.get_json()['rekognitionId']
+    
+    # Split data
+    rekognitionId, id = data.split('//')
+
+    # Get profile based on id
+    profile = fetch_users_from_dynamodb("students", [id])
+    profile[0]['role'] = 'student'
+
+    if len(profile) == 0:
+        profile = fetch_users_from_dynamodb("lecturers", [id])
+        profile[0]['role'] = 'lecturer'
+
+    # Pre process profile
+    image = generate_signed_url(S3_BUCKET_NAME, 'index/' + id)
+    profile = profile[0]
+
+    profile['FullName'] = profile['FullName']['S']
+    profile['BannerImg'] = profile['BannerImg']['S']
+    
+    # Save RekognitionId to session
+    profile['RekognitionId'] = profile['RekognitionId']['S']
+    session['RekognitionId'] = profile['RekognitionId']
+
+    if 'LecturerId' in profile:
+        profile['LecturerId'] = profile['LecturerId']['S']
+    else:
+        profile['StudentId'] = profile['StudentId']['S']
+    profile['image'] = image
+
+    print(profile)
+
+    return jsonify(profile)
+
+
+    
+    
+
+
 
 
 

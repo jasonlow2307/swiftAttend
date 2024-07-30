@@ -197,7 +197,7 @@
         {% endif %}
             <img src="{{ profile.image }}" alt="Profile Picture" class="profile-picture">
         </div>
-        <div class="info">
+        <div class="info" id="info">
             <h1>{{ profile.FullName }}</h1>
             {% if profile.StudentId %}
             <h2>{{ profile.StudentId }}</h2>
@@ -241,11 +241,28 @@
         <div id="qrModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <div id="info">
+                <div id="qr-info">
                     <h2>{{profile.FullName}}</h2>
                     <p>Scan the QR code to view the profile</p>
                 </div>
                 <div id="qrCode"></div>
+            </div>
+        </div>
+        <div id="scan-qr-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="qr-reader" style="width: 100%;"></div>
+            </div>
+        </div>
+        <div id="view-profile-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Profile Information</h2>
+                <p><strong>Full Name:</strong> {{ profile.FullName }}</p>
+                <p><strong>Student ID:</strong> {{ profile.StudentId }}</p>
+                <p><strong>Lecturer ID:</strong> {{ profile.LecturerId }}</p>
+                <p><strong>Course Enrolled:</strong> {{ profile.CourseEnrolled }}</p>
+                <p><strong>Email:</strong> {{ profile.Email }}</p>
             </div>
         </div>
     </div>
@@ -265,7 +282,122 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script>
+        //Scan QR code functionality
+        // Get the modal
+        var scan_qr_modal = document.getElementById("scan-qr-modal");
+
+        // Get the button that opens the modal
+        var btn = document.getElementById("scan-qr-button");
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks the button, open the modal 
+        btn.onclick = function() {
+            scan_qr_modal.style.display = "block";
+            startQrScanner();
+        }
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function() {
+            scan_qr_modal.style.display = "none";
+            stopQrScanner();
+        }
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == scan_qr_modal) {
+                modal.style.display = "none";
+                stopQrScanner();
+            }
+        }
+
+        // Initialize the QR scanner
+        let html5QrCode;
+
+        function startQrScanner() {
+            html5QrCode = new Html5Qrcode("qr-reader");
+            html5QrCode.start(
+                { facingMode: "environment" }, // camera facing back
+                {
+                    fps: 10,    // Optional, frame per seconds for qr code scanning
+                    qrbox: 250  // Optional, if you want bounded box UI
+                },
+                qrCodeMessage => {
+                    // Handle the scanned QR code message
+                    console.log(`QR Code detected: ${qrCodeMessage}`);
+                    scan_qr_modal.style.display = "none";
+                    stopQrScanner();
+                    sendRekognitionId(qrCodeMessage);
+                },
+                errorMessage => {
+                    // parse error, ignore it
+                    console.log(`QR Code no longer in front of camera: ${errorMessage}`);
+                })
+            .catch(err => {
+                // Start failed, handle it
+                console.log(`Unable to start scanning, error: ${err}`);
+            });
+        }
+
+        function stopQrScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(ignore => {
+                    // QR Code scanning is stopped.
+                }).catch(err => {
+                    // Stop failed, handle it.
+                    console.log(`Unable to stop scanning, error: ${err}`);
+                });
+            }
+        }
+
+        function sendRekognitionId(rekognitionId) {
+            fetch('/view_profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ rekognitionId: rekognitionId })
+            })
+            .then(response => response.json())
+            .then(profile => {
+                console.log("DONE");
+                console.log(profile);
+                viewProfile(profile);
+            })
+            .catch(error => {
+                console.error('Error fetching profile:', error);
+            });
+        }
+
+        function viewProfile(profile){
+            var viewProfileModal = document.getElementById("view-profile-modal");
+            viewProfileModal.style.display = "block";
+            if (profile.role == "student") {
+                viewProfileModal.innerHTML = `
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>Profile Information</h2>
+                    <img src="${profile.image}" alt="Profile Picture" style="width: 200px" class="profile-picture">
+                    <p><strong>Full Name:</strong> ${profile.FullName}</p>
+                    <p><strong>Student ID:</strong> ${profile.StudentId}</p>
+                </div>`;
+            } else {
+                viewProfileModal.innerHTML = `
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>Profile Information</h2>
+                    <img src="${profile.image}" alt="Profile Picture" style="width: 200px" class="profile-picture">
+                    <p><strong>Full Name:</strong> ${profile.FullName}</p>
+                    <p><strong>Lecturer ID:</strong> ${profile.LecturerId}</p>
+                </div>`;
+            }
+        }
+
+        // QR code functionality
         var qrButton = document.getElementById("qr-button");
         var id = '{{ profile.StudentId }}' || '{{ profile.LecturerId }}';
         qrButton.onclick = function() {
