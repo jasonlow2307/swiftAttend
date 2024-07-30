@@ -23,8 +23,8 @@
             position: relative;
         }
         .banner {
-            background-size: cover; /* Ensure the image covers the entire banner area */
-            background-position: center; /* Center the image */
+            background-size: cover;
+            background-position: center;
             color: #fff;
             position: relative;
             padding: 50px 20px;
@@ -39,8 +39,8 @@
             border-radius: 50%;
             width: 150px;
             height: 150px;
-            object-fit: cover; /* This ensures the image covers the entire area */
-            object-position: center; /* This centers the image */
+            object-fit: cover;
+            object-position: center;
         }
         .content {
             padding: 0px 20px 20px 30px;
@@ -70,17 +70,16 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s, box-shadow 0.3s;
-            width: calc(50% - 20px); /* 2 columns */
+            width: calc(50% - 20px);
             box-sizing: border-box;
         }
         .course-info {
             flex: 1;
         }
         .chart-container {
-            width: 125px; /* Adjust width as needed */
-            height: 150px; /* Adjust height as needed */
+            width: 125px;
+            height: 150px;
             margin-left: 20px;
-            
         }
         .course-box:hover {
             transform: translateY(-10px);
@@ -89,18 +88,15 @@
         .course-box h3 {
             margin-top: 0;
         }
-
         hr {
             margin-left: 25px;
             margin-right: 25px;
         }
-
         @keyframes gradientAnimation {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-
         .gradient-container {
             position: fixed;
             top: 0;
@@ -113,7 +109,6 @@
             display: none;
             z-index: 1000;
         }
-
         .modal {
             display: none;
             position: fixed;
@@ -123,23 +118,19 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgb(0,0,0);
-            background-color: rgba(0,0,0,0.4);
+            background-color: rgba(0, 0, 0, 0.4);
             padding-top: 60px;
             z-index: 1001;
         }
-
-        .modal h2 {
-            color: #003572;
-            text-align: center;
-        }
         .modal-content {
-            background-color: #fefefe;
+            background-color: #fff;
             margin: 5% auto;
             padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
             border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
         }
         .close {
             color: #aaa;
@@ -153,43 +144,6 @@
             text-decoration: none;
             cursor: pointer;
         }
-        .banner-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-        }
-
-        .banner-option {
-            cursor: pointer;
-            width: 30%; 
-            margin: 10px;
-            border-radius: 15px;
-        }
-
-        .banner-option:hover {
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
-        }
-
-        #more-banners {
-            margin-top: 10px;
-            padding: 10px 16px;
-            background-color: #003572; /* Dark blue background */
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease; /* Smooth transition for background color */
-            align-self: center;
-            margin: 0 auto;
-            display: block;
-            margin-top: 10px
-        }
-
-        #more-banners:hover {
-            background-color: #6699CC; /* Light blue background on hover */
-        }
-
         .qr-button {
             position: absolute;
             top: 0;
@@ -199,16 +153,38 @@
             padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
-            margin-right: 20px;
+            margin-right: 3%;
         }
-
-        .qr-button:hover {
+        .scan-qr-button {
+            position: absolute;
+            top: 0;
+            right: 12%;
+            background-color: #003572;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 3%;
+        }
+        .qr-button:hover, .scan-qr-button:hover {
             background-color: #6699CC;
         }
-
-        #qrCode {
+        #qrCode img {
             text-align: center;
             margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            background-color: #003572;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #6699CC;
         }
 </style>
 </head>
@@ -231,6 +207,9 @@
             {% endif %}
             <div id="qr-button" class="qr-button">
                 <i class="fas fa-qrcode"></i>
+            </div>
+            <div id="scan-qr-button" class="scan-qr-button">
+                <i class="fas fa-camera"></i>
             </div>
         </div>
         <hr>
@@ -262,6 +241,10 @@
         <div id="qrModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
+                <div id="info">
+                    <h2>{{profile.FullName}}</h2>
+                    <p>Scan the QR code to view the profile</p>
+                </div>
                 <div id="qrCode"></div>
             </div>
         </div>
