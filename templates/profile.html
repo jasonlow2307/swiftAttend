@@ -129,8 +129,28 @@
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             width: 80%;
-            max-width: 500px;
+            max-width: 800px;
             text-align: center;
+        }
+        .banner-options{
+            display: none;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        .banner-option {
+            width: 30%; /* Adjust width according to your layout */
+            height: 230px; /* Adjust height according to your layout */
+            border-radius: 15px;
+            margin: 10px;
+            display: block;
+            background-size: cover;
+            background-position: center;
+        }
+        .banner-option:hover {
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
         }
         .close {
             color: #aaa;
@@ -182,10 +202,12 @@
             padding: 10px 20px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin-top: 10px;
         }
         button:hover {
             background-color: #6699CC;
         }
+
 </style>
 </head>
 <body>
@@ -435,6 +457,7 @@
             }
         });
 
+        // For banner options
         function showGradientAnimation() {
             var modal = document.getElementById("myModal");
             var bannerOptions = document.getElementById('banner-options');
@@ -447,8 +470,8 @@
                 bannerElements[i].style.background = 'linear-gradient(270deg, blue, purple, pink)';
                 bannerElements[i].style.backgroundSize = '600% 600%';
                 bannerElements[i].style.animation = 'gradientAnimation 5s ease infinite';
-                bannerElements[i].style.width = '40%'; 
-                bannerElements[i].style.height = '250px'; 
+                bannerElements[i].style.width = '30%'; 
+                bannerElements[i].style.height = '230px'; 
                 bannerElements[i].style.borderRadius = '15px';
                 bannerElements[i].style.margin = '10px';
                 bannerElements[i].style.display = 'block';
@@ -501,6 +524,7 @@
             document.getElementById('more-banners').onclick = fetchMoreBanners;
         }
 
+        // For fetch more banners
         function fetchMoreBanners() {
             console.log(current_banners);
             fetch('/get_more_banners', {
@@ -524,8 +548,6 @@
                     var img = document.createElement('img');
                     img.className = 'banner-option';
                     img.setAttribute('data-banner', banner);
-                    img.style.width = '40%'; 
-                    img.style.height = '250px'; 
                     img.style.borderRadius = '15px';
                     img.style.margin = '10px';
                     img.style.background = 'linear-gradient(270deg, blue, purple, pink)';
@@ -571,6 +593,7 @@
             });
         }
 
+        // For charts
         document.addEventListener('DOMContentLoaded', function () {
             // Serialize and parse the courses data
             let courses = JSON.parse('{{ courses | tojson | safe }}');
