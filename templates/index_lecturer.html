@@ -38,14 +38,26 @@
             width: 100px;
         }
 
-        .logo {
+        .logo-container {
             padding: 1rem;
             text-align: center;
             cursor: pointer;
+            transition: transform 0.5s ease;
         }
 
-        .logo img {
+        .logo {
             height: 50px;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .rotate {
+            transform: rotate(90deg);
+            opacity: 1;
         }
 
         nav ul {
@@ -472,8 +484,8 @@
 </head>
 <body>
     <nav>
-        <div class="logo">
-            <img src="../static/logo.png" alt="Logo" onclick="toggleMenu()">
+        <div class="logo-container">
+            <img id="logo" class="logo" src="../static/logo.png" alt="Logo" onclick="toggleMenu()">
         </div>
         <ul>
             <li><a href="/reglec"><i class="fas fa-chalkboard-teacher nav-icon"></i><span class="nav-text">Register Lecturer</span></a></li>
@@ -701,6 +713,20 @@
                     }
                 }
             }
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const logo = document.getElementById("logo");
+            let rotated = false;
+
+            logo.addEventListener("click", function() {
+                if (rotated) {
+                    logo.src = "../static/logo2.png";
+                } else {
+                        logo.src = "../static/logo.png";
+                }
+                rotated = !rotated;
+            });
         });
     </script>
 </body>
