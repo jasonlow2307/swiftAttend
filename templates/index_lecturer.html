@@ -218,6 +218,10 @@
             animation: bounce 2s infinite;
         }
 
+        .chat-icon img {
+            width: 60px;
+        }
+
         .chat-title {
             font-size: 1.2rem;
             font-weight: bold;
@@ -282,8 +286,38 @@
 
         .chat-popup-body {
             padding: 1rem;
-            height: calc(100% - 120px);
+            height: 250px;
             overflow-y: auto;
+        }
+
+        .suggested-options {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f0f0; /* Light background */
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .suggested-option {
+            margin-bottom: 10px;
+        }
+
+        .suggested-option button {
+            background-color: #003572; /* Dark blue */
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s, transform 0.2s;
+            box-sizing: border-box;
+        }
+
+        .suggested-option button:hover {
+            background-color: #001d44; /* Darker blue on hover */
+            transform: translateY(-2px); /* Lift effect */
         }
 
         .chat-popup-footer {
@@ -365,6 +399,7 @@
             word-wrap: break-word;
             font-style: italic;
             display: inline-block;
+            position: relative;
         }
 
         .typing-indicator .content::after {
@@ -478,17 +513,29 @@
         </div>
     </main>
     <div class="chat-icon">
-        <img src="../static/chat-icon.png" alt="Chat Icon" onclick="toggleChatPopup()">
+        <img src="../static/logo.png" alt="Chat Icon" onclick="toggleChatPopup()">
     </div>
     <div class="chat-popup closed" id="chatPopup">
         <div class="chat-popup-header">
             <span class="chat-title">Swift Bot</span>
             <button class="close-btn" onclick="toggleChatPopup()">X</button>
         </div>
-        <div class="chat-popup-body" id="chatBody"></div>
+        <div class="chat-popup-body" id="chatBody">
+            <div class="suggested-options" id="suggestedOptions">
+                <div class="suggested-option">
+                    <button onclick="sendMessage('List enrolled courses')">List enrolled courses</button>
+                </div>
+                <div class="suggested-option">
+                    <button onclick="sendMessage('Get attendance summary')">Get attendance summary</button>
+                </div>
+                <div class="suggested-option">
+                    <button onclick="sendMessage('Get course details')">Get course details</button>
+                </div>
+            </div>
+        </div>
         <div class="chat-popup-footer">
             <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key === 'Enter') sendMessage()">
-            <button onclick="sendMessage()">Send</button>
+            <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
     <script>
@@ -497,44 +544,81 @@
         const chatInput = document.getElementById("chatInput");
 
         function toggleChatPopup() {
-            chatPopup.classList.toggle("open");
-            chatPopup.classList.toggle("closed");
-        }
-
-        function sendMessage() {
-            const message = chatInput.value;
-            if (message.trim() !== "") {
-                appendMessage("user", message);
-                chatInput.value = "";
-                simulateBotResponse();
+            if (chatPopup.classList.contains("open")) {
+                chatPopup.classList.remove("open");
+                chatPopup.classList.add("closed");
+                setTimeout(() => {
+                    chatPopup.style.display = "none";
+                }, 500); // Match the transition duration
+            } else {
+                chatPopup.style.display = "block";
+                setTimeout(() => {
+                    chatPopup.classList.remove("closed");
+                    chatPopup.classList.add("open");
+                }, 10); // Small delay to trigger transition
             }
         }
 
-        function appendMessage(sender, message) {
-            const messageElement = document.createElement("div");
-            messageElement.classList.add("message", sender);
-            const contentElement = document.createElement("div");
-            contentElement.classList.add("content");
-            contentElement.textContent = message;
-            messageElement.appendChild(contentElement);
-            chatBody.appendChild(messageElement);
-            chatBody.scrollTop = chatBody.scrollHeight;
+        function sendMessage(message) {
+            if (message) {
+                document.getElementById('chatInput').value = message;
+            }
+            var userInput = document.getElementById('chatInput').value;
+            if (userInput.trim() === "") return;
+
+            // Display user message
+            var chatbox = document.getElementById('chatBody');
+            chatbox.innerHTML += '<div class="message user"><div class="content">' + userInput + '</div></div>';
+            chatbox.scrollTop = chatbox.scrollHeight; // Scroll to the bottom
+            document.getElementById('chatInput').value = "";
+
+            // Remove suggested options after user sends a message
+            var suggestedOptions = document.getElementById('suggestedOptions');
+            suggestedOptions.style.display = 'none';
+
+            showTypingIndicator();
+
+            fetch('/bot_form', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var botMessages = data.messages;
+                removeTypingIndicator();
+                botMessages.forEach(message => {
+                    // Replace newline characters with HTML line break tags
+                    var botMessage = message.replace(/\\n/g, '<br>');
+                    chatbox.innerHTML += '<div class="message bot"><div class="content">' + botMessage + '</div></div>';
+                });
+                chatbox.scrollTop = chatbox.scrollHeight; // Scroll to the bottom
+
+                // Show suggested options again if needed
+                if (botMessages.length === 0) {
+                    suggestedOptions.style.display = 'flex';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
 
-        function simulateBotResponse() {
-            const typingIndicator = document.createElement("div");
-            typingIndicator.classList.add("message", "bot", "typing-indicator");
-            const contentElement = document.createElement("div");
-            contentElement.classList.add("content");
-            contentElement.textContent = "Typing";
-            typingIndicator.appendChild(contentElement);
+        function showTypingIndicator() {
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'typing-indicator';
+            typingIndicator.innerHTML = '<div class="content"></div>';
             chatBody.appendChild(typingIndicator);
-            chatBody.scrollTop = chatBody.scrollHeight;
+            chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+        }
 
-            setTimeout(() => {
-                chatBody.removeChild(typingIndicator);
-                appendMessage("bot", "This is a simulated response.");
-            }, 2000);
+        function removeTypingIndicator() {
+            const typingIndicator = document.querySelector('.typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
         }
 
         function toggleMenu() {
