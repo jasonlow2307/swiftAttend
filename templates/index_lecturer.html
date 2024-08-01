@@ -18,18 +18,30 @@
         body {
             background-color: #f9f9f9;
             color: #333;
-            position: relative; /* Ensure position relative for absolute positioning */
+            display: flex;
             min-height: 100vh; /* Ensure full viewport height */
         }
 
-        header {
+        nav {
             background-color: #003572;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            z-index: 100; /* Ensure header stays above other content */
+            color: white;
+            width: 20%;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+            transition: width 0.3s ease-in-out;
+        }
+
+        nav.closed {
+            width: 5%;
+        }
+
+        .logo {
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
         }
 
         .logo img {
@@ -38,20 +50,25 @@
 
         nav ul {
             list-style: none;
-            display: flex;
-            gap: 2rem;
-            transition: all 0.3s ease-in-out;
+            padding: 1rem 0;
+        }
+
+        nav ul li {
+            padding: 0.5rem 1rem;
         }
 
         nav ul li a {
             color: white;
             text-decoration: none;
             font-weight: bold;
-            transition: color 0.3s;
+            display: block;
+            transition: background-color 0.3s;
+            padding: 1rem;
         }
 
         nav ul li a:hover {
             color: #ffdd57;
+            transition: color 0.3s;
         }
 
         .menu-icon {
@@ -69,51 +86,52 @@
         }
 
         @media (max-width: 768px) {
-            nav ul {
-                display: none;
-                flex-direction: column;
-                width: 100%;
-                background-color: #003572;
-                position: absolute;
-                top: 60px;
-                right: 0;
-                border-radius: 0 0 8px 8px;
-                z-index: 50; /* Ensure nav menu stays above other content */
-            }
-
-            nav ul li {
-                text-align: center;
-                padding: 1rem 0;
-                border-top: 1px solid #fff;
-            }
-
-            nav ul li:first-child {
-                border-top: none;
+            nav {
+                width: 200px;
             }
 
             .menu-icon {
                 display: flex;
+                padding: 1rem;
             }
 
-            nav ul.show {
-                display: flex;
+            nav ul {
+                padding-top: 2rem;
             }
         }
 
         main {
-            text-align: center;
-            padding: 5rem 2rem;
+            margin-left: 20%;
+            padding: 2rem;
+            width: calc(100% - 20%);
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        main.closed {
+            margin-left: 5%;
+            padding: 2rem;
+            width: calc(100% - 5%);
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                margin-left: 200px;
+                width: calc(100% - 200px);
+            }
         }
 
         main h1 {
             font-size: 2.5rem;
             color: #0056b3;
+            animation: fadeInDown 1s ease-in-out;
         }
 
         main p {
             font-size: 1.25rem;
             margin-top: 1rem;
             color: #666;
+            animation: fadeInUp 1s ease-in-out;
         }
 
         .dashboard {
@@ -122,9 +140,8 @@
             justify-content: center;
             gap: 2rem;
             margin-top: 3rem;
-            width: 70%;
-            margin: 0 auto;
             padding-top: 30px;
+            animation: fadeIn 2s ease-in-out;
         }
 
         .box {
@@ -136,6 +153,12 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             text-align: left;
             flex: 1 1 calc(33.333% - 2rem);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         .box h2 {
@@ -161,13 +184,13 @@
             text-align: center;
         }
 
-        /* Chat icon style */
         .chat-icon {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            z-index: 1000; /* Ensure icon stays above other content */
+            z-index: 1000;
             cursor: pointer;
+            animation: bounce 2s infinite;
         }
 
         .chat-title {
@@ -205,9 +228,8 @@
             visibility: hidden;
         }
 
-
         .chat-popup-header {
-            background-color: #0056b3; /* Updated color */
+            background-color: #0056b3;
             color: white;
             padding: 1rem;
             text-align: center;
@@ -230,13 +252,12 @@
         }
 
         .close-btn:hover {
-            background-color: #004884; /* Darker hover color */
+            background-color: #004884;
         }
-
 
         .chat-popup-body {
             padding: 1rem;
-            height: calc(100% - 120px); /* Adjust height */
+            height: calc(100% - 120px);
             overflow-y: auto;
         }
 
@@ -244,8 +265,8 @@
             padding: 1rem;
             border-top: 1px solid #ccc;
             text-align: center;
-            display: flex; /* Ensure items are displayed in a row */
-            align-items: center; /* Center items vertically */
+            display: flex;
+            align-items: center;
             justify-content: space-between;
         }
 
@@ -272,24 +293,6 @@
 
         .chat-popup-footer button:hover {
             background-color: #002b4c;
-        }
-
-
-        .chat-popup-body {
-            padding: 1rem;
-            height: 300px;
-            overflow-y: auto;
-        }
-
-        @media (max-width: 768px) {
-            .box {
-                flex: 1 1 100%;
-            }
-
-            .chat-popup {
-                width: 90%;
-                right: 5%;
-            }
         }
 
         .message {
@@ -360,264 +363,236 @@
             }
         }
 
-        .suggested-options {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #f0f0f0; /* Light background */
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            text-align: center;
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
         }
 
-        .suggested-option {
-            margin-bottom: 10px;
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .suggested-option button {
-            background-color: #003572; /* Dark blue */
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s, transform 0.2s;
-            box-sizing: border-box;
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .suggested-option button:hover {
-            background-color: #001d44; /* Darker blue on hover */
-            transform: translateY(-2px); /* Lift effect */
+        @keyframes fadeInDown {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-
 
     </style>
 </head>
 <body>
-    <header>
+    <nav>
         <div class="logo">
-            <img src="../static/logo.png" alt="Swift Attend Logo">
+            <img src="../static/logo.png" alt="Logo" onclick="toggleMenu()">
         </div>
-        <div class="menu-icon" onclick="toggleMenu()">
+        <ul>
+            <li><a href="/reglec">Register Lecturer</a></li>
+            <li><a href="/regstd">Register Students</a></li>
+            <li><a href="/create">Create Class</a></li>
+            <li><a href="/init">Add Attendance</a></li>
+            <li><a href="/ret">Retrieve Attendance</a></li>
+            <li><a href="/courses">View Courses</a></li>
+            <li><a href="/profile">Profile</a></li>
+            <li><a href="/logout">Logout</a></li>
+        </ul>
+        <div class="menu-icon">
             <div></div>
             <div></div>
             <div></div>
         </div>
-        <nav>
-            <ul id="nav-links">
-                <li><a href="/reglec">Register Lecturer</a></li>
-                <li><a href="/regstd">Register Students</a></li>
-                <li><a href="/create">Create Class</a></li>
-                <li><a href="/init">Add Attendance</a></li>
-                <li><a href="/ret">Retrieve Attendance</a></li>
-                <li><a href="/courses">View Courses</a></li>
-                <li><a href="/profile">Profile</a></li>
-                <li><a href="/logout">Logout</a></li>
-            </ul>
-        </nav>
-    </header>
+    </nav>
     <main>
         <h1>Welcome to Swift Attend</h1>
-        <p>Seamless Attendance, Effortlessly Accurate</p>
-        <p>Welcome Back, {{user.FullName.S}} ({{user.LecturerId.S}})</p>
+        <p>Monitor and manage attendance seamlessly</p>
         <div class="dashboard">
             <div class="box">
-                <h2>Courses</h2>
-                <ul>  
-                {% for course in courses %} 
-                    <li>{{ course.CourseName }}</li>  
-                {% endfor %}  
-                </ul> 
+                <h2>Student Enrollment</h2>
+                <canvas id="studentChart"></canvas>
+                <p>Monthly student enrollment data.</p>
             </div>
             <div class="box">
-                <h2>Registered Students</h2>
-                <ul>
-                    {% for student in students %}
-                        <li>{{ student.FullName }}</li>
-                    {% endfor %}
-                </ul>
+                <h2>Attendance Records</h2>
+                <canvas id="attendanceChart"></canvas>
+                <p>Attendance data by course.</p>
             </div>
             <div class="box">
-                <h2>Number of Students In Each Classes</h2>
-                <canvas id="studentsChart"></canvas>
+                <h2>Class Distribution</h2>
+                <canvas id="classChart"></canvas>
+                <p>Number of classes by day.</p>
             </div>
-            {% for course in courses %}
-            <div class="box">
-                <h2>Attendance Records - {{ course.CourseCode }}</h2>
-                <canvas id="{{ course.CourseCode }}"></canvas>
-                <p>{{ course.AttendanceRate }}% absence rate for the past month</p>
-            </div>
-            {% endfor %}
         </div>
     </main>
-
-    <!-- Chat icon -->
-    <div class="chat-icon" onclick="toggleChat()">
-        <img src="../static/logo.png" alt="Chat Icon" width="50">
+    <div class="chat-icon">
+        <img src="../static/chat-icon.png" alt="Chat Icon" onclick="toggleChatPopup()">
     </div>
-
-    <!-- Chat popup -->
-    <div class="chat-popup" id="chatPopup">
+    <div class="chat-popup closed" id="chatPopup">
         <div class="chat-popup-header">
             <span class="chat-title">Swift Bot</span>
-            <button class="close-btn" onclick="toggleChat()"><i class="fas fa-times"></i></button>
+            <button class="close-btn" onclick="toggleChatPopup()">X</button>
         </div>
-        <div class="chat-popup-body" id="chatBody">
-            <!-- Chat messages go here -->
-            <div class="suggested-options" id="suggestedOptions">
-                <div class="suggested-option">
-                    <button onclick="sendMessage('List enrolled courses')">List enrolled courses</button>
-                </div>
-                <div class="suggested-option">
-                    <button onclick="sendMessage('Get attendance summary')">Get attendance summary</button>
-                </div>
-                <div class="suggested-option">
-                    <button onclick="sendMessage('Get course details')">Get course details</button>
-                </div>
-            </div>
-        </div>
+        <div class="chat-popup-body" id="chatBody"></div>
         <div class="chat-popup-footer">
-            <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="checkEnter(event)">
-            <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+            <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key === 'Enter') sendMessage()">
+            <button onclick="sendMessage()">Send</button>
         </div>
-    </div>    
-
+    </div>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const ctx1 = document.getElementById('studentsChart').getContext('2d');
-            const courses = JSON.parse('{{ courses | tojson | safe }}');
-            
-            new Chart(ctx1, {
-                type: 'bar',
-                data: {
-                    labels: courses.map(course => course.CourseCode),
-                    datasets: [{
-                        label: 'Number of Students',
-                        data: courses.map(course => course.StudentCount),
-                        backgroundColor: '#4fc3f7',
-                        borderColor: '#0288d1',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    animation: {
-                        duration: 2000
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: Math.max(...courses.map(course => course.StudentCount)) + Math.ceil(0.2 * Math.max(...courses.map(course => course.StudentCount)))
-                        }
-                    }
-                }
-            });
+        const chatPopup = document.getElementById("chatPopup");
+        const chatBody = document.getElementById("chatBody");
+        const chatInput = document.getElementById("chatInput");
 
-            const doughnutConfig = (data, backgroundColor) => ({
-                type: 'doughnut',
-                data: {
-                    datasets: [{
-                        data: [data, 100 - data],
-                        backgroundColor: [backgroundColor, '#e0e0e0'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    cutout: '80%',
-                    animation: {
-                        duration: 2000
-                    }
-                }
-            });
-        
-            courses.forEach(course => {
-                const ctx = document.getElementById(`${course.CourseCode}`).getContext('2d');
-                if (course.AttendanceRate < 33) {
-                    new Chart(ctx, doughnutConfig(course.AttendanceRate, 'red'));
-                } else if (course.AttendanceRate >= 33 && course.AttendanceRate <= 66) {
-                    new Chart(ctx, doughnutConfig(course.AttendanceRate, 'orange'));
-                } else {
-                    new Chart(ctx, doughnutConfig(course.AttendanceRate, '#4fc3f7'));
-                }
-            });
-        });
+        function toggleChatPopup() {
+            chatPopup.classList.toggle("open");
+            chatPopup.classList.toggle("closed");
+        }
+
+        function sendMessage() {
+            const message = chatInput.value;
+            if (message.trim() !== "") {
+                appendMessage("user", message);
+                chatInput.value = "";
+                simulateBotResponse();
+            }
+        }
+
+        function appendMessage(sender, message) {
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message", sender);
+            const contentElement = document.createElement("div");
+            contentElement.classList.add("content");
+            contentElement.textContent = message;
+            messageElement.appendChild(contentElement);
+            chatBody.appendChild(messageElement);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function simulateBotResponse() {
+            const typingIndicator = document.createElement("div");
+            typingIndicator.classList.add("message", "bot", "typing-indicator");
+            const contentElement = document.createElement("div");
+            contentElement.classList.add("content");
+            contentElement.textContent = "Typing";
+            typingIndicator.appendChild(contentElement);
+            chatBody.appendChild(typingIndicator);
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            setTimeout(() => {
+                chatBody.removeChild(typingIndicator);
+                appendMessage("bot", "This is a simulated response.");
+            }, 2000);
+        }
 
         function toggleMenu() {
-            const navLinks = document.getElementById("nav-links");
-            navLinks.classList.toggle("show");
+            const nav = document.querySelector("nav");
+            nav.classList.toggle("closed");
+
+            const main = document.querySelector("main");
+            main.classList.toggle("closed");
         }
 
-        function toggleChat() {
-            const chatPopup = document.getElementById("chatPopup");
-            if (chatPopup.classList.contains("open")) {
-                chatPopup.classList.remove("open");
-                chatPopup.classList.add("closed");
-                setTimeout(() => {
-                    chatPopup.style.display = "none";
-                }, 500); // Match the transition duration
-            } else {
-                chatPopup.style.display = "block";
-                setTimeout(() => {
-                    chatPopup.classList.remove("closed");
-                    chatPopup.classList.add("open");
-                }, 10); // Small delay to trigger transition
-            }
-        }
+        const studentCtx = document.getElementById('studentChart').getContext('2d');
+        const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+        const classCtx = document.getElementById('classChart').getContext('2d');
 
-
-        function sendMessage(message) {
-            if (message) {
-                document.getElementById('chatInput').value = message;
-            }
-            var userInput = document.getElementById('chatInput').value;
-            if (userInput.trim() === "") return;
-
-            // Display user message
-            var chatbox = document.getElementById('chatBody');
-            chatbox.innerHTML += '<div class="message user"><div class="content">' + userInput + '</div></div>';
-            chatbox.scrollTop = chatbox.scrollHeight; // Scroll to the bottom
-            document.getElementById('chatInput').value = "";
-
-            // Remove suggested options after user sends a message
-            var suggestedOptions = document.getElementById('suggestedOptions');
-            suggestedOptions.style.display = 'none';
-
-            fetch('/bot_form', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ message: userInput })
-            })
-            .then(response => response.json())
-            .then(data => {
-                var botMessages = data.messages;
-                botMessages.forEach(message => {
-                    // Replace newline characters with HTML line break tags
-                    var botMessage = message.replace(/\\n/g, '<br>');
-                    chatbox.innerHTML += '<div class="message bot"><div class="content">' + botMessage + '</div></div>';
-                });
-                chatbox.scrollTop = chatbox.scrollHeight; // Scroll to the bottom
-
-                // Show suggested options again if needed
-                if (botMessages.length === 0) {
-                    suggestedOptions.style.display = 'flex';
+        const studentChart = new Chart(studentCtx, {
+            type: 'bar',
+            data: {
+                labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+                datasets: [{
+                    label: 'Enrolled Students',
+                    data: [120, 150, 180, 200, 240, 300, 350],
+                    backgroundColor: '#003572'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        }
-
-        function checkEnter(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
             }
-        }
+        });
 
+        const attendanceChart = new Chart(attendanceCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Attendance',
+                    data: [95, 85, 90, 100],
+                    backgroundColor: 'rgba(0, 53, 114, 0.2)',
+                    borderColor: '#003572',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
 
+        const classChart = new Chart(classCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+                datasets: [{
+                    label: 'Classes',
+                    data: [10, 12, 8, 11, 14],
+                    backgroundColor: [
+                        '#003572',
+                        '#0056b3',
+                        '#0073e6',
+                        '#3399ff',
+                        '#66ccff'
+                    ],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
     </script>
 </body>
 </html>
-
