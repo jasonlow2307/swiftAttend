@@ -35,7 +35,7 @@
         }
 
         nav.closed {
-            width: 5%;
+            width: 100px;
         }
 
         .logo {
@@ -55,6 +55,8 @@
 
         nav ul li {
             padding: 0.5rem 1rem;
+            display: flex; 
+            align-items: center; 
         }
 
         nav ul li a {
@@ -69,6 +71,29 @@
         nav ul li a:hover {
             color: #ffdd57;
             transition: color 0.3s;
+        }
+
+        nav ul li a .nav-text {
+            display: inline-block;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        nav.closed ul li a .nav-text {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+            flex: 1;
+        }
+
+        nav ul li a .nav-icon {
+            display: none;
+        }
+
+        nav.closed ul li a .nav-icon {
+            display: inline-block;
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+            flex: 0 0 2rem;
         }
 
         .menu-icon {
@@ -108,9 +133,9 @@
         }
 
         main.closed {
-            margin-left: 5%;
+            margin-left: 150px;
             padding: 2rem;
-            width: calc(100% - 5%);
+            width: calc(100% - 100px);
             transition: margin-left 0.3s ease-in-out;
         }
 
@@ -416,14 +441,14 @@
             <img src="../static/logo.png" alt="Logo" onclick="toggleMenu()">
         </div>
         <ul>
-            <li><a href="/reglec">Register Lecturer</a></li>
-            <li><a href="/regstd">Register Students</a></li>
-            <li><a href="/create">Create Class</a></li>
-            <li><a href="/init">Add Attendance</a></li>
-            <li><a href="/ret">Retrieve Attendance</a></li>
-            <li><a href="/courses">View Courses</a></li>
-            <li><a href="/profile">Profile</a></li>
-            <li><a href="/logout">Logout</a></li>
+            <li><a href="/reglec"><i class="fas fa-chalkboard-teacher nav-icon"></i><span class="nav-text">Register Lecturer</span></a></li>
+            <li><a href="/regstd"><i class="fas fa-user-graduate nav-icon"></i><span class="nav-text">Register Students</span></a></li>
+            <li><a href="/create"><i class="fas fa-plus-circle nav-icon"></i><span class="nav-text">Create Class</span></a></li>
+            <li><a href="/init"><i class="fas fa-clipboard-check nav-icon"></i><span class="nav-text">Add Attendance</span></a></li>
+            <li><a href="/ret"><i class="fas fa-search nav-icon"></i><span class="nav-text">Retrieve Attendance</span></a></li>
+            <li><a href="/courses"><i class="fas fa-book-open nav-icon"></i><span class="nav-text">View Courses</span></a></li>
+            <li><a href="/profile"><i class="fas fa-user nav-icon"></i><span class="nav-text">Profile</span></a></li>
+            <li><a href="/logout"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Logout</span></a></li>
         </ul>
         <div class="menu-icon">
             <div></div>
