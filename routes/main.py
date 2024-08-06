@@ -48,13 +48,20 @@ def index():
 
     welcome_message = f"Welcome back, {user['FullName']['S']} ({id})"
 
+    courseCodes = [course['CourseCode'] for course in courses]
+
+    attendance = []
+
+    for course in courseCodes:
+        attendance.append(retrieve_student_records(course=course))
+    
+    rate = calculate_monthly_attendance(attendance[0])
+
     if role == 'student':
         return render_template('index_student.html', user=user, courses=courses)
     elif role == 'lecturer':
-        print(user)
-        print(courses)
-        print(students) # STUDENTS MAY NOT BE NEEDED
-        return render_template('index_lecturer.html', user=user, courses=courses, students=students)
+        # Students may not be needed
+        return render_template('index_lecturer.html', user=user, courses=courses, students=students, rate=rate)
     else:
         return render_template('index_admin.html', welcome_message=welcome_message)
 

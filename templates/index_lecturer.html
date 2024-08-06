@@ -523,7 +523,7 @@
             <div class="box">
                 <h2>Attendance Records</h2>
                 <canvas id="attendanceChart"></canvas>
-                <p>Attendance data by course.</p>
+                <p>Attendance rate by date.</p>
             </div>
             <div class="box">
                 <h2>Class Distribution</h2>
@@ -677,13 +677,16 @@
             }
         });
 
+        const attendanceRateLabel = Object.keys({{rate | tojson}});
+        const attendanceRateData = Object.values({{ rate | tojson }});
+
         const attendanceChart = new Chart(attendanceCtx, {
             type: 'line',
             data: {
-                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                labels: attendanceRateLabel,
                 datasets: [{
                     label: 'Attendance',
-                    data: [95, 85, 90, 100],
+                    data: attendanceRateData,
                     backgroundColor: 'rgba(0, 53, 114, 0.2)',
                     borderColor: '#003572',
                     borderWidth: 2,

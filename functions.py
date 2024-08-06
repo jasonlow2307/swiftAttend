@@ -4,6 +4,7 @@ import re
 from common import *
 from config import *
 from botocore.exceptions import ClientError
+from collections import defaultdict
 
 
 ############################ Custom Functions ###########################
@@ -240,6 +241,30 @@ def retrieve_student_records(course=None, date=None, time=None):
         return students
     
     return None
+
+def calculate_monthly_attendance(attendance_data):
+    attendance_by_month = defaultdict(lambda: defaultdict(lambda: {'PRESENT': 0, 'ABSENT': 0}))
+
+    print(len(attendance_data))
+    for entry in attendance_data:
+        date = datetime.strptime(entry['Date'], '%Y-%m-%d %H:%M:%S')
+        month_year = date.strftime('%Y-%m')
+        student_id = entry['StudentId']
+        attendance_status = entry['Attendance']
+        attendance_by_month[month_year][student_id][attendance_status] += 1
+
+    attendance_rates = {}
+    for month_year, students in attendance_by_month.items():
+        month_total_present = sum(student['PRESENT'] for student in students.values())
+        month_total_absent = sum(student['ABSENT'] for student in students.values())
+        total_classes = month_total_present + month_total_absent
+        if total_classes > 0:
+            attendance_rate = (month_total_present / total_classes) * 100
+        else:
+            attendance_rate = 0
+        attendance_rates[month_year] = attendance_rate
+
+    return attendance_rates
 
 # For /check_form and /ret_form
 # Generate a presigned URL for an image in the S3 bucket
