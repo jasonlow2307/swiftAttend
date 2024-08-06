@@ -25,7 +25,7 @@ initialized = False
 @attendance.route('/init')
 @role_required(['lecturer', 'admin'])
 def initialize():
-    courses = fetch_courses_from_dynamodb()
+    courses = fetch_courses_from_dynamodb(lecturer_id=session.get('id'))
     return render_template('initializeAttendance.html', courses=courses)
 
 @attendance.route('/check')
