@@ -38,6 +38,19 @@
             width: 100px;
         }
 
+        nav.closed li {
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        nav.closed li a{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
         .logo-container {
             padding: 1rem;
             text-align: center;
@@ -66,7 +79,7 @@
         }
 
         nav ul li {
-            padding: 0.5rem 1rem;
+            padding: 0.5rem;
             display: flex; 
             align-items: center; 
         }
@@ -497,11 +510,6 @@
             <li><a href="/profile"><i class="fas fa-user nav-icon"></i><span class="nav-text">Profile</span></a></li>
             <li><a href="/logout"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Logout</span></a></li>
         </ul>
-        <div class="menu-icon">
-            <div></div>
-            <div></div>
-            <div></div>
-        </div>
     </nav>
     <main>
         <h1>Welcome to Swift Attend</h1>
@@ -717,7 +725,7 @@
 
         document.addEventListener("DOMContentLoaded", function() {
             const logo = document.getElementById("logo");
-            let rotated = false;
+            let rotated = true;
 
             logo.addEventListener("click", function() {
                 if (rotated) {
