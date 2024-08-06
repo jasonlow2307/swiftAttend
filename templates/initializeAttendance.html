@@ -121,6 +121,7 @@
     </div>
 
     <script>
+        document.getElementById("courseInput").addEventListener("change", updateValidDays);
         document.getElementById("attendanceForm").addEventListener("submit", function(event) {
             event.preventDefault(); 
 
@@ -165,6 +166,67 @@
                 alert("Error initializing course!");
             });
         });
+
+        function updateValidDays() {
+            var selectedCourse = JSON.parse(document.getElementById("courseInput").value); // Parse the course JSON string
+            var courseDay = selectedCourse.Day;
+            var dayOfWeekMap = {
+                "Sunday": 0,
+                "Monday": 1,
+                "Tuesday": 2,
+                "Wednesday": 3,
+                "Thursday": 4,
+                "Friday": 5,
+                "Saturday": 6
+            };
+            var targetDay = dayOfWeekMap[courseDay];
+
+            var dateInput = document.getElementById("dateInput");
+            var currentDate = new Date();
+            var currentMonth = currentDate.getMonth();
+            var currentYear = currentDate.getFullYear();
+
+            // Helper function to pad numbers with leading zeros
+            function pad(number) {
+                return number < 10 ? '0' + number : number;
+            }
+
+            // Generate an array of disabled dates for the current month
+            var disabledDates = [];
+            var date = new Date(currentYear, currentMonth, 1);
+
+            while (date.getMonth() === currentMonth) {
+                if (date.getDay() !== targetDay) {
+                    disabledDates.push(date.toISOString().split('T')[0]);
+                }
+                date.setDate(date.getDate() + 1);
+            }
+
+            // Remove any existing input event listeners to prevent stacking alerts
+            var oldListeners = dateInput.cloneNode(false).eventListeners || [];
+            oldListeners.forEach(listener => {
+                dateInput.removeEventListener(listener.type, listener.handler);
+                console.log("Removed old event listener");
+            });
+
+            // Add a new input event listener to validate and disable invalid dates
+            function validateDate() {
+                var selectedDate = new Date(dateInput.value);
+                if (selectedDate.getDay() !== targetDay) {
+                    dateInput.value = '';
+                    alert('Please select a ' + courseDay + '.');
+                }
+            }
+
+            dateInput.addEventListener('input', validateDate);
+
+            // Set min and max attributes
+            dateInput.setAttribute('min', currentYear + '-' + pad(currentMonth + 1) + '-01');
+            dateInput.setAttribute('max', currentYear + '-' + pad(currentMonth + 1) + '-' + pad(new Date(currentYear, currentMonth + 1, 0).getDate()));
+        }
+
+        // Initialize the valid days on page load
+        updateValidDays();
     </script>
 </body>
 </html>
