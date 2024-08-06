@@ -51,6 +51,9 @@ def index():
     if role == 'student':
         return render_template('index_student.html', user=user, courses=courses)
     elif role == 'lecturer':
+        print(user)
+        print(courses)
+        print(students) # STUDENTS MAY NOT BE NEEDED
         return render_template('index_lecturer.html', user=user, courses=courses, students=students)
     else:
         return render_template('index_admin.html', welcome_message=welcome_message)
