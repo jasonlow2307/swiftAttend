@@ -310,7 +310,7 @@ def show_attendance():
     attendance_records = []
     detected_student_id = detected_students.keys()
 
-    student_records = fetch_student_records()
+    student_records = fetch_student_records(initialized_date, initialized_course)
 
     attendance_records = []
     present_counter = 0
@@ -443,7 +443,7 @@ def check_attendance_record():
                         detected_student_id.add(student_id)
                         face_to_student_map[face_id] = student_id
 
-    student_records = fetch_student_records()
+    student_records = fetch_student_records(initialized_date, initialized_course)
 
     attendance_records = []
     present_counter = 0

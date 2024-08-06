@@ -176,10 +176,7 @@ def update_attendance(student_id, attendance, date):
 
 # For /check_form
 # Fetch student records based on the initialized date and course
-def fetch_student_records():
-    global initialized_date
-    global initialized_course
-
+def fetch_student_records(initialized_date, initialized_course):
     response = dynamodb.scan(
         TableName=DYNAMODB_ATTENDANCE_TABLE_NAME,
         ExpressionAttributeNames={'#D': 'Date'},
@@ -245,7 +242,6 @@ def retrieve_student_records(course=None, date=None, time=None):
 def calculate_monthly_attendance(attendance_data):
     attendance_by_month = defaultdict(lambda: defaultdict(lambda: {'PRESENT': 0, 'ABSENT': 0}))
 
-    print(len(attendance_data))
     for entry in attendance_data:
         date = datetime.strptime(entry['Date'], '%Y-%m-%d %H:%M:%S')
         month_year = date.strftime('%Y-%m')
