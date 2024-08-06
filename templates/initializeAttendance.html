@@ -111,7 +111,7 @@
             <label for="course">Course:</label><br>
             <select id="courseInput" name="course">
                 {% for course in courses %} 
-                    <option value="{{ course }}">{{ course.CourseCode + " - " + course.CourseName }}</option>
+                    <option value='{{ course | tojson }}'>{{ course.CourseCode + " - " + course.CourseName }}</option>
                 {% endfor %}
             </select>
             <input type="submit" value="Submit">
@@ -122,10 +122,26 @@
 
     <script>
         document.getElementById("attendanceForm").addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent default form submission
+            event.preventDefault(); 
 
             var formData = new FormData(this);
+
+            var selectedCourse = JSON.parse(document.getElementById("courseInput").value); // Parse the course JSON string
+            var selectedDate = new Date(document.getElementById("dateInput").value);
             
+            var daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            var selectedDay = daysOfWeek[selectedDate.getUTCDay()];
+
+            var courseDay = selectedCourse.Day;
+
+            console.log("SELECTED DAY: " + selectedDay);
+            console.log("COURSE DAY: " + courseDay);
+
+            if (selectedDay !== courseDay) {
+                alert("The selected date is not on the correct day for this course. Please select a date on " + courseDay + ".");
+                return; 
+            }
+
             // Send form data to server using fetch API
             fetch("/init_form", {
                 method: "POST",
