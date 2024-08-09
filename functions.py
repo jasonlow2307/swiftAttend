@@ -247,7 +247,8 @@ def calculate_monthly_attendance(attendance_data):
         month_year = date.strftime('%Y-%m')
         student_id = entry['StudentId']
         attendance_status = entry['Attendance']
-        attendance_by_month[month_year][student_id][attendance_status] += 1
+        if attendance_status:
+            attendance_by_month[month_year][student_id][attendance_status] += 1
 
     attendance_rates = {}
     for month_year, students in attendance_by_month.items():

@@ -55,6 +55,7 @@ def index():
     for course in courseCodes:
         attendance.append(retrieve_student_records(course=course))
     
+    print(attendance[0])
     rate = calculate_monthly_attendance(attendance[0])
 
     if role == 'student':
