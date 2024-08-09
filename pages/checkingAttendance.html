@@ -209,6 +209,9 @@
         const captureOption = document.getElementById('captureOption');
         const uploadOption = document.getElementById('uploadOption');
         const liveOption = document.getElementById('liveOption');
+        const uploadLabel = document.querySelector('label[for="uploadImage"]');
+
+        uploadLabel.style.display = "none"; 
 
         liveOption.addEventListener('click', () => {
             window.location.href = "/live";
@@ -224,6 +227,8 @@
                 .catch(err => {
                     console.error("Error accessing the camera: ", err);
                 });
+
+            uploadLabel.style.display = "none"; 
         });
 
         uploadOption.addEventListener('click', () => {
@@ -260,10 +265,10 @@
         uploadImage.addEventListener('change', (event) => {
             const file = event.target.files[0];
             const fileNameSpan = document.getElementById('fileName');
-            const uploadLabel = document.querySelector('label[for="uploadImage"]');
             const uploadImage = document.getElementById('uploadImage');
 
             uploadImage.style.display = "none";
+            uploadLabel.style.display = "block"; 
 
             if (file) {
                 const reader = new FileReader();
