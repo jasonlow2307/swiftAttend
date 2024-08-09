@@ -136,6 +136,31 @@
             max-width: 90%;
             border-radius: 10px;
         }
+
+        #uploadImage {
+            display: none;
+        }
+
+        #uploadContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        label.file-upload.file-selected {
+            background-color: #003572;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        label.file-upload.file-selected:hover {
+            background-color: #00214d;
+        }
     </style>
 </head>
 <body>
@@ -155,8 +180,10 @@
             </div>
         </div>
         <div id="uploadContainer" class="hide">
+            <img id="uploadPreview" src="#" alt="Upload Preview" class="hide">
+            <label for="uploadImage" class="file-upload">Choose File</label>
+            <span id="fileName" style="display: none;">No file chosen</span>
             <input type="file" id="uploadImage" accept="image/*">
-            <img id="uploadPreview" src="#" alt="Upload Preview">
         </div>
         <form id="attendanceForm" action="/check_form" method="post" enctype="multipart/form-data">
             <input type="hidden" name="image" id="image">
@@ -232,6 +259,12 @@
 
         uploadImage.addEventListener('change', (event) => {
             const file = event.target.files[0];
+            const fileNameSpan = document.getElementById('fileName');
+            const uploadLabel = document.querySelector('label[for="uploadImage"]');
+            const uploadImage = document.getElementById('uploadImage');
+
+            uploadImage.style.display = "none";
+
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -239,9 +272,21 @@
                     uploadPreview.classList.remove('hide');
                     submitButton.classList.remove('hide');
                     imageInput.value = e.target.result;
+
+                    fileNameSpan.style.display = "none"; 
+                    uploadLabel.textContent = file.name;
+                    uploadLabel.classList.add('file-selected');
                 };
                 reader.readAsDataURL(file);
+
+                uploadImage.style.display = "none";
                 submitButton.style.display = "block";
+            } else {
+                uploadLabel.textContent = "Choose File";
+                uploadLable.classList.remove('file-selected');
+                fileNameSpan.style.display = "none";    
+                uploadPreview.classList.add('hide');
+                submitButton.classList.add('none');
             }
         });
 
