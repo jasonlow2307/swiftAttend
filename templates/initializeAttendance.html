@@ -204,36 +204,25 @@
             var targetDay = dayOfWeekMap[courseDay];
 
             var dateInput = document.getElementById("dateInput");
-            var currentDate = new Date();
-            var currentMonth = currentDate.getMonth();
-            var currentYear = currentDate.getFullYear();
 
-            // Helper function to pad numbers with leading zeros
-            function pad(number) {
-                return number < 10 ? '0' + number : number;
-            }
-
-            // Generate an array of disabled dates for the current month
-            var disabledDates = [];
-            var date = new Date(currentYear, currentMonth, 1);
-
-            while (date.getMonth() === currentMonth) {
-                if (date.getDay() !== targetDay) {
-                    disabledDates.push(date.toISOString().split('T')[0]);
-                }
-                date.setDate(date.getDate() + 1);
-            }
+            // Remove the min and max attributes to allow free date selection
+            dateInput.removeAttribute('min');
+            dateInput.removeAttribute('max');
 
             // Remove the old input event listener to prevent stacking alerts
-            dateInput.removeEventListener('input', validateDate);
+            dateInput.removeEventListener('change', validateDate);
             console.log("Removed old event listener");
 
-            // Add a new input event listener to validate and disable invalid dates
-            dateInput.addEventListener('input', validateDate);
+            // Add a new change event listener to validate and disable invalid dates
+            function validateDate() {
+                var selectedDate = new Date(dateInput.value);
+                if (selectedDate.getDay() !== targetDay) {
+                    dateInput.value = ''; // Clear the invalid date
+                    alert('Please select a ' + courseDay + '.'); // Show the alert only if an invalid date is selected
+                }
+            }
 
-            // Set min and max attributes
-            dateInput.setAttribute('min', currentYear + '-' + pad(currentMonth + 1) + '-01');
-            dateInput.setAttribute('max', currentYear + '-' + pad(currentMonth + 1) + '-' + pad(new Date(currentYear, currentMonth + 1, 0).getDate()));
+            dateInput.addEventListener('change', validateDate);
         }
 
         // Initialize the valid days on page load
