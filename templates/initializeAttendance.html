@@ -167,6 +167,28 @@
             });
         });
 
+        function validateDate() {
+            var selectedCourse = JSON.parse(document.getElementById("courseInput").value); // Parse the course JSON string
+            var courseDay = selectedCourse.Day;
+            var dayOfWeekMap = {
+                "Sunday": 0,
+                "Monday": 1,
+                "Tuesday": 2,
+                "Wednesday": 3,
+                "Thursday": 4,
+                "Friday": 5,
+                "Saturday": 6
+            };
+            var targetDay = dayOfWeekMap[courseDay];
+            
+            var dateInput = document.getElementById("dateInput");
+            var selectedDate = new Date(dateInput.value);
+            if (selectedDate.getDay() !== targetDay) {
+                dateInput.value = '';
+                alert('Please select a ' + courseDay + '.');
+            }
+        }
+
         function updateValidDays() {
             var selectedCourse = JSON.parse(document.getElementById("courseInput").value); // Parse the course JSON string
             var courseDay = selectedCourse.Day;
@@ -202,22 +224,11 @@
                 date.setDate(date.getDate() + 1);
             }
 
-            // Remove any existing input event listeners to prevent stacking alerts
-            var oldListeners = dateInput.cloneNode(false).eventListeners || [];
-            oldListeners.forEach(listener => {
-                dateInput.removeEventListener(listener.type, listener.handler);
-                console.log("Removed old event listener");
-            });
+            // Remove the old input event listener to prevent stacking alerts
+            dateInput.removeEventListener('input', validateDate);
+            console.log("Removed old event listener");
 
             // Add a new input event listener to validate and disable invalid dates
-            function validateDate() {
-                var selectedDate = new Date(dateInput.value);
-                if (selectedDate.getDay() !== targetDay) {
-                    dateInput.value = '';
-                    alert('Please select a ' + courseDay + '.');
-                }
-            }
-
             dateInput.addEventListener('input', validateDate);
 
             // Set min and max attributes
