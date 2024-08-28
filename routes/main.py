@@ -29,6 +29,17 @@ def index():
                 course['AttendanceRate'] = attendance_rate
             else:
                 course['AttendanceRate'] = "NA"
+            courseCodes = [course['CourseCode'] for course in courses]
+
+            attendance = []
+
+            for course in courseCodes:
+                records = retrieve_student_records(course=course)
+                for record in records:
+                    if str(record['StudentId']) == id:
+                        attendance.append(record)
+            
+            rate = calculate_monthly_attendance(attendance)
     elif role == 'lecturer':
         user = fetch_users_from_dynamodb("lecturers", [id])[0]
         courses = fetch_courses_from_dynamodb(lecturer_id=id)
@@ -43,23 +54,21 @@ def index():
                 attendance_rate = round(present_counter / len(attendance_records) * 100, 2)
                 course['AttendanceRate'] = attendance_rate
         students = fetch_users_from_dynamodb("students")
+        courseCodes = [course['CourseCode'] for course in courses]
+
+        attendance = []
+
+        for course in courseCodes:
+            attendance.append(retrieve_student_records(course=course))
+    
+        rate = calculate_monthly_attendance(attendance[0])
     else:
         user = {'FullName': {'S': "Admin"}}
 
     welcome_message = f"Welcome back, {user['FullName']['S']} ({id})"
 
-    courseCodes = [course['CourseCode'] for course in courses]
-
-    attendance = []
-
-    for course in courseCodes:
-        attendance.append(retrieve_student_records(course=course))
-    
-    print(attendance[0])
-    rate = calculate_monthly_attendance(attendance[0])
-
     if role == 'student':
-        return render_template('index_student.html', user=user, courses=courses)
+        return render_template('index_student.html', user=user, courses=courses, rate=rate)
     elif role == 'lecturer':
         # Students may not be needed
         return render_template('index_lecturer.html', user=user, courses=courses, students=students, rate=rate)

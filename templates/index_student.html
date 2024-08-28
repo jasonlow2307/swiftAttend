@@ -8,6 +8,7 @@
     <title>Swift Attend Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
     <style>
+        /* Keep the existing styles from the original code */
         * {
             margin: 0;
             padding: 0;
@@ -18,37 +19,107 @@
         body {
             background-color: #f9f9f9;
             color: #333;
-        }
-
-        header {
-            background-color: #003572;
-            padding: 1rem 2rem;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
+            min-height: 100vh;
         }
 
-        .logo img {
+        nav {
+            background-color: #003572;
+            color: white;
+            width: 20%;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+            transition: width 0.3s ease-in-out;
+        }
+
+        nav.closed {
+            width: 100px;
+        }
+
+        nav.closed li {
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        nav.closed li a {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo-container {
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.5s ease;
+        }
+
+        .logo {
             height: 50px;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .rotate {
+            transform: rotate(90deg);
+            opacity: 1;
         }
 
         nav ul {
             list-style: none;
+            padding: 1rem 0;
+        }
+
+        nav ul li {
+            padding: 0.5rem;
             display: flex;
-            gap: 2rem;
-            transition: all 0.3s ease-in-out;
+            align-items: center;
         }
 
         nav ul li a {
             color: white;
             text-decoration: none;
             font-weight: bold;
-            transition: color 0.3s;
+            display: block;
+            transition: background-color 0.3s;
+            padding: 1rem;
         }
 
         nav ul li a:hover {
             color: #ffdd57;
+            transition: color 0.3s;
+        }
+
+        nav ul li a .nav-text {
+            display: inline-block;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        nav.closed ul li a .nav-text {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+            flex: 1;
+        }
+
+        nav ul li a .nav-icon {
+            display: none;
+        }
+
+        nav.closed ul li a .nav-icon {
+            display: inline-block;
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+            flex: 0 0 2rem;
         }
 
         .menu-icon {
@@ -66,50 +137,52 @@
         }
 
         @media (max-width: 768px) {
-            nav ul {
-                display: none;
-                flex-direction: column;
-                width: 100%;
-                background-color: #003572;
-                position: absolute;
-                top: 60px;
-                right: 0;
-                border-radius: 0 0 8px 8px;
-            }
-
-            nav ul li {
-                text-align: center;
-                padding: 1rem 0;
-                border-top: 1px solid #fff;
-            }
-
-            nav ul li:first-child {
-                border-top: none;
+            nav {
+                width: 200px;
             }
 
             .menu-icon {
                 display: flex;
+                padding: 1rem;
             }
 
-            nav ul.show {
-                display: flex;
+            nav ul {
+                padding-top: 2rem;
             }
         }
 
         main {
-            text-align: center;
-            padding: 5rem 2rem;
+            margin-left: 20%;
+            padding: 2rem;
+            width: calc(100% - 20%);
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        main.closed {
+            margin-left: 150px;
+            padding: 2rem;
+            width: calc(100% - 100px);
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                margin-left: 200px;
+                width: calc(100% - 200px);
+            }
         }
 
         main h1 {
             font-size: 2.5rem;
             color: #0056b3;
+            animation: fadeInDown 1s ease-in-out;
         }
 
         main p {
             font-size: 1.25rem;
             margin-top: 1rem;
             color: #666;
+            animation: fadeInUp 1s ease-in-out;
         }
 
         .dashboard {
@@ -118,9 +191,8 @@
             justify-content: center;
             gap: 2rem;
             margin-top: 3rem;
-            width: 70%;
-            margin: 0 auto;
             padding-top: 30px;
+            animation: fadeIn 2s ease-in-out;
         }
 
         .box {
@@ -132,6 +204,12 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             text-align: left;
             flex: 1 1 calc(33.333% - 2rem);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         .box h2 {
@@ -157,36 +235,17 @@
             text-align: center;
         }
 
-        @media (max-width: 1200px) {
-            .box {
-                flex: 1 1 calc(50% - 2rem);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .box {
-                flex: 1 1 100%;
-            }
-        }
-        
-        .profile_image{
-            width: 200px;
-            margin-left: auto;
-            margin-right: auto;
-            margin-bottom: 10px;
-        }
-
-        .courses{
-            margin-bottom: 5px;
-        }
-
-                /* Chat icon style */
-                .chat-icon {
+        .chat-icon {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            z-index: 1000; /* Ensure icon stays above other content */
+            z-index: 1000;
             cursor: pointer;
+            animation: bounce 2s infinite;
+        }
+
+        .chat-icon img {
+            width: 60px;
         }
 
         .chat-title {
@@ -224,9 +283,8 @@
             visibility: hidden;
         }
 
-
         .chat-popup-header {
-            background-color: #0056b3; /* Updated color */
+            background-color: #0056b3;
             color: white;
             padding: 1rem;
             text-align: center;
@@ -249,22 +307,51 @@
         }
 
         .close-btn:hover {
-            background-color: #004884; /* Darker hover color */
+            background-color: #004884;
         }
-
 
         .chat-popup-body {
             padding: 1rem;
-            height: calc(100% - 120px); /* Adjust height */
+            height: 250px;
             overflow-y: auto;
+        }
+
+        .suggested-options {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f0f0; /* Light background */
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .suggested-option {
+            margin-bottom: 10px;
+        }
+
+        .suggested-option button {
+            background-color: #003572; /* Dark blue */
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s, transform 0.2s;
+            box-sizing: border-box;
+        }
+
+        .suggested-option button:hover {
+            background-color: #001d44; /* Darker blue on hover */
+            transform: translateY(-2px); /* Lift effect */
         }
 
         .chat-popup-footer {
             padding: 1rem;
             border-top: 1px solid #ccc;
             text-align: center;
-            display: flex; /* Ensure items are displayed in a row */
-            align-items: center; /* Center items vertically */
+            display: flex;
+            align-items: center;
             justify-content: space-between;
         }
 
@@ -291,24 +378,6 @@
 
         .chat-popup-footer button:hover {
             background-color: #002b4c;
-        }
-
-
-        .chat-popup-body {
-            padding: 1rem;
-            height: 300px;
-            overflow-y: auto;
-        }
-
-        @media (max-width: 768px) {
-            .box {
-                flex: 1 1 100%;
-            }
-
-            .chat-popup {
-                width: 90%;
-                right: 5%;
-            }
         }
 
         .message {
@@ -356,6 +425,7 @@
             word-wrap: break-word;
             font-style: italic;
             display: inline-block;
+            position: relative;
         }
 
         .typing-indicator .content::after {
@@ -379,109 +449,93 @@
             }
         }
 
-        .suggested-options {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #f0f0f0; /* Light background */
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            text-align: center;
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
         }
 
-        .suggested-option {
-            margin-bottom: 10px;
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .suggested-option button {
-            background-color: #003572; /* Dark blue */
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s, transform 0.2s;
-            box-sizing: border-box;
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .suggested-option button:hover {
-            background-color: #001d44; /* Darker blue on hover */
-            transform: translateY(-2px); /* Lift effect */
+        @keyframes fadeInDown {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-
     </style>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <img src="../static/logo.png" alt="Swift Attend Logo">
+    <nav>
+        <div class="logo-container">
+            <img id="logo" class="logo" src="../static/logo.png" alt="Logo" onclick="toggleMenu()">
         </div>
-        <div class="menu-icon" onclick="toggleMenu()">
-            <div></div>
-            <div></div>
-            <div></div>
-        </div>
-        <nav>
-            <ul id="nav-links">
-                <li><a href="/ret">Retrieve Attendance</a></li>
-                <li><a href="/courses">View Courses</a></li>
-                <li><a href="/profile">Profile</a></li>
-                <li><a href="/logout">Logout</a></li>
-            </ul>
-        </nav>
-    </header>
+        <ul>
+            <li><a href="/ret"><i class="fas fa-clipboard-check nav-icon"></i><span class="nav-text">View Attendance</span></a></li>
+            <li><a href="/courses"><i class="fas fa-book-open nav-icon"></i><span class="nav-text">View Courses</span></a></li>
+            <li><a href="/profile"><i class="fas fa-user nav-icon"></i><span class="nav-text">Profile</span></a></li>
+            <li><a href="/logout"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Logout</span></a></li>
+        </ul>
+    </nav>
     <main>
         <h1>Welcome to Swift Attend</h1>
-        <p>Seamless Attendance, Effortlessly Accurate</p>
-        <p>Welcome Back, {{user.FullName.S}} ({{user.StudentId.S}})</p>
+        <p>Monitor your attendance and stay on top of your classes</p>
         <div class="dashboard">
             <div class="box">
-                <h2>Courses</h2>
-                <ul>  
-                {% for course in courses %} 
-                    <li class = "courses">{{ course.CourseName }}</li>  
-                {% endfor %}  
-                </ul> 
+                <h2>Your Attendance</h2>
+                <canvas id="attendanceChart"></canvas>
+                <p>Overview of your attendance records</p>
             </div>
             <div class="box">
-                <h2>Profile</h2>
+                <h2>Your Courses</h2>
                 <ul>
-                    <img class = "profile_image" src = {{user.Image}}>
-                    <li>Full Name: {{user.FullName.S}}</li>
-                    <li>Student ID: {{user.StudentId.S}}</li>
+                    {% for course in courses %}
+                        <li>{{ course.CourseName }}</li>
+                    {% endfor %}
                 </ul>
+                <p>List of courses you are enrolled in</p>
             </div>
-            <div class="box">
-                <h2>Attendance Records</h2>
-                <canvas id="studentsChart"></canvas>
-            </div>
-            {% for course in courses %}
-            <div class="box">
-                <h2>Attendance Records - {{ course.CourseCode }}</h2>
-                <canvas id="{{ course.CourseCode }}"></canvas>
-                {% if course.AttendanceRate == "NA" or course.AttendanceRate is none %}
-                    <p>No records found</p>
-                {% else %}
-                    <p>{{ course.AttendanceRate }}% absence rate for the past month</p>
-                {% endif %}
-            </div>
-            {% endfor %}
         </div>
     </main>
-
-    <!-- Chat icon -->
-    <div class="chat-icon" onclick="toggleChat()">
-        <img src="../static/logo.png" alt="Chat Icon" width="50">
+    <div class="chat-icon">
+        <img src="../static/logo.png" alt="Chat Icon" onclick="toggleChatPopup()">
     </div>
-
-    <!-- Chat popup -->
-    <div class="chat-popup" id="chatPopup">
+    <div class="chat-popup closed" id="chatPopup">
         <div class="chat-popup-header">
             <span class="chat-title">Swift Bot</span>
-            <button class="close-btn" onclick="toggleChat()"><i class="fas fa-times"></i></button>
+            <button class="close-btn" onclick="toggleChatPopup()">X</button>
         </div>
         <div class="chat-popup-body" id="chatBody">
-            <!-- Chat messages go here -->
             <div class="suggested-options" id="suggestedOptions">
                 <div class="suggested-option">
                     <button onclick="sendMessage('List enrolled courses')">List enrolled courses</button>
@@ -495,79 +549,22 @@
             </div>
         </div>
         <div class="chat-popup-footer">
-            <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="checkEnter(event)">
+            <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key === 'Enter') sendMessage()">
             <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
         </div>
-    </div>  
-
+    </div>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const ctx1 = document.getElementById('studentsChart').getContext('2d');
-            const courses = JSON.parse('{{ courses | tojson | safe }}');
-
-            new Chart(ctx1, {
-                type: 'bar',
-                data: {
-                    labels: courses.map(course => course.CourseCode),
-                    datasets: [{
-                        label: 'Attendance Rate',
-                        data: courses.map(course => course.AttendanceRate),
-                        backgroundColor: '#4fc3f7',
-                        borderColor: '#0288d1',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    animation: {
-                        duration: 2000
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100
-                        }
-                    }
-                }
-            });
-
-            const doughnutConfig = (data, backgroundColor) => ({
-                type: 'doughnut',
-                data: {
-                    datasets: [{
-                        data: [data, 100 - data],
-                        backgroundColor: [backgroundColor, '#e0e0e0'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    cutout: '80%',
-                    animation: {
-                        duration: 2000
-                    }
-                }
-            });
-        
-            courses.forEach(course => {
-                const ctx = document.getElementById(`${course.CourseCode}`).getContext('2d');
-                if (course.AttendanceRate < 33) {
-                    new Chart(ctx, doughnutConfig(course.AttendanceRate, 'red'));
-                } else if (course.AttendanceRate >= 33 && course.AttendanceRate <= 66) {
-                    new Chart(ctx, doughnutConfig(course.AttendanceRate, 'orange'));
-                } else {
-                    new Chart(ctx, doughnutConfig(course.AttendanceRate, '#4fc3f7'));
-                }
-            });
-        });
-
         function toggleMenu() {
-            const navLinks = document.getElementById("nav-links");
-            navLinks.classList.toggle("show");
+            const nav = document.querySelector('nav');
+            const logo = document.getElementById('logo');
+            nav.classList.toggle('closed');
         }
 
-        function toggleChat() {
-            const chatPopup = document.getElementById("chatPopup");
+        const chatPopup = document.getElementById("chatPopup");
+        const chatBody = document.getElementById("chatBody");
+        const chatInput = document.getElementById("chatInput");
+
+        function toggleChatPopup() {
             if (chatPopup.classList.contains("open")) {
                 chatPopup.classList.remove("open");
                 chatPopup.classList.add("closed");
@@ -582,7 +579,6 @@
                 }, 10); // Small delay to trigger transition
             }
         }
-
 
         function sendMessage(message) {
             if (message) {
@@ -601,6 +597,8 @@
             var suggestedOptions = document.getElementById('suggestedOptions');
             suggestedOptions.style.display = 'none';
 
+            showTypingIndicator();
+
             fetch('/bot_form', {
                 method: 'POST',
                 headers: {
@@ -611,6 +609,7 @@
             .then(response => response.json())
             .then(data => {
                 var botMessages = data.messages;
+                removeTypingIndicator();
                 botMessages.forEach(message => {
                     // Replace newline characters with HTML line break tags
                     var botMessage = message.replace(/\\n/g, '<br>');
@@ -628,11 +627,60 @@
             });
         }
 
-        function checkEnter(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
+        function showTypingIndicator() {
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'typing-indicator';
+            typingIndicator.innerHTML = '<div class="content"></div>';
+            chatBody.appendChild(typingIndicator);
+            chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+        }
+
+        function removeTypingIndicator() {
+            const typingIndicator = document.querySelector('.typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
             }
         }
+
+        const attendanceCtx = document.getElementById('attendanceChart');
+        const attendanceRateLabel = Object.keys({{rate | tojson}});
+        const attendanceRateData = Object.values({{ rate | tojson }});
+
+        const attendanceChart = new Chart(attendanceCtx, {
+            type: 'line',
+            data: {
+                labels: attendanceRateLabel,
+                datasets: [{
+                    label: 'Attendance',
+                    data: attendanceRateData,
+                    backgroundColor: 'rgba(0, 53, 114, 0.2)',
+                    borderColor: '#003572',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+        document.addEventListener("DOMContentLoaded", function() {
+            const logo = document.getElementById("logo");
+            let rotated = true;
+
+            logo.addEventListener("click", function() {
+                if (rotated) {
+                    logo.src = "../static/logo2.png";
+                } else {
+                    logo.src = "../static/logo.png";
+                }
+                rotated = !rotated;
+            });
+        });
     </script>
 </body>
 </html>
