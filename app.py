@@ -16,6 +16,7 @@ socketio = SocketIO(app)
 def escapejs(value):
     return json.dumps(value)
 
+# For live
 @socketio.on('frame')
 def handle_frame(data):
     # Decode the base64 frame
