@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory, Response, render_template, session
 import json
 from flask_socketio import SocketIO, emit
+from flask_cors import CORS
 import base64
 import cv2
 import numpy as np
@@ -11,7 +12,8 @@ from routes.browse import browse
 from common import dynamodb
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 def escapejs(value):
     return json.dumps(value)
@@ -64,5 +66,5 @@ if __name__ == '__main__':
 
 
 
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
 
