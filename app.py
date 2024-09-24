@@ -8,6 +8,7 @@ from routes.attendance import attendance, process_frame
 from routes.auth import auth
 from routes.main import main
 from routes.browse import browse
+from common import dynamodb
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -42,8 +43,6 @@ app.register_blueprint(attendance)
 
 app.jinja_env.filters['escapejs'] = escapejs
 
-import boto3
-dynamodb = boto3.client('dynamodb')
 
 if __name__ == '__main__':
     # Scan the table to get all items
