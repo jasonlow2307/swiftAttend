@@ -145,7 +145,7 @@ known_face_encodings = []  # List to store face encodings of known faces
 known_face_ids = []  # List to store face encodings of known faces
 
 # Parameters
-RESIZE_SCALE = 0.5  # Scale to reduce the resolution
+RESIZE_SCALE = 1  # Scale to reduce the resolution
 
 def resize_frame(frame, scale=RESIZE_SCALE):
     width = int(frame.shape[1] * scale)
@@ -183,6 +183,7 @@ def process_frame(frame):
             print(status)
         
         if face_id in face_timestamps:
+            print("Time: " + str(current_time - face_timestamps[face_id]))
             if current_time - face_timestamps[face_id] > 3:
                 if face_id not in face_to_student_map:
                     # Check face encoding against known faces
@@ -291,7 +292,7 @@ def live():
         return render_template_string('''
                 <script>
                     alert("You need to initialize the class first.");
-                    window.location.href = "{{ url_for('app.initialize') }}";
+                    window.location.href = "{{ url_for('attendance.initialize') }}";
                 </script>
         ''')
     return render_template('live.html')
