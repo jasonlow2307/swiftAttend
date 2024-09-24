@@ -53,7 +53,6 @@ def index():
                         present_counter += 1
                 attendance_rate = round(present_counter / len(attendance_records) * 100, 2)
                 course['AttendanceRate'] = attendance_rate
-        students = fetch_users_from_dynamodb("students")
         courseCodes = [course['CourseCode'] for course in courses]
 
         attendance = []
@@ -70,8 +69,7 @@ def index():
     if role == 'student':
         return render_template('index_student.html', user=user, courses=courses, rate=rate)
     elif role == 'lecturer':
-        # Students may not be needed
-        return render_template('index_lecturer.html', user=user, courses=courses, students=students, rate=rate)
+        return render_template('index_lecturer.html', user=user, courses=courses, rate=rate)
     else:
         return render_template('index_admin.html', welcome_message=welcome_message)
 
