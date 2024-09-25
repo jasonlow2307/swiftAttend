@@ -176,6 +176,7 @@
             <img id="previewImage" src="#" alt="Image Preview">
             <div class="button-container">
                 <button id="capture" class="file-upload">Capture Photo</button>
+                <button id="switch-camera" class="file-upload">Switch Camera</button>
                 <button id="capture-again" class="file-upload hide">Capture Again</button>
             </div>
         </div>
@@ -210,6 +211,7 @@
         const uploadOption = document.getElementById('uploadOption');
         const liveOption = document.getElementById('liveOption');
         const uploadLabel = document.querySelector('label[for="uploadImage"]');
+        const switchCameraButton = document.getElementById('switch-camera');
 
         uploadLabel.style.display = "none"; 
 
@@ -220,13 +222,25 @@
         captureOption.addEventListener('click', () => {
             initialButtons.classList.add('hide');
             cameraContainer.classList.remove('hide');
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }) // Use facingMode for mobile
+            var cameraDirection = { video: { facingMode: "environment" } }; 
+            navigator.mediaDevices.getUserMedia(cameraDirection) 
                 .then(stream => {
                     video.srcObject = stream;
                 })
                 .catch(err => {
                     console.error("Error accessing the camera: ", err);
                 });
+            switchCameraButton.addEventListener('click', () => {
+                cameraDirection = cameraDirection.video.facingMode === "environment" ? { video: { facingMode: "user" } } : { video: { facingMode: "environment" } };
+                navigator.mediaDevices.getUserMedia(cameraDirection)
+                    .then(stream => {
+                        video.srcObject = stream;
+                    })
+                    .catch(err => {
+                        console.error("Error accessing the camera: ", err);
+                    });
+            });
+            
 
             uploadLabel.style.display = "none"; 
         });
@@ -241,6 +255,7 @@
             captureAgainButton.classList.remove('hide');
             submitButton.style.display = "block";
             captureButton.classList.add('hide');
+            switchCameraButton.classList.add('hide');
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
