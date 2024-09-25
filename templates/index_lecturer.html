@@ -39,14 +39,18 @@
             padding: 10px;
             display: flex;
             align-items: center;
-            justify-content: center;
         }
 
         nav li a {
             display: flex;
             align-self: center;
-            justify-content: center;
+            justify-content: flex-start;
             font-size: 1.2rem;
+        }
+
+        /* Ensure the icon and text are spaced properly */
+        nav li a i {
+            margin-right: 10px; /* Adjust margin between icon and text */
         }
 
         /* Closed state for narrower width */
@@ -64,7 +68,6 @@
 
         nav.closed li a {
             display: flex;
-            justify-content: center;
             align-items: center;
             font-size: 1rem;
         }
