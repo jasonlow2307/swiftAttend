@@ -221,9 +221,8 @@
             active = true;
         }
 
-        const socket = io.connect(`http://localhost:5000`);
-        //const socket = io.connect(`http://13.212.39.211:5000`);
-        //const socket = io.connect(`http://13.250.16.121:5000`);
+        //const socket = io.connect(`http://localhost:5000`);
+        const socket = io.connect(`http://13.228.70.219:5000`);
 
         socket.on('connect', () => {
             console.log('Connected to server');
