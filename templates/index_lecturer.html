@@ -22,6 +22,7 @@
             min-height: 100vh; /* Ensure full viewport height */
         }
 
+        /* Base nav styles */
         nav {
             background-color: #003572;
             color: white;
@@ -34,10 +35,26 @@
             transition: width 0.3s ease-in-out;
         }
 
-        nav.closed {
-            width: 100px;
+        nav li {
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
+        nav li a {
+            display: flex;
+            align-self: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* Closed state for narrower width */
+        nav.closed {
+            width: 10%;
+        }
+
+        /* Adjust list items in closed state */
         nav.closed li {
             padding: 0;
             display: flex;
@@ -45,10 +62,39 @@
             align-items: center;
         }
 
-        nav.closed li a{
+        nav.closed li a {
             display: flex;
             justify-content: center;
             align-items: center;
+            font-size: 1rem;
+        }
+
+        nav.closed .logo-container {
+            padding: 0;
+            padding-top: 20px;
+        }
+
+        nav.closed .logo {
+            height: 40px;
+        }
+
+        /* Media query for mobile devices */
+        @media only screen and (max-width: 768px) {
+            nav {
+                width: 40%; /* Make the nav narrower on smaller screens */
+            }
+
+            nav.closed {
+                width: 15%; /* Narrower width when closed */
+            }
+
+            nav li a {
+                font-size: 1rem; /* Resize icons for mobile */
+            }
+
+            nav.closed li a {
+                font-size: 0.8rem; /* Further reduce icon size for closed nav on mobile */
+            }
         }
 
         .logo-container {
@@ -496,7 +542,7 @@
     </style>
 </head>
 <body>
-    <nav>
+    <nav id="main-nav">
         <div class="logo-container">
             <img id="logo" class="logo" src="../static/logo.png" alt="Logo" onclick="toggleMenu()">
         </div>
@@ -762,6 +808,24 @@
                 rotated = !rotated;
             });
         });
+
+        // Function to toggle the 'closed' class based on screen size
+        function toggleNavOnMobile() {
+            const nav = document.getElementById('main-nav');
+            console.log(window.innerWidth)
+
+            if (window.innerWidth <= 768) {
+                nav.classList.add('closed');  // Add 'closed' class for mobile screens
+            } else {
+                nav.classList.remove('closed');  // Remove 'closed' class for larger screens
+            }
+        }
+
+        // Initial check when the page loads
+        toggleNavOnMobile();
+
+        // Re-check when the window is resized
+        window.addEventListener('resize', toggleNavOnMobile);
     </script>
 </body>
 </html>
