@@ -380,13 +380,26 @@
 
         /* Media Queries for Different Screen Sizes */
         @media (max-width: 768px) {
+            main h1 {
+                font-size: 4rem;
+            }
+            main p {
+                font-size: 1.5rem;
+            }
             nav {
-                width: 40%;
+                width: 30%;
             }
 
             nav.closed {
-                width: 15%;
+                width: 12%;
+                padding-top: 0px;
             }
+
+            nav.closed .logo-container {
+                padding-top: 0px;
+                text-align: center;
+            }
+
 
             nav li a {
                 font-size: 1rem;
