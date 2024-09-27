@@ -8,6 +8,7 @@
     <title>Swift Attend Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
     <style>
+        /* General Styles */
         * {
             margin: 0;
             padding: 0;
@@ -22,7 +23,71 @@
             min-height: 100vh; /* Ensure full viewport height */
         }
 
-        /* Base nav styles */
+        /* Style for the closed nav */
+        #main-nav {
+            height: 100vh; /* Set a narrow width when the nav is closed */
+            width: 300px;
+            transition: width 0.3s ease; /* Smooth transition when toggling */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center horizontally */
+            justify-content: flex-start;
+            overflow-y: hidden;
+        }
+
+        /* Style for the ul and li elements inside the nav */
+        #main-nav ul {
+            flex-grow: 1;
+            justify-content: space-between;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center the icons */
+            width: 100%;
+        }
+
+        #main-nav li {
+            flex-grow: 1; /* Allow each list item to grow and take up equal space */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%; /* Make sure items take the full width of the nav */
+        }
+
+        /* Style for the nav icons */
+        #main-nav .nav-icon {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            display: block;
+            margin-right: 13px;
+        }
+
+
+
+        /* Optional: When nav is open, adjust the width and show the text */
+        #main-nav.open {
+            width: 250px; /* Set the width when the nav is open */
+        }
+
+        #main-nav.open .nav-text {
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        /* Style for logo-container and logo */
+        #main-nav .logo-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        #main-nav #logo {
+            width: 50px;
+            cursor: pointer;
+        }
+
+
         nav {
             background-color: #003572;
             color: white;
@@ -33,10 +98,12 @@
             left: 0;
             overflow-y: auto;
             transition: width 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         nav li {
-            padding: 10px;
             display: flex;
             align-items: center;
         }
@@ -48,27 +115,21 @@
             font-size: 1.2rem;
         }
 
-        /* Ensure the icon and text are spaced properly */
         nav li a i {
             margin-right: 10px; /* Adjust margin between icon and text */
         }
 
-        /* Closed state for narrower width */
         nav.closed {
             width: 10%;
         }
 
-        /* Adjust list items in closed state */
         nav.closed li {
-            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
         nav.closed li a {
-            display: flex;
-            align-items: center;
             font-size: 1rem;
         }
 
@@ -79,25 +140,6 @@
 
         nav.closed .logo {
             height: 40px;
-        }
-
-        /* Media query for mobile devices */
-        @media only screen and (max-width: 768px) {
-            nav {
-                width: 40%; /* Make the nav narrower on smaller screens */
-            }
-
-            nav.closed {
-                width: 15%; /* Narrower width when closed */
-            }
-
-            nav li a {
-                font-size: 1rem; /* Resize icons for mobile */
-            }
-
-            nav.closed li a {
-                font-size: 0.8rem; /* Further reduce icon size for closed nav on mobile */
-            }
         }
 
         .logo-container {
@@ -116,7 +158,7 @@
             opacity: 0;
             pointer-events: none;
         }
-        
+
         .rotate {
             transform: rotate(90deg);
             opacity: 1;
@@ -124,20 +166,21 @@
 
         nav ul {
             list-style: none;
-            padding: 1rem 0;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center the icons */
+            width: 100%;
         }
 
-        nav ul li {
-            padding: 0.5rem;
-            display: flex; 
-            align-items: center; 
-        }
 
         nav ul li a {
             color: white;
             text-decoration: none;
             font-weight: bold;
-            display: block;
+            display: flex;
+            flex-direction: row;
             transition: background-color 0.3s;
             padding: 1rem;
         }
@@ -147,11 +190,6 @@
             transition: color 0.3s;
         }
 
-        nav ul li a .nav-text {
-            display: inline-block;
-            transition: opacity 0.3s ease-in-out;
-        }
-
         nav.closed ul li a .nav-text {
             opacity: 0;
             width: 0;
@@ -159,15 +197,10 @@
             flex: 1;
         }
 
-        nav ul li a .nav-icon {
-            display: none;
-        }
-
         nav.closed ul li a .nav-icon {
-            display: inline-block;
+            display: block;
             font-size: 1.2rem;
-            margin-right: 0.5rem;
-            flex: 0 0 2rem;
+            margin-bottom: 10px;
         }
 
         .menu-icon {
@@ -184,21 +217,6 @@
             transition: all 0.3s;
         }
 
-        @media (max-width: 768px) {
-            nav {
-                width: 200px;
-            }
-
-            .menu-icon {
-                display: flex;
-                padding: 1rem;
-            }
-
-            nav ul {
-                padding-top: 2rem;
-            }
-        }
-
         main {
             margin-left: 20%;
             padding: 2rem;
@@ -213,26 +231,21 @@
             transition: margin-left 0.3s ease-in-out;
         }
 
-        @media (max-width: 768px) {
-            main {
-                margin-left: 20%;
-            }
-        }
-
         main h1 {
-            font-size: 7vw;
+            font-size: 5.5rem;
             width: fit-content;
             color: #0056b3;
             animation: fadeInDown 1s ease-in-out;
         }
 
         main p {
-            font-size: 3vw;
+            font-size: 2rem;
             margin-top: 1rem;
             color: #666;
             animation: fadeInUp 1s ease-in-out;
         }
 
+        /* Dashboard and Box Styles */
         .dashboard {
             display: flex;
             flex-wrap: wrap;
@@ -248,6 +261,7 @@
             border-radius: 8px;
             padding: 1rem;
             width: 300px;
+            max-width: 400px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             text-align: left;
             flex: 1 1 calc(50% - 1rem);
@@ -282,6 +296,7 @@
             text-align: center;
         }
 
+        /* Chat Icon Styles */
         .chat-icon {
             position: fixed;
             bottom: 20px;
@@ -295,14 +310,7 @@
             width: 60px;
         }
 
-        .chat-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #fff;
-            flex: 1;
-            text-align: center;
-        }
-
+        /* Popup Styles */
         .chat-popup {
             position: fixed;
             bottom: 20px;
@@ -325,11 +333,6 @@
             visibility: visible;
         }
 
-        .chat-popup.closed {
-            opacity: 0;
-            visibility: hidden;
-        }
-
         .chat-popup-header {
             background-color: #0056b3;
             color: white;
@@ -350,7 +353,6 @@
             cursor: pointer;
             padding: 0.5rem;
             font-size: 0.9rem;
-            outline: none;
         }
 
         .close-btn:hover {
@@ -363,36 +365,6 @@
             overflow-y: auto;
         }
 
-        .suggested-options {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #f0f0f0; /* Light background */
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .suggested-option {
-            margin-bottom: 10px;
-        }
-
-        .suggested-option button {
-            background-color: #003572; /* Dark blue */
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s, transform 0.2s;
-            box-sizing: border-box;
-        }
-
-        .suggested-option button:hover {
-            background-color: #001d44; /* Darker blue on hover */
-            transform: translateY(-2px); /* Lift effect */
-        }
-
         .chat-popup-footer {
             padding: 1rem;
             border-top: 1px solid #ccc;
@@ -402,142 +374,54 @@
             justify-content: space-between;
         }
 
-        .chat-popup-footer input[type="text"] {
-            width: calc(100% - 20px);
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            outline: none;
-            box-sizing: border-box;
-        }
-
-        .chat-popup-footer button {
-            padding: 10px 20px;
-            margin-left: 10px;
-            background-color: #003572;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            outline: none;
-            box-sizing: border-box;
-        }
-
-        .chat-popup-footer button:hover {
-            background-color: #002b4c;
-        }
-
-        .message {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 10px;
-            align-items: flex-end;
-        }
-
-        .message .content {
-            background-color: #e0f7fa;
-            color: #00796b;
-            border-radius: 15px;
-            padding: 10px 15px;
-            max-width: 70%;
-            word-wrap: break-word;
-        }
-
-        .message.user {
-            justify-content: flex-end;
-        }
-
-        .message.bot {
-            justify-content: flex-start;
-        }
-
-        .message.bot .content {
-            background-color: #e0e0e0;
-            color: #333;
-        }
-
-        .typing-indicator {
-            display: flex;
-            justify-content: flex-start;
-            margin-bottom: 10px;
-            align-items: flex-end;
-        }
-
-        .typing-indicator .content {
-            background-color: #e0e0e0;
-            color: #333;
-            border-radius: 15px;
-            padding: 10px 15px;
-            max-width: 70%;
-            word-wrap: break-word;
-            font-style: italic;
-            display: inline-block;
-            position: relative;
-        }
-
-        .typing-indicator .content::after {
-            content: '';
-            display: inline-block;
-            animation: ellipsis 1.25s infinite;
-        }
-
-        @keyframes ellipsis {
-            0% {
-                content: '';
+        /* Media Queries for Different Screen Sizes */
+        @media (max-width: 768px) {
+            nav {
+                width: 40%;
             }
-            33% {
-                content: '.';
+
+            nav.closed {
+                width: 15%;
             }
-            66% {
-                content: '..';
+
+            nav li a {
+                font-size: 1rem;
             }
-            100% {
-                content: '...';
+
+            nav.closed li a {
+                font-size: 0.8rem;
+            }
+
+            main {
+                margin-left: 40%;
+                width: calc(100% - 40%);
+            }
+
+            .chat-popup {
+                width: 80%;
             }
         }
 
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-                transform: translateY(0);
+        @media (max-width: 480px) {
+            nav {
+                width: 50%;
             }
-            40% {
-                transform: translateY(-10px);
-            }
-            60% {
-                transform: translateY(-5px);
-            }
-        }
 
-        @keyframes fadeIn {
-            0% {
-                opacity: 0;
-                transform: translateY(20px);
+            nav.closed {
+                width: 20%;
             }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
 
-        @keyframes fadeInUp {
-            0% {
-                opacity: 0;
-                transform: translateY(20px);
+            nav li a {
+                font-size: 0.9rem;
             }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
 
-        @keyframes fadeInDown {
-            0% {
-                opacity: 0;
-                transform: translateY(-20px);
+            main {
+                margin-left: 50%;
+                width: calc(100% - 50%);
             }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
+
+            .chat-popup {
+                width: 90%;
             }
         }
 

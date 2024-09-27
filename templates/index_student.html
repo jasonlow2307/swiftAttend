@@ -8,7 +8,6 @@
     <title>Swift Attend Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
     <style>
-        /* Keep the existing styles from the original code */
         * {
             margin: 0;
             padding: 0;
@@ -36,7 +35,10 @@
         }
 
         nav.closed {
-            width: 100px;
+            width: 12%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         nav.closed li {
@@ -205,6 +207,7 @@
             text-align: left;
             flex: 1 1 calc(33.333% - 2rem);
             transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            max-width: 400px;
         }
 
         .box:hover {
