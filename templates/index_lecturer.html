@@ -223,7 +223,7 @@
             transition: margin-left 0.3s ease-in-out;
         }
 
-        main.closed {
+        main.open {
             margin-left: 150px;
             padding: 2rem;
             width: calc(100% - 100px);
@@ -381,10 +381,10 @@
         /* Media Queries for Different Screen Sizes */
         @media (max-width: 768px) {
             main h1 {
-                font-size: 4rem;
+                font-size: 3rem;
             }
             main p {
-                font-size: 1.5rem;
+                font-size: 1.25rem;
             }
             nav {
                 width: 30%;
@@ -400,17 +400,16 @@
                 text-align: center;
             }
 
-
             nav li a {
-                font-size: 1rem;
+                font-size: 0.9rem;
             }
 
-            nav.closed li a {
-                font-size: 0.8rem;
+            nav ul li a {
+                padding: 0rem;
             }
 
-            main {
-                margin-left: 40%;
+            main.open {
+                margin-left: 30%;
                 width: calc(100% - 40%);
             }
 
@@ -595,7 +594,7 @@
             nav.classList.toggle("closed");
 
             const main = document.querySelector("main");
-            main.classList.toggle("closed");
+            main.classList.toggle("open");
         }
 
         const studentCtx = document.getElementById('studentChart').getContext('2d');
