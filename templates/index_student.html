@@ -19,8 +19,69 @@
             background-color: #f9f9f9;
             color: #333;
             display: flex;
-            min-height: 100vh;
+            min-height: 100vh; /* Ensure full viewport height */
         }
+
+        /* Style for the closed nav */
+        #main-nav {
+            height: 100vh; /* Set a narrow width when the nav is closed */
+            transition: width 0.3s ease; /* Smooth transition when toggling */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center horizontally */
+            justify-content: flex-start;
+            overflow-y: hidden;
+        }
+
+        /* Style for the ul and li elements inside the nav */
+        #main-nav ul {
+            flex-grow: 1;
+            justify-content: space-between;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center the icons */
+            width: 100%;
+        }
+
+        #main-nav li {
+            flex-grow: 1; /* Allow each list item to grow and take up equal space */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%; /* Make sure items take the full width of the nav */
+        }
+
+        /* Style for the nav icons */
+        #main-nav .nav-icon {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            display: block;
+            margin-right: 13px;
+        }
+
+        #main-nav.open {
+            width: 250px; /* Set the width when the nav is open */
+        }
+
+        #main-nav.open .nav-text {
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        /* Style for logo-container and logo */
+        #main-nav .logo-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        #main-nav #logo {
+            width: 50px;
+            cursor: pointer;
+        }
+
 
         nav {
             background-color: #003572;
@@ -32,26 +93,48 @@
             left: 0;
             overflow-y: auto;
             transition: width 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        nav li {
+            display: flex;
+            align-items: center;
+        }
+
+        nav li a {
+            display: flex;
+            align-self: center;
+            justify-content: flex-start;
+            font-size: 1.2rem;
+        }
+
+        nav li a i {
+            margin-right: 10px; /* Adjust margin between icon and text */
         }
 
         nav.closed {
-            width: 12%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
+            width: 10%;
         }
 
         nav.closed li {
-            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
         nav.closed li a {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-size: 1rem;
+        }
+
+        nav.closed .logo-container {
+            padding: 0;
+            padding-top: 20px;
+        }
+
+        nav.closed .logo {
+            height: 40px;
         }
 
         .logo-container {
@@ -70,7 +153,7 @@
             opacity: 0;
             pointer-events: none;
         }
-        
+
         .rotate {
             transform: rotate(90deg);
             opacity: 1;
@@ -78,20 +161,21 @@
 
         nav ul {
             list-style: none;
-            padding: 1rem 0;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center the icons */
+            width: 100%;
         }
 
-        nav ul li {
-            padding: 0.5rem;
-            display: flex;
-            align-items: center;
-        }
 
         nav ul li a {
             color: white;
             text-decoration: none;
             font-weight: bold;
-            display: block;
+            display: flex;
+            flex-direction: row;
             transition: background-color 0.3s;
             padding: 1rem;
         }
@@ -101,11 +185,6 @@
             transition: color 0.3s;
         }
 
-        nav ul li a .nav-text {
-            display: inline-block;
-            transition: opacity 0.3s ease-in-out;
-        }
-
         nav.closed ul li a .nav-text {
             opacity: 0;
             width: 0;
@@ -113,15 +192,10 @@
             flex: 1;
         }
 
-        nav ul li a .nav-icon {
-            display: none;
-        }
-
         nav.closed ul li a .nav-icon {
-            display: inline-block;
-            font-size: 1.5rem;
-            margin-right: 0.5rem;
-            flex: 0 0 2rem;
+            display: block;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
         }
 
         .menu-icon {
@@ -138,21 +212,6 @@
             transition: all 0.3s;
         }
 
-        @media (max-width: 768px) {
-            nav {
-                width: 200px;
-            }
-
-            .menu-icon {
-                display: flex;
-                padding: 1rem;
-            }
-
-            nav ul {
-                padding-top: 2rem;
-            }
-        }
-
         main {
             margin-left: 20%;
             padding: 2rem;
@@ -160,54 +219,54 @@
             transition: margin-left 0.3s ease-in-out;
         }
 
-        main.closed {
+        main.open {
             margin-left: 150px;
             padding: 2rem;
             width: calc(100% - 100px);
             transition: margin-left 0.3s ease-in-out;
         }
 
-        @media (max-width: 768px) {
-            main {
-                margin-left: 200px;
-                width: calc(100% - 200px);
-            }
-        }
-
         main h1 {
-            font-size: 2.5rem;
+            font-size: 3.5rem;
+            width: fit-content;
             color: #0056b3;
             animation: fadeInDown 1s ease-in-out;
         }
 
         main p {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             margin-top: 1rem;
             color: #666;
             animation: fadeInUp 1s ease-in-out;
         }
 
+        /* Dashboard and Box Styles */
         .dashboard {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 2rem;
-            margin-top: 3rem;
             padding-top: 30px;
             animation: fadeIn 2s ease-in-out;
+            margin-top: 35px;
         }
 
         .box {
             background: white;
             border: 1px solid #ccc;
             border-radius: 8px;
-            padding: 1.5rem;
-            width: 300px;
+            padding: 1rem;
+            min-width: 340px;
+            max-width: 500px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             text-align: left;
-            flex: 1 1 calc(33.333% - 2rem);
+            flex: 1 1 auto;
             transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            min-height: 280px;
+            max-height: 100%;
+            overflow: auto;
         }
 
         .box:hover {
@@ -217,7 +276,7 @@
 
         .box h2 {
             margin-bottom: 1rem;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             color: #0056b3;
         }
 
@@ -226,18 +285,19 @@
             padding-left: 1.25rem;
         }
 
-        .box canvas {
-            width: 100%;
-            height: 150px;
+        .canvas {
+            margin-top: auto;
         }
 
         .box p {
-            margin-top: 1rem;
+            margin-top: auto;
             font-size: 0.9rem;
             color: #333;
             text-align: center;
+            padding-top: 10px;
         }
 
+        /* Chat Icon Styles */
         .chat-icon {
             position: fixed;
             bottom: 20px;
@@ -251,14 +311,7 @@
             width: 60px;
         }
 
-        .chat-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #fff;
-            flex: 1;
-            text-align: center;
-        }
-
+        /* Popup Styles */
         .chat-popup {
             position: fixed;
             bottom: 20px;
@@ -281,11 +334,6 @@
             visibility: visible;
         }
 
-        .chat-popup.closed {
-            opacity: 0;
-            visibility: hidden;
-        }
-
         .chat-popup-header {
             background-color: #0056b3;
             color: white;
@@ -306,47 +354,20 @@
             cursor: pointer;
             padding: 0.5rem;
             font-size: 0.9rem;
-            outline: none;
         }
 
         .close-btn:hover {
             background-color: #004884;
         }
 
+        .chat-title {
+            font-size: 1.2rem;
+        }
+
         .chat-popup-body {
             padding: 1rem;
             height: 250px;
             overflow-y: auto;
-        }
-
-        .suggested-options {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #f0f0f0; /* Light background */
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .suggested-option {
-            margin-bottom: 10px;
-        }
-
-        .suggested-option button {
-            background-color: #003572; /* Dark blue */
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s, transform 0.2s;
-            box-sizing: border-box;
-        }
-
-        .suggested-option button:hover {
-            background-color: #001d44; /* Darker blue on hover */
-            transform: translateY(-2px); /* Lift effect */
         }
 
         .chat-popup-footer {
@@ -428,7 +449,6 @@
             word-wrap: break-word;
             font-style: italic;
             display: inline-block;
-            position: relative;
         }
 
         .typing-indicator .content::after {
@@ -452,54 +472,156 @@
             }
         }
 
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-                transform: translateY(0);
+        .suggested-options {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f0f0; /* Light background */
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .suggested-option {
+            margin-bottom: 10px;
+        }
+
+        .suggested-option button {
+            background-color: #003572; /* Dark blue */
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s, transform 0.2s;
+            box-sizing: border-box;
+        }
+
+        .suggested-option button:hover {
+            background-color: #001d44; /* Darker blue on hover */
+            transform: translateY(-2px); /* Lift effect */
+        }
+
+        /* Media Queries for Different Screen Sizes */
+        @media (max-width: 768px) {
+            main h1 {
+                font-size: 3rem;
             }
-            40% {
-                transform: translateY(-10px);
+            main p {
+                font-size: 1.25rem;
             }
-            60% {
-                transform: translateY(-5px);
+            nav {
+                width: 30%;
+            }
+
+            nav.closed {
+                width: 12%;
+                padding-top: 0px;
+            }
+
+            nav.closed .logo-container {
+                padding-top: 0px;
+                text-align: center;
+            }
+
+            nav li a {
+                font-size: 0.9rem;
+            }
+
+            nav ul li a {
+                padding: 0rem;
+            }
+
+            main.open {
+                margin-left: 30%;
+                width: calc(100% - 40%);
+            }
+
+            .box {
+                min-width: 150px;
+                max-width: 250px;
+            }
+
+            .chat-popup {
+                width: 50%;
+            }
+
+            .chat-icon img {
+                width: 45px;
             }
         }
 
-        @keyframes fadeIn {
-            0% {
-                opacity: 0;
-                transform: translateY(20px);
+        @media (max-width: 426px) {
+            main h1 {
+                font-size: 2.3rem;
+                margin-left: 40px;
             }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
+            main p {
+                font-size: 1.25rem;
             }
-        }
 
-        @keyframes fadeInUp {
-            0% {
-                opacity: 0;
-                transform: translateY(20px);
+            .slogan {
+                margin-left: 40px;
             }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
+            nav {
+                width: 100%;
             }
-        }
 
-        @keyframes fadeInDown {
-            0% {
-                opacity: 0;
-                transform: translateY(-20px);
+            #main-nav.closed ul {
+                display: none;
             }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
+
+            #main-nav {
+                width: 100%;
+            }
+
+            #main-nav .logo-container {
+                padding-top: 20px;
+                margin: 0px;
+                text-align: center;
+            }
+
+            #main-nav.closed {
+                background-color: #f9f9f9;
+                width: 80px;
+            }
+
+            nav.closed .logo-container {
+                padding-top: 0px;
+                text-align: center;
+            }
+
+            nav li a {
+                font-size: 0.9rem;
+            }
+
+            nav ul li a {
+                padding: 0rem;
+            }
+
+            main.open {
+                margin-left: 30%;
+                width: calc(100% - 40%);
+            }
+
+            .box {
+                min-width: 150px;
+                max-width: 250px;
+            }
+
+            .chat-popup {
+                width: 60%;
+                height: 45%;
+            }
+
+            .chat-icon img {
+                width: 45px;
             }
         }
     </style>
 </head>
 <body>
-    <nav>
+    <nav id="main-nav">
         <div class="logo-container">
             <img id="logo" class="logo" src="../static/logo.png" alt="Logo" onclick="toggleMenu()">
         </div>
