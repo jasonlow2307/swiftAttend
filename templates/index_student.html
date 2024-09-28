@@ -504,14 +504,21 @@
 
         /* Media Queries for Different Screen Sizes */
         @media (max-width: 768px) {
+            .dashboard {
+                margin-top: 0px;
+            }
+
+            main {
+                margin-left: 27%;   
+            }
             main h1 {
-                font-size: 3rem;
+                font-size: 2.5rem;
             }
             main p {
                 font-size: 1.25rem;
             }
             nav {
-                width: 30%;
+                width: 25%;
             }
 
             nav.closed {
@@ -533,13 +540,13 @@
             }
 
             main.open {
-                margin-left: 30%;
-                width: calc(100% - 40%);
+                margin-left: 15%;
+                width: calc(100% - 15%);
             }
 
             .box {
                 min-width: 150px;
-                max-width: 250px;
+                max-width: 450px;
             }
 
             .chat-popup {
@@ -553,8 +560,7 @@
 
         @media (max-width: 426px) {
             main h1 {
-                font-size: 2.3rem;
-                margin-left: 40px;
+                font-size: 2rem;
             }
             main p {
                 font-size: 1.25rem;
@@ -610,12 +616,16 @@
             }
 
             .chat-popup {
-                width: 60%;
-                height: 45%;
+                width: 70%;
+                height: 60%;
             }
 
             .chat-icon img {
                 width: 45px;
+            }
+
+            canvas {
+                margin-top: auto;
             }
         }
     </style>
@@ -681,8 +691,10 @@
     <script>
         function toggleMenu() {
             const nav = document.querySelector('nav');
+            const main = document.querySelector('main');
             const logo = document.getElementById('logo');
             nav.classList.toggle('closed');
+            main.classList.toggle('open');
         }
 
         const chatPopup = document.getElementById("chatPopup");
@@ -806,6 +818,24 @@
                 rotated = !rotated;
             });
         });
+
+        // Function to toggle the 'closed' class based on screen size
+        function toggleNavOnMobile() {
+            const nav = document.getElementById('main-nav');
+            console.log(window.innerWidth)
+
+            if (window.innerWidth <= 768) {
+                nav.classList.add('closed');  // Add 'closed' class for mobile screens
+            } else {
+                nav.classList.remove('closed');  // Remove 'closed' class for larger screens
+            }
+        }
+
+        // Initial check when the page loads
+        toggleNavOnMobile();
+
+        // Re-check when the window is resized
+        window.addEventListener('resize', toggleNavOnMobile);
     </script>
 </body>
 </html>
