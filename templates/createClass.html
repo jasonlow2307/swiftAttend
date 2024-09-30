@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Class Creation</title>
     <style>
+        * {
+            font-size: 0.95rem;
+        }
         body {
             background-color: #f5f5f5;
             font-family: Arial, sans-serif;
@@ -19,13 +23,36 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             width: 400px;
+            max-height: 450px;
             margin: 50px auto;
+            overflow-y: scroll;
+        }
+
+        .header{
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            align-content: center;
+            margin-top: 10px;
+        }
+
+        #icon {
+            margin-top: 15px;
+            padding-right: 12px;
+            font-size: 30px;
+            color: #003572;
+        }
+
+        #home {
+            font-size: 25px;
+            color: #003572;
+            margin-top: 10px;
         }
 
         h1 {
             color: #003572;
             font-weight: bold;
-            font-size: 30px;
+            font-size: 1.7rem;
             margin-bottom: 20px;
             text-align: center;
         }
@@ -48,7 +75,6 @@
         input[type="submit"] {
             width: calc(100% - 22px);
             padding: 10px;
-            margin-bottom: 10px;
             border-radius: 5px;
             border: 1px solid #ddd;
             box-sizing: border-box;
@@ -60,6 +86,7 @@
             color: white;
             cursor: pointer;
             border: none;
+            font-size: 1rem;
         }
 
         input[type="submit"]:hover {
@@ -117,11 +144,52 @@
             transform: translate(-50%, -50%);
         }
 
+        button {
+            background-color: #003572;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+
+        button:hover {
+            background-color: #001d44;
+        }
+
+        @media (max-width: 768px) {
+            .container{
+                width: 40%;
+                height: auto;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            #icon {
+                font-size: 25px;
+                margin-top: 10px;
+            }
+
+            * {
+                font-size: 12px;
+            }
+
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Create Class</h1>
+        <div class="header">
+            <i class="fas fa-plus-circle nav-icon" id="icon"></i>
+            <h1>Create Class</h1>
+        </div>
         <form id="classForm" action="/create_form" method="POST">
             <label for="courseName">Course Name:</label>
             <input type="text" id="courseName" name="courseName" pattern="[A-Za-z0-9\s]+" required><br><br>
@@ -142,12 +210,23 @@
             <input type="time" id="time" name="time" required><br><br>
             
             <label>Select Students:</label><br>
-            {% for student in students|sort(attribute='StudentId') %}
+
+            {% for student in first_five_students %}
                 <div class="checkbox-container">
                     <input type="checkbox" name="students" value="{{ student }}">
                     <label>{{ student.StudentId|string + " - " +  student.FullName }}</label>
                 </div>
             {% endfor %}
+
+            <div id="more-students" style="display: none;">
+                {% for student in remaining_students %}
+                    <div class="checkbox-container">
+                        <input type="checkbox" name="students" value="{{ student }}">
+                        <label>{{ student.StudentId|string + " - " +  student.FullName }}</label>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="button" onclick="toggleStudents()">View More Students</button>
             <br>
             
             <label>Select Lecturer:</label><br>
@@ -161,12 +240,24 @@
 
             <input type="submit" value="Create Class">
 
-            <a href="/"><p>Home</p></a>
+            <a href="/"><i class="fas fa-home" id="home"></i></a>
         </form>
     </div>
     
     <!-- Script to handle form submission and display JSON response -->
     <script>
+        function toggleStudents() {
+            var moreStudents = document.getElementById("more-students");
+            var button = event.target;
+            if (moreStudents.style.display === "none") {
+                moreStudents.style.display = "block";
+                button.innerText = "View Less Students";
+            } else {
+                moreStudents.style.display = "none";
+                button.innerText = "View More Students";
+            }
+        }
+
         document.getElementById("classForm").addEventListener("submit", function(event) {
             event.preventDefault(); // Prevent default form submission
             var formData = new FormData(this);

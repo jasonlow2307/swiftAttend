@@ -58,7 +58,11 @@ def create_class():
         student['StudentId'] = int(student['StudentId'])
     for lecturer in lecturers:
         lecturer['LecturerId'] = int(lecturer['LecturerId'])
-    return render_template('createClass.html', students=students, lecturers = lecturers)
+
+    first_five_students = students[:5]
+    remaining_students = students[5:]
+
+    return render_template('createClass.html', first_five_students=first_five_students, remaining_students=remaining_students, lecturers = lecturers)
 
 @attendance.route('/create_form', methods=['POST'])
 def create_class_record():
