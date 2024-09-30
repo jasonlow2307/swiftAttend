@@ -1,11 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Retrieve Attendance Records</title>
     <style>
+        .header{
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            align-content: center;
+            margin-top: 10px;
+        }
+
+        #icon {
+            margin-top: 5px;
+            padding-right: 12px;
+            font-size: 27px;
+            color: #003572;
+        }
+
+        #home {
+            font-size: 25px;
+            color: #003572;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #home:hover {
+            color: #001d44;
+        }
+
         body {
             background-color: #f0f0f0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -66,6 +95,7 @@
             color: white;
             cursor: pointer;
             border: none;
+            margin-top: 5px;
         }
 
         input[type="submit"]:hover {
@@ -117,11 +147,48 @@
             padding: 10px;
             background-color: #fff; /* Background color of each option */
         }
+
+        @media (max-width: 768px) {
+            .container{
+                width: 50%;
+                height: auto;
+            }
+
+            * {
+                font-size: 12px;
+            }
+
+            #icon {
+                margin-top: 2px;
+            }
+
+        }
+
+        @media (max-width: 426px) {
+            .container{
+                width: 60%;
+                height: auto;
+            }
+
+            h1 {
+                font-size: 17px;
+            }
+
+            #icon {
+                font-size: 25px;
+                margin-top: 10px;
+                margin-bottom: 0px;
+                padding-right: 2px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Retrieve Attendance Records</h1>
+        <div class="header">
+            <i class="fas fa-search nav-icon" id="icon"></i>
+            <h1>Retrieve Attendance Records</h1>
+        </div>
         <form id="retrieveForm" action="/ret_form" method="post" onsubmit="return validateForm()">
             <label for="course">Course:</label>
             <select id="course" name="course">
@@ -137,7 +204,7 @@
             <input type="submit" value="Retrieve">
         </form>
         <div id="results"></div>
-        <a href="/"><p>Home</p></a>
+        <a href="/"><i class="fas fa-home" id="home"></i></a>
     </div>
 
     <script>
