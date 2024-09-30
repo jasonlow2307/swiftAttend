@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" type="image/png" href="../static/logo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -62,6 +63,7 @@
 
         .file-upload:hover {
             background-color: #001d44;
+            cursor: pointer;
         }
 
         input[type="text"],
@@ -80,6 +82,7 @@
             color: white;
             cursor: pointer;
             border: none;
+            margin-top: 10px;
         }
 
         input[type="submit"]:hover {
@@ -96,23 +99,32 @@
             margin-right: auto; /* Centers the image horizontally */
         }
 
-        /* Style for the "Home" link */
-        p {
-            text-align: center;
+        .header{
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            align-content: center;
             margin-top: 10px;
-            color: #003572;
-            cursor: pointer;
-            font-weight: bold;
         }
 
-        p:hover {
-            text-decoration: underline;
+        #icon {
+            padding-right: 10px;
+            font-size: 30px;
+            color: #003572;
+        }
+
+        #home {
+            font-size: 25px;
+            color: #003572;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Lecturer Registration</h2>
+        <div class="header">
+            <i class="fas fa-chalkboard-teacher nav-icon" id="icon"></i>
+            <h2>Lecturer Registration</h2>
+        </div>
         <img id="previewImage" src="#" alt="Image Preview" style="display: none;">
         <form id="registrationForm" enctype="multipart/form-data">
             <label class="file-upload">
@@ -123,7 +135,7 @@
             <input type="submit" value="Submit">
             <input type="hidden" name="role" value="lecturer">
         </form>
-        <a href="/"><p>Home</p></a>
+        <a href="/"><i class="fas fa-home" id="home"></i></a>
     </div>
 
     <script>
