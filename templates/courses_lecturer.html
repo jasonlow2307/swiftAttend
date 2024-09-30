@@ -1,8 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <style>
+        .header{
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            align-content: center;
+            margin-top: 10px;
+        }
+
+        #icon {
+            margin-top: 17px;
+            padding-right: 12px;
+            font-size: 27px;
+            color: #003572;
+        }
+
+        #home {
+            font-size: 25px;
+            color: #003572;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #home:hover {
+            color: #001d44;
+        }
+
         /* Consolidated CSS rules */
         .box:hover, #add-student-button:hover, #edit-button:hover, #exit-edit-button:hover, .remove-student-button:hover {
             background-color: #6699CC; /* Light blue background on hover */
@@ -49,12 +78,14 @@
     
         .modal-content {
             background-color: #fefefe;
-            margin: 15% auto;
+            margin: 5% auto;
             padding: 20px;
             border: 1px solid #888;
             display: inline-block; /* Adjust the display to inline-block */
             border-radius: 15px;
-            min-width: 200px;
+            width: 500px;
+            max-height: 475px;
+            overflow-y: auto;
         }
     
         .close {
@@ -92,10 +123,12 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: auto;
+            width: 80%;
             text-align: center;
             max-height: 90vh;
             overflow: auto;
+            margin-top: 20px;
+            margin-bottom: 20px;
         }
     
         h1 {
@@ -106,12 +139,12 @@
         }
     
         .box {
-            border: 5px solid #003572; /* Change the border color to dark blue */
+            border: 2px solid #003572; /* Change the border color to dark blue */
             padding: 10px 20px;
             margin: 10px;
             display: inline-block;
             vertical-align: top;
-            width: 200px;
+            width: 175px;
             border-radius: 10px; /* Add rounded corners */
         }
     
@@ -170,7 +203,8 @@
         }
 
         .box-container {
-            display: flex;
+            display: flex;    
+            max-width: 720px;        
             flex-wrap: wrap;
             justify-content: center;
         }
@@ -245,7 +279,10 @@
 <body>
     <div class="container">
         <div class="content">
-            <h1>Classes</h1>
+            <div class="header">
+                <i class="fas fa-book-open nav-icon" id="icon"></i>
+                <h1>Courses</h1>
+            </div>
             <div class="box-container">
                 {% for course in courses %}
                 <div class="class-box box" onclick="openModal('{{ course.CourseName }}', '{{ course.CourseCode }}', '{{ course.Students|escapejs }}', '{{ course.Lecturer.FullName }}', '{{ course.Lecturer.Image }}')">
@@ -257,8 +294,7 @@
                 </div>
                 {% endfor %}
             </div>
-            <a href="/"><p>Home</p></a>
-        </div>        
+        </div>      
 
         <div id="myModal" class="modal">
             <div class="modal-content">
@@ -288,6 +324,7 @@
                 <button id="exit-edit-button" onClick="exitEditMode()">Exit Edit Mode</button>
             </div>
         </div>
+        <a href="/"><i class="fas fa-home" id="home"></i></a>  
     </div>
 
     <script>
