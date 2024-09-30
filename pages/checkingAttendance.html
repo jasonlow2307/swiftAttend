@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" type="image/png" href="../static/logo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +16,31 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+        }
+
+        .header{
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            align-content: center;
+            margin-top: 10px;
+        }
+
+        #icon {
+            margin-top: 20px;
+            padding-right: 12px;
+            font-size: 27px;
+            color: #003572;
+        }
+
+        #home {
+            font-size: 25px;
+            color: #003572;
+            margin-top: 15px;
+        }
+
+        #home:hover {
+            color: #001d44;
         }
 
         .container {
@@ -161,11 +187,16 @@
         label.file-upload.file-selected:hover {
             background-color: #00214d;
         }
+
+        
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Attendance Checking</h1>
+        <div class="header">
+            <i class="fas fa-clock nav-icon" id="icon"></i>
+            <h1>Attendance Checking</h1>
+        </div>
         <div id="initialButtons">
             <button id="captureOption" class="file-upload">Capture Image</button>
             <button id="uploadOption" class="file-upload">Upload Image</button>
@@ -192,7 +223,7 @@
         </form>
         <div id="loadingMessage">Processing...</div>
         <div id="results"></div>
-        <a href="/"><p>Home</p></a>
+        <a href="/"><i class="fas fa-home" id="home"></i></a>
     </div>
     <script>
         const video = document.getElementById('video');
