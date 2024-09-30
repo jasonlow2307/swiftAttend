@@ -37,7 +37,7 @@ def check_attendance():
         return render_template_string('''
                 <script>
                     alert("You need to initialize the class first.");
-                    window.location.href = "{{ url_for('app.initialize') }}";
+                    window.location.href = "{{ url_for('attendance.initialize') }}";
                 </script>
             ''')
 
