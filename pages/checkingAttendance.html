@@ -36,7 +36,7 @@
         #home {
             font-size: 25px;
             color: #003572;
-            margin-top: 15px;
+            margin-top: 20px;
         }
 
         #home:hover {
@@ -188,7 +188,40 @@
             background-color: #00214d;
         }
 
-        
+        @media (max-width: 768px) {
+            .container{
+                width: 50%;
+                height: auto;
+            }
+
+            * {
+                font-size: 12px;
+            }
+
+            #icon {
+                margin-top: 20px;
+            }
+
+        }
+
+        @media (max-width: 426px) {
+            .file-upload {
+                font-size: 12px;
+            }
+            .container{
+                width: 60%;
+                height: auto;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            #icon {
+                font-size: 25px;
+                margin-top: 12px;
+            }
+        }
     </style>
 </head>
 <body>
