@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" type="image/png" href="../static/logo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,6 +24,10 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             width: 400px;
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
             text-align: center;
         }
 
@@ -108,11 +113,57 @@
         p:hover {
             text-decoration: underline;
         }
+
+        .header{
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            align-content: center;
+            margin-top: 10px;
+        }
+
+        #icon {
+            padding-right: 10px;
+            font-size: 30px;
+            color: #003572;
+        }
+
+        #home {
+            font-size: 25px;
+            color: #003572;
+        }
+
+        @media (max-width: 768px) {
+            .container{
+                width: 40%;
+                height: auto;
+            }
+
+            * {
+                font-size: 12px;
+            }
+
+        }
+
+        @media (max-width: 426px) {
+            .container{
+                width: 60%;
+                height: auto;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Student Registration</h2>
+        <div class="header">
+            <i class="fas fa-user-graduate nav-icon" id="icon"></i>
+            <h2>Student Registration</h2>
+        </div>
         <img id="previewImage" src="#" alt="Image Preview" style="display: none;">
         <form id="registrationForm" enctype="multipart/form-data">
             <label class="file-upload">
@@ -123,7 +174,7 @@
             <input type="submit" value="Submit">
             <input type="hidden" name="role" value="student">
         </form>
-        <a href="/"><p>Home</p></a>
+        <a href="/"><i class="fas fa-home" id="home"></i></a>
     </div>
 
     <script>
