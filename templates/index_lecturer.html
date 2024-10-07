@@ -58,7 +58,7 @@
             z-index: 1000;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
             overflow-y: auto;
-            transition: width 0.5s ease-in-out;
+            transition: width 0.3s ease-in-out;
         }
 
         #main-nav.closed {
@@ -530,6 +530,10 @@
 
         /* Media Queries for Different Screen Sizes */
         @media (max-width: 768px) {
+            main {
+                margin-left: 13%;
+            }
+
             main h1 {
                 font-size: 3rem;
             }
@@ -546,7 +550,7 @@
             }
 
             nav.closed .logo-container {
-                padding-top: 0px;
+                padding-top: 10px;
                 text-align: center;
             }
 
@@ -608,7 +612,6 @@
             }
 
             #main-nav.closed {
-                background-color: #f9f9f9;
                 width: 80px;
             }
 
@@ -794,6 +797,8 @@
             }
         }
 
+        let rotated = true;
+
         function toggleMenu() {
             const nav = document.querySelector("nav");
             nav.classList.toggle("closed");
@@ -803,6 +808,13 @@
 
             const body = document.querySelector("body");
             body.classList.toggle("dimmed");
+
+            if (rotated) {
+                logo.src = "../static/logo2.png";
+            } else {
+                logo.src = "../static/logo.png";
+            }
+            rotated = !rotated;
         }
 
         // Function to handle clicks outside the nav area
@@ -921,20 +933,6 @@
                     }
                 }
             }
-        });
-
-        document.addEventListener("DOMContentLoaded", function() {
-            const logo = document.getElementById("logo");
-            let rotated = true;
-
-            logo.addEventListener("click", function() {
-                if (rotated) {
-                    logo.src = "../static/logo2.png";
-                } else {
-                        logo.src = "../static/logo.png";
-                }
-                rotated = !rotated;
-            });
         });
 
         // Function to toggle the 'closed' class based on screen size

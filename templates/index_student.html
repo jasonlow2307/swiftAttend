@@ -25,12 +25,19 @@
         /* Style for the closed nav */
         #main-nav {
             height: 100vh; /* Set a narrow width when the nav is closed */
+            width: 400px;
             transition: width 0.3s ease; /* Smooth transition when toggling */
             display: flex;
             flex-direction: column;
             align-items: center; /* Center horizontally */
             justify-content: flex-start;
             overflow-y: hidden;
+            z-index: 99999;
+        }
+
+        #main-nav.closed{
+            width: 100px;
+            transition: width 0.3s ease;;
         }
 
         /* Style for the ul and li elements inside the nav */
@@ -213,17 +220,37 @@
         }
 
         main {
-            margin-left: 20%;
+            margin-left: 10%;
             padding: 2rem;
             width: calc(100% - 20%);
             transition: margin-left 0.3s ease-in-out;
         }
 
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(128, 128, 128, 0.5); /* Gray color with 50% opacity */
+            z-index: 999; /* Ensure it sits on top of the content */
+            pointer-events: none; /* Prevent interaction through the overlay */
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        body.dimmed .overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        body.dimmed main {
+            opacity: 0.8; /* Slight dim on the content */
+            transition: opacity 0.5s ease;
+        }
+
         main.open {
-            margin-left: 150px;
-            padding: 2rem;
-            width: calc(100% - 100px);
-            transition: margin-left 0.3s ease-in-out;
+            z-index: -999;
         }
 
         main h1 {
@@ -509,7 +536,7 @@
             }
 
             main {
-                margin-left: 27%;   
+                margin-left: 13%;   
             }
             main h1 {
                 font-size: 2.5rem;
@@ -642,6 +669,7 @@
             <li><a href="/logout"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Logout</span></a></li>
         </ul>
     </nav>
+    <div class="overlay"></div>
     <main>
         <h1>Welcome to Swift Attend</h1>
         <p>Monitor your attendance and stay on top of your classes</p>
@@ -689,12 +717,23 @@
         </div>
     </div>
     <script>
+        let rotated = true;
         function toggleMenu() {
             const nav = document.querySelector('nav');
             const main = document.querySelector('main');
             const logo = document.getElementById('logo');
+            const body = document.querySelector('body');
+
+            body.classList.toggle('dimmed');
             nav.classList.toggle('closed');
             main.classList.toggle('open');
+
+            if (rotated) {
+                logo.src = "../static/logo2.png";
+            } else {
+                logo.src = "../static/logo.png";
+            }
+            rotated = !rotated;
         }
 
         // Function to handle clicks outside the nav area
@@ -823,37 +862,18 @@
                 }
             }
         });
-        document.addEventListener("DOMContentLoaded", function() {
-            const logo = document.getElementById("logo");
-            let rotated = true;
-
-            logo.addEventListener("click", function() {
-                if (rotated) {
-                    logo.src = "../static/logo2.png";
-                } else {
-                    logo.src = "../static/logo.png";
-                }
-                rotated = !rotated;
-            });
-        });
 
         // Function to toggle the 'closed' class based on screen size
-        function toggleNavOnMobile() {
+        function toggleNavOnLoad() {
             const nav = document.getElementById('main-nav');
-            console.log(window.innerWidth)
-
-            if (window.innerWidth <= 768) {
-                nav.classList.add('closed');  // Add 'closed' class for mobile screens
-            } else {
-                nav.classList.remove('closed');  // Remove 'closed' class for larger screens
-            }
+            nav.classList.add('closed'); 
         }
 
         // Initial check when the page loads
-        toggleNavOnMobile();
+        toggleNavOnLoad();
 
         // Re-check when the window is resized
-        window.addEventListener('resize', toggleNavOnMobile);
+        window.addEventListener('resize', toggleNavOnLoad);
     </script>
 </body>
 </html>
