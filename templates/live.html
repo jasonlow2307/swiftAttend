@@ -245,7 +245,12 @@
 
         // Access the webcam
         const video = document.getElementById('video-stream');
-        navigator.mediaDevices.getUserMedia({ video: true })
+        navigator.mediaDevices.getUserMedia({
+            video: {
+                width: { ideal: 640 },  // Lower resolution, adjust as needed
+                height: { ideal: 480 }
+            }
+        })
             .then(stream => {
                 video.srcObject = stream;
                 const mediaStream = stream.getTracks()[0];
@@ -263,7 +268,7 @@
                             }
                         })
                         .catch(error => console.error('Error grabbing frame:', error));
-                }, 500);
+                }, 700);
             })
             .catch(error => console.error('Error accessing webcam:', error));
 
@@ -276,7 +281,7 @@
                 ctx.drawImage(frame, 0, 0);
                 canvas.toBlob(blob => {
                     resolve(blob);
-                }, 'image/jpeg');
+                }, 'image/jpeg', 0.6);
             });
         }
     </script>
