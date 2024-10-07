@@ -7,30 +7,49 @@
     <title>Register</title>
     <style>
         body {
-            background-color: #f0f0f0;
+            background-color: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
-            justify-content: center;
-            align-items: center;
             min-height: 100vh;
-            margin: 50px 0;
         }
 
         .container {
+            width: 50%; /* Set the container to take up 60% of the screen */;
+            margin: auto; /* Center the content within the right side */
             background-color: white;
             padding: 20px;
+            padding-top: 0px;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 400px;
+            max-width: 400px;
             text-align: center;
+        }
+
+        .main-container {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+        }
+
+        .background {
+            width: 50%; 
+            align-items: center;
+            display: flex;
+        }
+
+        .background img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensure the image covers the area without distortion */
         }
 
         h1 {
             color: #003572;
             font-weight: bold;
-            font-size: 24px;
+            font-size: 25px;
             margin-bottom: 20px;
         }
 
@@ -84,7 +103,6 @@
 
         p {
             text-align: center;
-            margin-top: 10px;
             color: #003572;
             cursor: pointer;
             font-weight: bold;
@@ -156,72 +174,90 @@
             border-radius: 10px;
         }
 
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 20px;
+            }
+
+            p {
+                font-size: 12px;
+            }
+        }
+
         @media (max-width: 426px) {
             .container {
-                width: 80%;
-                margin-top: 25px;
+                width: 100%;
+            }
+
+            .background {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Register</h1>
-        {% if error %}
-        <div class="alert alert-danger">
-            {{ error }}
+    <div class="main-container">
+        <div class="background">
+            <img src="/static/banners/stationeries.jpeg" alt="background">
         </div>
-        {% endif %}
-        <form method="POST" action="{{ url_for('auth.register') }}" enctype="multipart/form-data">
-            {{ form.hidden_tag() }}
-            <p>
-                {{ form.email.label }}<br>
-                {{ form.email(size=32) }}<br>
-                {% for error in form.email.errors %}
-                    <span class="error-message">{{ error }}</span><br>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.password.label }}<br>
-                {{ form.password(size=32) }}<br>
-                {% for error in form.password.errors %}
-                    <span class="error-message">{{ error }}</span><br>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.given_name.label }}<br>
-                {{ form.given_name(size=32) }}<br>
-                {% for error in form.given_name.errors %}
-                    <span class="error-message">{{ error }}</span><br>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.family_name.label }}<br>
-                {{ form.family_name(size=32) }}<br>
-                {% for error in form.family_name.errors %}
-                    <span class="error-message">{{ error }}</span><br>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.role.label }}<br>
-                {{ form.role() }}<br>
-                {% for error in form.role.errors %}
-                    <span class="error-message">{{ error }}</span><br>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.image.label }}<br>
-                <img id="imagePreview" src="#" alt="Image Preview" style="display: none;">
-                {{ form.image() }}<br>
-                {% for error in form.image.errors %}
-                    <span class="error-message">{{ error }}</span><br>
-                {% endfor %}
-            </p>                        
-            <p>{{ form.submit(class="btn btn-primary") }}</p>
-        </form>
-        <p style="display: none;">{{ error }}</p>
-        <p>Already have an account?</p>
-        <a href="{{ url_for('auth.login') }}"><p>Log In</p></a>
+        <div class="container">
+            <h1>Register</h1>
+            {% if error %}
+            <div class="alert alert-danger">
+                {{ error }}
+            </div>
+            {% endif %}
+            <form method="POST" action="{{ url_for('auth.register') }}" enctype="multipart/form-data">
+                {{ form.hidden_tag() }}
+                <p>
+                    {{ form.email.label }}<br>
+                    {{ form.email(size=32) }}<br>
+                    {% for error in form.email.errors %}
+                        <span class="error-message">{{ error }}</span><br>
+                    {% endfor %}
+                </p>
+                <p>
+                    {{ form.password.label }}<br>
+                    {{ form.password(size=32) }}<br>
+                    {% for error in form.password.errors %}
+                        <span class="error-message">{{ error }}</span><br>
+                    {% endfor %}
+                </p>
+                <p>
+                    {{ form.given_name.label }}<br>
+                    {{ form.given_name(size=32) }}<br>
+                    {% for error in form.given_name.errors %}
+                        <span class="error-message">{{ error }}</span><br>
+                    {% endfor %}
+                </p>
+                <p>
+                    {{ form.family_name.label }}<br>
+                    {{ form.family_name(size=32) }}<br>
+                    {% for error in form.family_name.errors %}
+                        <span class="error-message">{{ error }}</span><br>
+                    {% endfor %}
+                </p>
+                <p>
+                    {{ form.role.label }}<br>
+                    {{ form.role() }}<br>
+                    {% for error in form.role.errors %}
+                        <span class="error-message">{{ error }}</span><br>
+                    {% endfor %}
+                </p>
+                <p>
+                    {{ form.image.label }}<br>
+                    <img id="imagePreview" src="#" alt="Image Preview" style="display: none;">
+                    {{ form.image() }}<br>
+                    {% for error in form.image.errors %}
+                        <span class="error-message">{{ error }}</span><br>
+                    {% endfor %}
+                </p>                        
+                <p>{{ form.submit(class="btn btn-primary") }}</p>
+            </form>
+            <p style="display: none;">{{ error }}</p>
+            <p>Already have an account?</p>
+            <a href="{{ url_for('auth.login') }}"><p>Log In</p></a>
+        </div>
     </div>
     <script>
         // Function to preview image before upload
