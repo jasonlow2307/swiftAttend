@@ -1,10 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <style>
         .box:hover, #add-student-button:hover, #edit-button:hover, #exit-edit-button:hover, .remove-student-button:hover {
             background-color: #6699CC; /* Light blue background on hover */
+        }
+
+        #home {
+            font-size: 1.5rem;
+            color: #003572;
+            margin-top: 5px;
         }
 
         .modal {
@@ -58,7 +66,7 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: auto;
+            width: 80%;
             text-align: center;
             max-height: 90vh;
             overflow: auto;
@@ -178,6 +186,16 @@
             color: #003572; /* Dark blue text color */
             font-size: 14px;
         }
+
+        @media (max-width: 426px) {
+            .container {
+                width: 70%;
+            }
+
+            .box-container {
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -195,7 +213,7 @@
                 </div>
                 {% endfor %}
             </div>
-            <a href="/"><p>Home</p></a>
+            <a href="/"><i class="fas fa-home" id="home"></i></a>
         </div>        
 
         <div id="myModal" class="modal">
@@ -272,4 +290,3 @@
     </script>
 </body>
 </html>
-```
