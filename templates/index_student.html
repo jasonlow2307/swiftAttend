@@ -697,6 +697,24 @@
             main.classList.toggle('open');
         }
 
+        // Function to handle clicks outside the nav area
+        function handleOutsideClick(event) {
+            const nav = document.querySelector("nav");
+
+            // Check if the nav is not closed and if the click happened outside of nav
+            if (!nav.classList.contains("closed") && !nav.contains(event.target)) {
+                toggleMenu();  // Call toggleMenu() if conditions are met
+            }
+        }
+
+        // Add event listener to the whole document to detect clicks outside the nav
+        document.addEventListener("click", handleOutsideClick);
+
+        // Prevent clicks inside the nav from closing the menu
+        document.querySelector("nav").addEventListener("click", function(event) {
+            event.stopPropagation();  // Stop the click from propagating to the document
+        });
+
         const chatPopup = document.getElementById("chatPopup");
         const chatBody = document.getElementById("chatBody");
         const chatInput = document.getElementById("chatInput");
