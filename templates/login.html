@@ -7,22 +7,20 @@
     <title>Login</title>
     <style>
         body {
-            background-color: #f0f0f0;
+            background-color: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
-            justify-content: center;
-            align-items: center;
             height: 100vh;
         }
 
         .container {
-            background-color: white;
+            width: 50%; 
+            margin: auto; 
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 400px;
+            max-width: 400px;
             text-align: center;
         }
 
@@ -89,32 +87,63 @@
             font-weight: bold;
         }
 
+        .main-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+
+        .background {
+            width: 50%;
+            height: 100%;
+            position: relative;
+        }
+
+        .background img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 70%;
+            }
+        }
+
         @media (max-width: 426px) {
             .container {
-                width: 80%;
-                margin-top: 25px;
+                width: 100%;
+            }
+            .background{
+                display: none;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Login</h1>
-        <form method="POST">
-            {{ form.hidden_tag() }}
-            <p>
-                {{ form.email.label }}<br>
-                {{ form.email(size=32) }}<br>
-                {{ form.password.label }}<br>
-                {{ form.password(size=32) }}<br>
-                {{ form.submit(class="btn btn-primary") }}
-            </p>
-            <p>Don't have an account?</p>
-            <a href = "register"><p>Register</p></a>
-            {% if error %}
-                <p class="error-message">{{ error }}</p>
-            {% endif %}
-        </form>
+    <div class="main-container">
+        <div class="background">
+            <img src="/static/banners/stationeries.jpeg" alt="background">
+        </div>
+        <div class="container">
+            <h1>Login</h1>
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <p>
+                    {{ form.email.label }}<br>
+                    {{ form.email(size=32) }}<br>
+                    {{ form.password.label }}<br>
+                    {{ form.password(size=32) }}<br>
+                    {{ form.submit(class="btn btn-primary") }}
+                </p>
+                <p>Don't have an account?</p>
+                <a href = "register"><p>Register</p></a>
+                {% if error %}
+                    <p class="error-message">{{ error }}</p>
+                {% endif %}
+            </form>
+        </div>
     </div>
 </body>
 </html>
