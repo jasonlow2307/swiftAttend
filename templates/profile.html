@@ -13,6 +13,20 @@
             margin: 0;
             padding: 0;
         }
+
+        #home {
+            font-size: 25px;
+            color: #003572;
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #home:hover {
+            color: #001d44;
+        }
+
         .container {
             max-width: 800px;
             margin: 50px auto;
@@ -128,9 +142,10 @@
             padding: 20px;
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            width: 80%;
+            width: 30%;
             max-width: 800px;
             text-align: center;
+            margin-top: 90px;
         }
         .banner-options{
             display: none;
@@ -214,9 +229,22 @@
             font-weight: bold;
             display: block;
             transition: background-color 0.3s;
-            padding: 1rem;
-            margin-top: 20px;
             text-align: center;
+        }
+
+        video {
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 85%;
+                margin-top: 25px;
+            }
+
+            .scan-qr-button {
+                margin-right: 30px;
+            }
         }
 
 </style>
@@ -270,7 +298,7 @@
             </div>
             {% endfor %}
             </div>
-            <a href="/">Home</p>
+            <a href="/"><i class="fas fa-home" id="home"></i></p>
         </div>
         <div id="qrModal" class="modal">
             <div class="modal-content">

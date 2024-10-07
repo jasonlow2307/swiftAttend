@@ -32,15 +32,8 @@
             color: #001d44;
         }
 
-        /* Consolidated CSS rules */
-        .box:hover, #add-student-button:hover, #edit-button:hover, #exit-edit-button:hover, .remove-student-button:hover {
-            background-color: #6699CC; /* Light blue background on hover */
-        }
-
-        /* Removed duplicate CSS rules */
-        #class-container {
-                    white-space: nowrap;
-                    overflow-x: auto;
+        #add-student-button:hover, #edit-button:hover, #exit-edit-button:hover, .remove-student-button:hover, .box:hover {
+            background-color: #6699CC;
         }
 
         #studentIdDropdown, #confirm-button {
@@ -100,11 +93,6 @@
             color: black;
             text-decoration: none;
             cursor: pointer;
-        }
-    
-        #class-container {
-            white-space: nowrap;
-            overflow-x: auto;
         }
     
         body {
@@ -208,13 +196,6 @@
             flex-wrap: wrap;
             justify-content: center;
         }
-
-        @media screen and (max-width: 800px) {
-            .box-container {
-                flex-direction: column;
-                align-items: center;
-            }
-        }
         
         p {
             font-weight: bold;
@@ -274,6 +255,26 @@
             background-color: #6699CC; /* Light blue background on hover */
         }
 
+        
+
+        @media (max-width: 426px) {
+            .container {
+                width: 30%;
+                height: auto;
+                max-width: 250px;
+            }
+
+            h1 {
+                font-size: 17px;
+            }
+
+            #icon {
+                font-size: 25px;
+                margin-top: 10px;
+                margin-bottom: 0px;
+                padding-right: 2px;
+            }
+        }
     </style>
 </head>
 <body>
