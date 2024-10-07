@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <style>
@@ -10,6 +11,12 @@
             justify-content: center;
             align-content: center;
             margin-top: 10px;
+        }
+
+        #home {
+            font-size: 1.5rem;
+            color: #003572;
+            margin-top: 5px;
         }
 
         #icon {
@@ -255,24 +262,58 @@
             background-color: #6699CC; /* Light blue background on hover */
         }
 
-        
-
         @media (max-width: 426px) {
             .container {
-                width: 30%;
-                height: auto;
-                max-width: 250px;
+                width: 85%;
+                padding: 0px;
+                padding-bottom: 10px;
             }
 
-            h1 {
-                font-size: 17px;
+            .box-container {
+                font-size: 0.8rem;
             }
 
-            #icon {
-                font-size: 25px;
-                margin-top: 10px;
-                margin-bottom: 0px;
-                padding-right: 2px;
+            .box {
+                max-width: 110px;
+            }
+
+            .lecturer-image {
+                max-width: 110px;
+            }
+
+            .modal-content {
+                width: 90%;
+                padding: 10px;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-sizing: border-box;
+            }
+
+            table {
+                width: 100%;
+                table-layout: auto;
+                word-wrap: break-word;
+            }
+
+            th, td {
+                padding: 8px;
+                font-size: 12px;
+                white-space: normal;
+            }
+
+            .remove-column {
+                display: none;
+            }
+
+            /* Adjust table layout if the remove column is present */
+            .remove-column-active th, .remove-column-active td {
+                width: auto;
+            }
+
+            /* If the remove column is visible, make room for it */
+            .remove-column-visible table {
+                width: 100%;
+                table-layout: fixed;
             }
         }
     </style>
