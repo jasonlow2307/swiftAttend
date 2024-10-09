@@ -185,6 +185,19 @@
                 width: 100%;
                 margin-top: 20px;
             }
+
+            #more-students {
+                max-height: 0;
+                opacity: 0;
+                overflow: hidden;
+                transition: all 0.5s ease-in-out; /* Adjust the duration as needed */
+            }
+
+            #more-students.show {
+                max-height: 500px; /* Set a max-height greater than the content height */
+                opacity: 1;
+            }
+
         }
 
         @media (max-width: 768px) {
@@ -247,7 +260,7 @@
                     </div>
                 {% endfor %}
 
-                <div id="more-students" style="display: none;">
+                <div id="more-students">
                     {% for student in remaining_students %}
                         <div class="checkbox-selection">
                             <input type="checkbox" name="students" value="{{ student }}">
@@ -256,7 +269,7 @@
                     {% endfor %}
                     </div>
 
-                <button type="button" onclick="toggleStudents()">View More Students</button>
+                <button type="button" onclick="toggleStudents(this)">View More Students</button>
                 <br>
                 
                 <label>Select Lecturer:</label><br>
@@ -275,17 +288,18 @@
 
     <!-- Script to handle form submission and display JSON response -->
     <script>
-        function toggleStudents() {
+        function toggleStudents(button) {
             var moreStudents = document.getElementById("more-students");
-            var button = event.target;
-            if (moreStudents.style.display === "none") {
-                moreStudents.style.display = "block";
-                button.innerText = "View Less Students";
-            } else {
-                moreStudents.style.display = "none";
+            if (moreStudents.classList.contains("show")) {
+                moreStudents.classList.remove("show");
                 button.innerText = "View More Students";
+            } else {
+                moreStudents.classList.add("show");
+                button.innerText = "View Less Students";
             }
         }
+
+
 
         document.getElementById("classForm").addEventListener("submit", function(event) {
             event.preventDefault(); // Prevent default form submission
