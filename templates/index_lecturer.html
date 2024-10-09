@@ -254,10 +254,38 @@
         }
 
         main h1 {
-            font-size: 5.5rem;
-            width: fit-content;
-            color: #0056b3;
-            animation: fadeInDown 1s ease-in-out;
+            font-size: 36px;
+            color: #2c3e50; /* Modern dark text color */
+            margin: 0 0 10px;
+            font-weight: 700;
+        }
+
+        .slogan {
+            font-size: 18px;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+
+        .welcome-banner {
+            background-image: url('../static/banners/stationeries_2.jpeg'); /* Set the image URL */
+            background-size: cover; /* Cover the entire container */
+            background-position: center; /* Center the image */
+            background-repeat: no-repeat; /* Prevent repetition */
+            height: 400px; /* Adjust the height as needed */
+            display: flex; /* Use flexbox for centering */
+            flex-direction: column; /* Align items vertically */
+            justify-content: center; /* Center items vertically */
+            align-items: center; /* Center items horizontally */
+            text-align: center; /* Center the text */
+            color: white; /* Light text color */
+            border-radius: 15px;;
+        }
+
+        .title-background {
+            background: rgba(255, 255, 255, 0.8); /* Semi-transparent overlay */
+            padding: 20px 40px;
+            border-radius: 10px;
+            text-align: center;
         }
 
         main p {
@@ -583,16 +611,24 @@
 
         @media (max-width: 426px) {
             main h1 {
-                font-size: 2.3rem;
-                margin-left: 40px;
+                font-size: 1.5rem;
             }
             main p {
                 font-size: 1.25rem;
             }
 
             .slogan {
-                margin-left: 40px;
+                font-size: 1rem;
             }
+
+            .welcome-banner {
+                margin-left: 15px;
+            }
+
+            .title-background {
+                width: 80%;
+            }
+
             nav {
                 width: 100%;
             }
@@ -668,8 +704,12 @@
     </nav>
     <div class="overlay"></div>
     <main>
-        <h1>Welcome to Swift Attend</h1>
-        <p class="slogan">Monitor and manage attendance seamlessly</p>
+        <div class="welcome-banner">
+            <div class="title-background">
+                <h1>Welcome to Swift Attend</h1>
+                <p class="slogan">Monitor and manage attendance seamlessly</p>
+            </div>
+        </div>
         <div class="dashboard">
             <div class="box">
                 <h2>Student Enrollment</h2>
