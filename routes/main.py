@@ -25,7 +25,10 @@ def index():
                         total_records += 1
                         if record['Attendance'] == 'PRESENT':
                             present_counter += 1
-                attendance_rate = round(present_counter / total_records * 100, 2)
+                if total_records != 0:
+                    attendance_rate = round(present_counter / total_records * 100, 2)
+                else:
+                    attendance_rate = 0
                 course['AttendanceRate'] = attendance_rate
             else:
                 course['AttendanceRate'] = "NA"

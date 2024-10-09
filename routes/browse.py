@@ -137,7 +137,10 @@ def profile():
                         total_records += 1
                         if record['Attendance'] == 'PRESENT':
                             present_counter += 1
-                attendance_rate = round(present_counter / total_records * 100, 2)
+                if total_records == 0:
+                    attendance_rate = 0
+                else:
+                    attendance_rate = round(present_counter / total_records * 100, 2)
                 course['AttendanceRate'] = attendance_rate
             else:
                 course['AttendanceRate'] = "NA"

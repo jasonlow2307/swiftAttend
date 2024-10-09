@@ -135,15 +135,9 @@
                             <th>Image</th>  
                             <th>Full Name</th>
                             <th>Attendance</th>
-                            {% if attendance_records[0].Emotion %}
-                                <th>Emotion</th>
-                            {% endif %}
-                            {% if attendance_records[0].EyeDirection %}
-                                <th>Eye Direction</th>
-                            {% endif %}
-                            {% if attendance_records[0].Focused %}
-                                <th>Focus</th>
-                            {% endif %}
+                            <th>Emotion</th>
+                            <th>Eye Direction</th>
+                            <th>Focus</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -154,12 +148,18 @@
                                 <td>{{ record.Attendance }}</td>
                                 {% if record.Emotion %}
                                     <td>{{ record.Emotion }}</td>
+                                {% else %}
+                                    <td>N/A</td>
                                 {% endif %}
                                 {% if record.EyeDirection %}
                                     <td>{{ record.EyeDirection.Yaw }}, {{ record.EyeDirection.Pitch }}</td>
+                                {% else %}
+                                    <td>N/A</td>
                                 {% endif %}
                                 {% if record.Focused %}
                                     <td>{{ record.Focused }}</td>
+                                {% else %}
+                                    <td>N/A</td>
                                 {% endif %}
                             </tr>
                         {% endfor %}
