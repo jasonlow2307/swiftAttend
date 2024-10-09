@@ -47,6 +47,8 @@
             font-size: 25px;
             color: #003572;
             margin-top: 15px;
+            text-align: center;
+            margin: 0 auto;
         }
 
         #home:hover {
@@ -97,13 +99,13 @@
             background-color: #001d44;
         }
 
-        .checkbox-container, .radio-container {
+        .checkbox-selection, .radio-container {
             display: flex;
             align-items: center;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
 
-        .checkbox-container input[type="checkbox"],
+        .checkbox-selection input[type="checkbox"],
         .radio-container input[type="radio"] {
             appearance: none;
             -webkit-appearance: none;
@@ -117,12 +119,12 @@
             position: relative;
         }
 
-        .checkbox-container input[type="checkbox"]:checked,
+        .checkbox-selection input[type="checkbox"]:checked,
         .radio-container input[type="radio"]:checked {
             background-color: #003572;
         }
 
-        .checkbox-container input[type="checkbox"]:checked::before,
+        .checkbox-selection input[type="checkbox"]:checked::before,
         .radio-container input[type="radio"]:checked::before {
             content: "\2713";
             display: block;
@@ -165,6 +167,24 @@
             background-color: #001d44;
         }
 
+        @media (min-width: 1024px) {
+            .container {
+                width: 80%;
+            }
+
+            form {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                width: 100%;
+                gap: 30px;
+            }
+
+            .form-1, .form-2 {
+                width: 100%;
+            }
+        }
+
         @media (max-width: 768px) {
             .container{
                 width: 60%;
@@ -195,59 +215,62 @@
             <h1>Create Class</h1>
         </div>
         <form id="classForm" action="/create_form" method="POST">
-            <label for="courseName">Course Name:</label>
-            <input type="text" id="courseName" name="courseName" pattern="[A-Za-z0-9\s]+" required><br><br>
+            <div class="form-1">
+                <label for="courseName">Course Name:</label>
+                <input type="text" id="courseName" name="courseName" pattern="[A-Za-z0-9\s]+" required><br><br>
+                
+                <label for="courseName">Course Code:</label>
+                <input type="text" id="courseCode" name="courseCode" required><br><br>
+        
+                <label for="day">Day:</label>
+                <select id="day" name="day" required>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                </select><br><br>
+                
+                <label for="time">Time:</label>
+                <input type="time" id="time" name="time" required><br><br>
+            </div>
+            <div class="form-2">
             
-            <label for="courseName">Course Code:</label>
-            <input type="text" id="courseCode" name="courseCode" required><br><br>
-    
-            <label for="day">Day:</label>
-            <select id="day" name="day" required>
-                <option value="Monday">Monday</option>
-                <option value="Tuesday">Tuesday</option>
-                <option value="Wednesday">Wednesday</option>
-                <option value="Thursday">Thursday</option>
-                <option value="Friday">Friday</option>
-            </select><br><br>
-            
-            <label for="time">Time:</label>
-            <input type="time" id="time" name="time" required><br><br>
-            
-            <label>Select Students:</label><br>
+                <label for="students">Select Students:</label><br>
 
-            {% for student in first_five_students %}
-                <div class="checkbox-container">
-                    <input type="checkbox" name="students" value="{{ student }}">
-                    <label>{{ student.StudentId|string + " - " +  student.FullName }}</label>
-                </div>
-            {% endfor %}
-
-            <div id="more-students" style="display: none;">
-                {% for student in remaining_students %}
-                    <div class="checkbox-container">
+                {% for student in first_five_students %}
+                    <div class="checkbox-selection">
                         <input type="checkbox" name="students" value="{{ student }}">
-                        <label>{{ student.StudentId|string + " - " +  student.FullName }}</label>
+                        <label for="students">{{ student.StudentId|string + " - " +  student.FullName }}</label>
                     </div>
                 {% endfor %}
+
+                <div id="more-students" style="display: none;">
+                    {% for student in remaining_students %}
+                        <div class="checkbox-selection">
+                            <input type="checkbox" name="students" value="{{ student }}">
+                            <label>{{ student.StudentId|string + " - " +  student.FullName }}</label>
+                        </div>
+                    {% endfor %}
+                    </div>
+
+                <button type="button" onclick="toggleStudents()">View More Students</button>
+                <br>
+                
+                <label>Select Lecturer:</label><br>
+                {% for lecturer in lecturers|sort(attribute='LecturerId') %}
+                    <div class="radio-container">
+                        <input type="radio" name="lecturer" value="{{ lecturer }}">
+                        <label>{{ lecturer.LecturerId|string + " - " +  lecturer.FullName }}</label>
+                    </div>
+                {% endfor %}
+                <br>
             </div>
-            <button type="button" onclick="toggleStudents()">View More Students</button>
-            <br>
-            
-            <label>Select Lecturer:</label><br>
-            {% for lecturer in lecturers|sort(attribute='LecturerId') %}
-                <div class="radio-container">
-                    <input type="radio" name="lecturer" value="{{ lecturer }}">
-                    <label>{{ lecturer.LecturerId|string + " - " +  lecturer.FullName }}</label>
-                </div>
-            {% endfor %}
-            <br>
-
-            <input type="submit" value="Create Class">
-
-            <a href="/"><i class="fas fa-home" id="home"></i></a>
         </form>
+        <input type="submit" value="Create Class">
+        <a href="/"><i class="fas fa-home" id="home"></i></a>
     </div>
-    
+
     <!-- Script to handle form submission and display JSON response -->
     <script>
         function toggleStudents() {
