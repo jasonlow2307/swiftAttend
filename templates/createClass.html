@@ -168,6 +168,19 @@
             background-color: #001d44;
         }
 
+        #more-students {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.5s ease-in-out; /* Adjust the duration as needed */
+        }
+
+        #more-students.show {
+            max-height: 500px; /* Set a max-height greater than the content height */
+            opacity: 1;
+        }
+
+
         @media (min-width: 1024px) {
             .container {
                 width: 80%;
@@ -185,19 +198,6 @@
                 width: 100%;
                 margin-top: 20px;
             }
-
-            #more-students {
-                max-height: 0;
-                opacity: 0;
-                overflow: hidden;
-                transition: all 0.5s ease-in-out; /* Adjust the duration as needed */
-            }
-
-            #more-students.show {
-                max-height: 500px; /* Set a max-height greater than the content height */
-                opacity: 1;
-            }
-
         }
 
         @media (max-width: 768px) {
@@ -219,6 +219,16 @@
                 font-size: 12px;
             }
 
+        }
+
+        @media (max-width: 426px) {
+            label {
+                font-size: 15px;
+            }
+
+            .container {
+                width: 80%;
+            }
         }
 
     </style>
@@ -251,7 +261,7 @@
             </div>
             <div class="form-2">
             
-                <label for="students">Select Students:</label><br>
+                <label for="students">Select Students:</label>
 
                 {% for student in first_five_students %}
                     <div class="checkbox-selection">
@@ -272,7 +282,7 @@
                 <button type="button" onclick="toggleStudents(this)">View More Students</button>
                 <br>
                 
-                <label>Select Lecturer:</label><br>
+                <label>Select Lecturer:</label>
                 {% for lecturer in lecturers|sort(attribute='LecturerId') %}
                     <div class="radio-container">
                         <input type="radio" name="lecturer" value="{{ lecturer }}">
