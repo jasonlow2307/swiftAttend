@@ -23,7 +23,6 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             width: 400px;
-            max-height: 550px;
             margin: 50px auto;
             overflow-y: scroll;
         }
@@ -48,7 +47,8 @@
             color: #003572;
             margin-top: 15px;
             text-align: center;
-            margin: 0 auto;
+            display: flex;
+            justify-content: center;
         }
 
         #home:hover {
@@ -73,13 +73,14 @@
             color: #333;
             margin-top: 10px;
             margin-bottom: 5px;
+            font-size: 17px;
         }
 
         input[type="text"],
         select,
         input[type="time"],
         input[type="submit"] {
-            width: calc(100% - 22px);
+            width: 100%;
             padding: 10px;
             border-radius: 5px;
             border: 1px solid #ddd;
@@ -177,11 +178,12 @@
                 flex-direction: row;
                 justify-content: space-between;
                 width: 100%;
-                gap: 30px;
+                gap: 100px;
             }
 
             .form-1, .form-2 {
                 width: 100%;
+                margin-top: 20px;
             }
         }
 
