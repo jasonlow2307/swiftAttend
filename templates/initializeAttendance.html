@@ -171,6 +171,7 @@
             <input type="date" id="dateInput" name="date" required><br>
             <label for="course">Course:</label><br>
             <select id="courseInput" name="course">
+                <option value="" disabled selected>Select a course</option>
                 {% for course in courses %} 
                     <option value='{{ course | tojson }}'>{{ course.CourseCode + " - " + course.CourseName }}</option>
                 {% endfor %}

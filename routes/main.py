@@ -15,6 +15,7 @@ def index():
         user = fetch_users_from_dynamodb("students", [id])[0]
         user['Image'] = generate_signed_url(S3_BUCKET_NAME, 'index/' + id)
         courses = fetch_courses_from_dynamodb(student_id=id)
+        rate = 0
         for course in courses:
             present_counter = 0
             total_records = 0
@@ -41,8 +42,9 @@ def index():
                 for record in records:
                     if str(record['StudentId']) == id:
                         attendance.append(record)
-            
-            rate = calculate_monthly_attendance(attendance)
+
+            if len(attendance) > 0:
+                rate = calculate_monthly_attendance(attendance)
     elif role == 'lecturer':
         user = fetch_users_from_dynamodb("lecturers", [id])[0]
         courses = fetch_courses_from_dynamodb(lecturer_id=id)
@@ -63,7 +65,10 @@ def index():
         for course in courseCodes:
             attendance.append(retrieve_student_records(course=course))
     
-        rate = calculate_monthly_attendance(attendance[0])
+        if attendance:
+            rate = calculate_monthly_attendance(attendance[0])
+        else:
+            rate = 0
     else:
         user = {'FullName': {'S': "Admin"}}
 

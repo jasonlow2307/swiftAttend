@@ -50,6 +50,7 @@ def list_classes():
             image_key = 'index/' + student_id
             student['Image'] = generate_signed_url(S3_BUCKET_NAME, image_key)
 
+        # Default value for all_students
         all_students = fetch_users_from_dynamodb("students")
         for student in all_students:
             student_id = student['StudentId']

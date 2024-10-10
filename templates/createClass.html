@@ -188,6 +188,14 @@
 
             form {
                 display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                width: 100%;
+                gap: 20px;
+            }
+
+            .form-container {
+                display: flex;
                 flex-direction: row;
                 justify-content: space-between;
                 width: 100%;
@@ -240,56 +248,62 @@
             <h1>Create Class</h1>
         </div>
         <form id="classForm" action="/create_form" method="POST">
-            <div class="form-1">
-                <label for="courseName">Course Name:</label>
-                <input type="text" id="courseName" name="courseName" pattern="[A-Za-z0-9\s]+" required><br><br>
-                
-                <label for="courseName">Course Code:</label>
-                <input type="text" id="courseCode" name="courseCode" required><br><br>
-        
-                <label for="day">Day:</label>
-                <select id="day" name="day" required>
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                </select><br><br>
-                
-                <label for="time">Time:</label>
-                <input type="time" id="time" name="time" required><br><br>
-            </div>
-            <div class="form-2">
+            <div class="form-container">
+                <div class="form-1">
+                    <label for="courseName">Course Name:</label>
+                    <input type="text" id="courseName" name="courseName" pattern="[A-Za-z0-9\s]+" required><br><br>
+                    
+                    <label for="courseName">Course Code:</label>
+                    <input type="text" id="courseCode" name="courseCode" required><br><br>
             
-                <label for="students">Select Students:</label>
+                    <label for="day">Day:</label>
+                    <select id="day" name="day" required>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select><br><br>
+                    
+                    <label for="time">Time:</label>
+                    <input type="time" id="time" name="time" required><br><br>
+                </div>
+                <div class="form-2">
+                    <label for="students">Select Students:</label>
+                    {% if first_five_students|length == 0 %}
+                        <p>No students available</p>
+                    {% endif %}
 
-                {% for student in first_five_students %}
-                    <div class="checkbox-selection">
-                        <input type="checkbox" name="students" value="{{ student }}">
-                        <label for="students">{{ student.StudentId|string + " - " +  student.FullName }}</label>
-                    </div>
-                {% endfor %}
-
-                <div id="more-students">
-                    {% for student in remaining_students %}
+                    {% for student in first_five_students %}
                         <div class="checkbox-selection">
                             <input type="checkbox" name="students" value="{{ student }}">
-                            <label>{{ student.StudentId|string + " - " +  student.FullName }}</label>
+                            <label for="students">{{ student.StudentId|string + " - " +  student.FullName }}</label>
                         </div>
                     {% endfor %}
-                    </div>
 
-                <button type="button" onclick="toggleStudents(this)">View More Students</button>
-                <br>
-                
-                <label>Select Lecturer:</label>
-                {% for lecturer in lecturers|sort(attribute='LecturerId') %}
-                    <div class="radio-container">
-                        <input type="radio" name="lecturer" value="{{ lecturer }}">
-                        <label>{{ lecturer.LecturerId|string + " - " +  lecturer.FullName }}</label>
+                    <div id="more-students">
+                        {% for student in remaining_students %}
+                            <div class="checkbox-selection">
+                                <input type="checkbox" name="students" value="{{ student }}">
+                                <label>{{ student.StudentId|string + " - " +  student.FullName }}</label>
+                            </div>
+                        {% endfor %}
                     </div>
-                {% endfor %}
-                <br>
+                    
+                    {% if remaining_students %}
+                        <button type="button" onclick="toggleStudents(this)">View More Students</button>
+                    {% endif %}
+                    <br>
+                    
+                    <label>Select Lecturer:</label>
+                    {% for lecturer in lecturers|sort(attribute='LecturerId') %}
+                        <div class="radio-container">
+                            <input type="radio" name="lecturer" value="{{ lecturer }}">
+                            <label>{{ lecturer.LecturerId|string + " - " +  lecturer.FullName }}</label>
+                        </div>
+                    {% endfor %}
+                    <br>
+                </div>
             </div>
             <input type="submit" value="Create Class">
         </form>
