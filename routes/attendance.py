@@ -482,7 +482,7 @@ def check_attendance_record():
                 CollectionId=REKOGNITION_COLLECTION_NAME,
                 FaceId=face_id,
                 FaceMatchThreshold=70,
-                MaxFaces=10
+                MaxFaces=50
             )
 
             if 'FaceMatches' in response_search and len(response_search['FaceMatches']) > 0:
