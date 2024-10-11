@@ -5,7 +5,7 @@ from flask_cors import CORS
 import base64
 import cv2
 import numpy as np
-from routes.attendance import attendance, process_frame
+from routes.attendance import attendance, test_process_frame
 from routes.auth import auth
 from routes.main import main
 from routes.browse import browse
@@ -27,7 +27,7 @@ def handle_frame(data):
     frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
     
     # Process the frame
-    processed_frame = process_frame(frame)
+    processed_frame = test_process_frame(frame)
     
     # Encode the processed frame to JPEG
     ret, buffer = cv2.imencode('.jpg', processed_frame)

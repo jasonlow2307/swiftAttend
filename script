@@ -1,0 +1,18 @@
+import boto3
+from common import s
+
+# Initialize the Rekognition client
+rekognition = s.client('rekognition')
+
+# Your Rekognition collection name
+collection_id = "swiftAttend"
+
+# List all faces in the collection
+response = rekognition.list_faces(
+    CollectionId=collection_id,
+    MaxResults=500  # Adjust this value to control the number of results
+)
+
+# Print details of the faces in the collection
+for face in response['Faces']:
+    print(f"FaceId: {face['FaceId']}, ImageId: {face['ImageId']}, ExternalImageId: {face.get('ExternalImageId', 'N/A')}")

@@ -217,7 +217,7 @@
 
         window.onload = function() {
             videoElement = document.getElementById('processed-stream');
-            fetchInterval = setInterval(fetchDetectedStudents, 3000);
+            fetchInterval = setInterval(fetchDetectedStudents, 5000);
             // Start sending frames to server
             active = true;
         }
@@ -268,7 +268,7 @@
                             }
                         })
                         .catch(error => console.error('Error grabbing frame:', error));
-                }, 700);
+                }, 16);
             })
             .catch(error => console.error('Error accessing webcam:', error));
 
@@ -281,7 +281,7 @@
                 ctx.drawImage(frame, 0, 0);
                 canvas.toBlob(blob => {
                     resolve(blob);
-                }, 'image/jpeg', 0.6);
+                }, 'image/jpeg', 0.8);
             });
         }
     </script>

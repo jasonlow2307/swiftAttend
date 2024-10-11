@@ -1,7 +1,10 @@
 from functools import wraps
+import threading
 from flask import Blueprint, redirect, render_template_string, send_from_directory, request, jsonify, render_template, url_for, session, Response
 from datetime import datetime, timedelta, timezone
 import io
+
+import numpy as np
 from config import *
 from common import *
 import ast
@@ -161,173 +164,174 @@ def resize_frame(frame, scale=RESIZE_SCALE):
     resized_frame = cv2.resize(frame, dimensions, interpolation=cv2.INTER_AREA)
     return resized_frame
 
-def process_frame(frame):
-    global detected_students
-    global status
-    global known_face_encodings
-    global known_face_ids
-    global face_processing_cooldown
+# TODO LIMIT REKOGNITION CALL TO 1
+# LINK THE CHECKED ATTENDANCE
+
+import mediapipe as mp
+import uuid
+
+# Initialize mediapipe Face Detection
+mp_face_detection = mp.solutions.face_detection
+face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
+
+# Global variables for face tracking and status
+frame_count = 0
+process_every_nth_frame = 4  # Process every 4th frame to optimize performance
+previous_faces = {}  # Dictionary to track previous face locations, IDs, and status
+face_to_student_map = {}  # Maps AWS Rekognition face IDs to student names/details
+status = ""  # Status variable to track the current processing stage
+
+# Rekognition and tracking parameters
+FACE_HOLD_TIME = 3  # Time (in seconds) a face must be held before triggering Rekognition
+INITIAL_COOLDOWN = 3  # Initial cooldown time for unrecognized faces
+MAX_REKOGNITION_ATTEMPTS = 5  # Number of Rekognition attempts before increasing cooldown
+INCREASED_COOLDOWN = 10  # Cooldown after max attempts reached
+
+# Helper function to resize frames
+def resize_frame(frame, scale=0.5):
+    """Resize frame for optimized processing."""
+    width = int(frame.shape[1] * scale)
+    height = int(frame.shape[0] * scale)
+    dimensions = (width, height)
+    return cv2.resize(frame, dimensions, interpolation=cv2.INTER_AREA)
+
+# Calculate Euclidean distance between bounding boxes
+def calculate_distance(box1, box2):
+    """Calculate Euclidean distance between the centers of two bounding boxes."""
+    (x1, y1, w1, h1) = box1
+    (x2, y2, w2, h2) = box2
+    center1 = (x1 + w1 // 2, y1 + h1 // 2)
+    center2 = (x2 + w2 // 2, y2 + h2 // 2)
+    return np.sqrt((center1[0] - center2[0]) ** 2 + (center1[1] - center2[1]) ** 2)
+
+def track_faces(current_faces, previous_faces, threshold=30):
+    """Track faces between current and previous frames based on bounding box positions."""
+    current_ids = {}
+    unmatched_prev_ids = set(previous_faces.keys())
+
+    for curr_id, curr_box in current_faces.items():
+        best_match = None
+        min_distance = float('inf')
+
+        for prev_id, prev_box in previous_faces.items():
+            distance = calculate_distance(curr_box['box'], prev_box['box'])
+
+            if distance < min_distance and distance < threshold:
+                best_match = prev_id
+                min_distance = distance
+
+        if best_match is not None:
+            # If a match is found, update the current ID with existing face attributes
+            curr_box['timestamp'] = previous_faces[best_match]['timestamp']
+            curr_box['recognized'] = previous_faces[best_match]['recognized']
+            curr_box['last_recognition_time'] = previous_faces[best_match].get('last_recognition_time', 0)
+            curr_box['in_cooldown'] = previous_faces[best_match].get('in_cooldown', False)
+            curr_box['rekognition_attempts'] = previous_faces[best_match].get('rekognition_attempts', 0)
+            current_ids[best_match] = curr_box
+            unmatched_prev_ids.discard(best_match)
+        else:
+            # Assign a new ID to the face
+            new_id = str(uuid.uuid4())
+            curr_box['timestamp'] = time.time()  # Set the current time
+            curr_box['last_recognition_time'] = 0
+            curr_box['recognized'] = False  # Not recognized yet
+            curr_box['in_cooldown'] = False
+            curr_box['rekognition_attempts'] = 0  # No Rekognition attempts yet
+            print(f"New face detected: ID = {new_id}, Timestamp = {curr_box['timestamp']}")
+            current_ids[new_id] = curr_box
+
+    # Handle faces in the previous frame that no longer have a match
+    for prev_id in unmatched_prev_ids:
+        current_ids[prev_id] = previous_faces[prev_id]  # Retain unmatched faces
+
+    return current_ids
+
+def call_rekognition(face_image):
+    """Send the cropped face to AWS Rekognition and return the result."""
+    print("Calling AWS Rekognition...")
+    _, face_bytes = cv2.imencode('.jpg', face_image)
+    response = rekognition.search_faces_by_image(
+        CollectionId=REKOGNITION_COLLECTION_NAME,
+        Image={'Bytes': face_bytes.tobytes()},
+        FaceMatchThreshold=70,
+        MaxFaces=1
+    )
+    return response.get('FaceMatches', [])
+
+def test_process_frame(frame):
+    global frame_count, previous_faces, status
+
+    # Skip frames to reduce processing load
+    frame_count += 1
+    if frame_count % process_every_nth_frame != 0:
+        return frame
 
     # Resize frame for faster processing
-    frame = resize_frame(frame)
+    frame = resize_frame(frame, scale=0.4)
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    try:
-        # Detect face locations
-        face_locations = face_recognition.face_locations(frame)
-    except Exception as e:
-        print(f"Error in face_recognition.face_locations: {e}")
-    # Encode faces in the frame
-    face_encodings = face_recognition.face_encodings(frame, face_locations)
+    # Perform face detection
+    results = face_detection.process(rgb_frame)
 
+    # Prepare a dictionary to store the current frame's face bounding boxes
+    current_faces = {}
+
+    if results.detections:
+        for detection in results.detections:
+            bboxC = detection.location_data.relative_bounding_box
+            ih, iw, _ = frame.shape
+            x, y, w, h = int(bboxC.xmin * iw), int(bboxC.ymin * ih), int(bboxC.width * iw), int(bboxC.height * ih)
+            temp_id = str(uuid.uuid4())
+            current_faces[temp_id] = {'box': (x, y, w, h), 'timestamp': time.time(), 'recognized': False, 'in_cooldown': False, 'rekognition_attempts': 0}
+
+    # Match the current frame's faces with the previous frame's faces to assign consistent IDs
+    tracked_faces = track_faces(current_faces, previous_faces)
+    previous_faces = tracked_faces
+
+    # Process each tracked face
     current_time = time.time()
+    for face_id, face_data in tracked_faces.items():
+        (x, y, w, h) = face_data['box']
 
-    for (face_encoding, (top, right, bottom, left)) in zip(face_encodings, face_locations):
-        face_id = f"{top}_{right}_{bottom}_{left}"
+        # If face has been in the frame for 3 seconds and is not recognized or in cooldown
+        if not face_data['recognized'] and not face_data['in_cooldown'] and (current_time - face_data['timestamp']) >= FACE_HOLD_TIME:
+            print(f"Face ID {face_id[:8]} ready for Rekognition (attempt {face_data['rekognition_attempts'] + 1}).")
 
-        # Skip known faces
-        if face_id in known_face_ids:
-            continue
+            # Set cooldown before calling Rekognition
+            face_data['in_cooldown'] = True
+            face_data['last_recognition_time'] = current_time
 
-        if face_id in face_processing_cooldown and (current_time - face_processing_cooldown[face_id]) < FACE_PROCESSING_COOLDOWN:
-            continue
-        else:
-            face_processing_cooldown[face_id] = current_time
+            # Call AWS Rekognition for recognition
+            face_region = frame[y:y + h, x:x + w]
+            matches = call_rekognition(face_region)
+            if matches:
+                rekognition_id = matches[0]['Face']['FaceId']
+                face_data['recognized'] = True
+                face_to_student_map[face_id] = f"Student_{rekognition_id[:8]}"
+                print(f"Face ID {face_id[:8]} recognized. Will not reprocess.")
+            else:
+                # No match found, increase Rekognition attempts and keep the cooldown active
+                face_data['rekognition_attempts'] += 1
+                print(f"Face ID {face_id[:8]} not recognized. Setting cooldown.")
 
-        cv2.rectangle(frame, (left, top), (right, bottom), (255, 0, 0), 2)
+        # Check if cooldown period has expired
+        if face_data['in_cooldown'] and face_data['recognized'] == False:
+            cooldown_time = INITIAL_COOLDOWN if face_data['rekognition_attempts'] <= MAX_REKOGNITION_ATTEMPTS else INCREASED_COOLDOWN
+            time_since_last_recognition = current_time - face_data['last_recognition_time']
+            
+            print(f"Face ID {face_id[:8]} is in cooldown. Time since last recognition: {time_since_last_recognition:.2f} seconds.")
 
-        if status == "":
-            status = "Face detected"
-            print(status)
+            if time_since_last_recognition >= cooldown_time:
+                face_data['in_cooldown'] = False
+                print(f"Cooldown expired for Face ID {face_id[:8]}. Ready for another attempt.")
 
-        # If the face is already stored in timestamps
-        if face_id in face_timestamps:
-            print("Time: " + str(current_time - face_timestamps[face_id]))
-            if current_time - face_timestamps[face_id] > 3:
-                if face_id not in face_to_student_map:
-                    # Check face encoding against known faces
-                    matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
-
-                    if True in matches:
-                        # Face recognized
-                        first_match_index = matches.index(True)
-                        known_face_id = known_face_ids[first_match_index]
-                        status = "Student has already been matched"
-                        print(status)
-                        cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-
-                        if known_face_id not in matched_faces:
-                            # Process recognized face (DynamoDB lookup, etc.)
-                            process_recognized_face(known_face_id, face_id, frame, top, right, bottom, left)
-                    else:
-                        # Handle new faces with Rekognition
-                        process_new_face_with_rekognition(face_encoding, face_id, frame, top, right, bottom, left)
-        else:
-            face_timestamps[face_id] = current_time
+        # Draw bounding boxes and labels
+        color = (0, 0, 255) if face_data['recognized'] else (0, 255, 0)
+        label = face_to_student_map.get(face_id, f"Unknown (Attempts: {face_data['rekognition_attempts']})")
+        cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+        cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
     return frame
-
-def process_recognized_face(known_face_id, face_id, frame, top, right, bottom, left):
-    global detected_students
-    global matched_faces
-    global status
-
-    # Retrieve student details from DynamoDB
-    person_info = dynamodb.get_item(
-        TableName=DYNAMODB_STUDENT_TABLE_NAME,
-        Key={'RekognitionId': {'S': known_face_id}}
-    )
-
-    if 'Item' in person_info:
-        student_id = person_info['Item']['StudentId']['S']
-        student_name = person_info['Item']['FullName']['S']
-        student_image = generate_signed_url(S3_BUCKET_NAME, 'index/' + student_id)
-        
-        # Store detected student details
-        detected_students[student_id] = {
-            'name': student_name,
-            'image': student_image
-        }
-        face_to_student_map[face_id] = student_id
-
-        print(f"Detected student_id: {student_id} Name: {student_name}")
-        print(student_image)
-
-        # Update status and draw a green rectangle around recognized face
-        matched_faces.append(known_face_id)
-        status = "Student matched"
-        print(status)
-        cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
-
-def process_new_face_with_rekognition(face_encoding, face_id, frame, top, right, bottom, left):
-    global known_face_encodings
-    global known_face_ids
-    global detected_students
-    global status
-    global matched_faces
-
-    try:
-        print("REKOGNITION")
-        # Convert the detected face region to the required format for Rekognition
-        face_region = frame[top:bottom, left:right]
-        _, face_buffer = cv2.imencode('.jpg', face_region)
-        face_bytes = face_buffer.tobytes()
-
-        # Call Rekognition to search for the face
-        response_search = rekognition.search_faces_by_image(
-            CollectionId=REKOGNITION_COLLECTION_NAME,
-            Image={'Bytes': face_bytes},
-            FaceMatchThreshold=70,
-            MaxFaces=10
-        )
-
-        # Process the search response
-        face_matches = response_search.get('FaceMatches', [])
-        if face_matches:
-            for match in face_matches:
-                face_id_from_rekognition = match['Face']['FaceId']
-                person_info = dynamodb.get_item(
-                    TableName=DYNAMODB_STUDENT_TABLE_NAME,
-                    Key={'RekognitionId': {'S': face_id_from_rekognition}}
-                )
-
-                if 'Item' in person_info:
-                    if person_info['Item']['RekognitionId']['S'] not in matched_faces:
-                        student_id = person_info['Item']['StudentId']['S']
-                        student_name = person_info['Item']['FullName']['S']
-                        student_image = generate_signed_url(S3_BUCKET_NAME, 'index/' + student_id)
-                        
-                        # Store detected student details
-                        detected_students[student_id] = {
-                            'name': student_name,
-                            'image': student_image
-                        }
-                        face_to_student_map[face_id] = student_id
-
-                        print(f"Detected student_id: {student_id} Name: {student_name}")
-                        print(student_image)
-
-                        matched_faces.append(person_info['Item']['RekognitionId']['S'])
-                        status = "Student matched"
-                        print(status)
-
-                        # Draw a green rectangle around the recognized face
-                        cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
-                        
-                        # Save the new face encoding and ID
-                        known_face_encodings.append(face_encoding)
-                        known_face_ids.append(face_id_from_rekognition)
-
-    except rekognition.exceptions.InvalidParameterException as e:
-        print("InvalidParameterException:", e)
-        status = "Invalid face image"
-        cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-
-    except Exception as e:
-        print("Error calling Rekognition:", e)
-        status = "Error with Rekognition"
-        cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-
-
 
 
 @attendance.route('/detected_students')
