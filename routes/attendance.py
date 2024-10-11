@@ -179,6 +179,7 @@ frame_count = 0
 process_every_nth_frame = 4  # Process every 4th frame to optimize performance
 previous_faces = {}  # Dictionary to track previous face locations, IDs, and status
 face_to_student_map = {}  # Maps AWS Rekognition face IDs to student names/details
+recognized_faces = {} # To keep track of already recognized face IDs
 status = ""  # Status variable to track the current processing stage
 
 # Rekognition and tracking parameters
@@ -259,7 +260,7 @@ def call_rekognition(face_image):
     return response.get('FaceMatches', [])
 
 def test_process_frame(frame):
-    global frame_count, previous_faces, status
+    global frame_count, previous_faces, status, recognized_faces
 
     # Skip frames to reduce processing load
     frame_count += 1
@@ -282,7 +283,13 @@ def test_process_frame(frame):
             ih, iw, _ = frame.shape
             x, y, w, h = int(bboxC.xmin * iw), int(bboxC.ymin * ih), int(bboxC.width * iw), int(bboxC.height * ih)
             temp_id = str(uuid.uuid4())
-            current_faces[temp_id] = {'box': (x, y, w, h), 'timestamp': time.time(), 'recognized': False, 'in_cooldown': False, 'rekognition_attempts': 0}
+            current_faces[temp_id] = {
+                'box': (x, y, w, h), 
+                'timestamp': time.time(), 
+                'recognized': False, 
+                'in_cooldown': False, 
+                'rekognition_attempts': 0
+            }
 
     # Match the current frame's faces with the previous frame's faces to assign consistent IDs
     tracked_faces = track_faces(current_faces, previous_faces)
@@ -293,8 +300,15 @@ def test_process_frame(frame):
     for face_id, face_data in tracked_faces.items():
         (x, y, w, h) = face_data['box']
 
-        # If face has been in the frame for 3 seconds and is not recognized or in cooldown
-        if not face_data['recognized'] and not face_data['in_cooldown'] and (current_time - face_data['timestamp']) >= FACE_HOLD_TIME:
+        # Skip Rekognition if face has already been recognized
+        if face_data['recognized'] or face_id in recognized_faces:
+            # Draw bounding box for recognized face
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+            cv2.putText(frame, f"Recognized: {face_to_student_map.get(face_id, 'Student')}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            continue
+
+        # If face has been in the frame for 3 seconds and is not in cooldown
+        if not face_data['in_cooldown'] and (current_time - face_data['timestamp']) >= FACE_HOLD_TIME:
             print(f"Face ID {face_id[:8]} ready for Rekognition (attempt {face_data['rekognition_attempts'] + 1}).")
 
             # Set cooldown before calling Rekognition
@@ -308,6 +322,12 @@ def test_process_frame(frame):
                 rekognition_id = matches[0]['Face']['FaceId']
                 face_data['recognized'] = True
                 face_to_student_map[face_id] = f"Student_{rekognition_id[:8]}"
+                
+                # Update recognized_faces to prevent future Rekognition calls
+                recognized_faces[face_id] = rekognition_id
+
+                # Update detected students and prevent further calls for this face
+                update_detected_students(rekognition_id)
                 print(f"Face ID {face_id[:8]} recognized. Will not reprocess.")
             else:
                 # No match found, increase Rekognition attempts and keep the cooldown active
@@ -315,7 +335,7 @@ def test_process_frame(frame):
                 print(f"Face ID {face_id[:8]} not recognized. Setting cooldown.")
 
         # Check if cooldown period has expired
-        if face_data['in_cooldown'] and face_data['recognized'] == False:
+        if face_data['in_cooldown']:
             cooldown_time = INITIAL_COOLDOWN if face_data['rekognition_attempts'] <= MAX_REKOGNITION_ATTEMPTS else INCREASED_COOLDOWN
             time_since_last_recognition = current_time - face_data['last_recognition_time']
             
@@ -332,6 +352,28 @@ def test_process_frame(frame):
         cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
     return frame
+
+def update_detected_students(rekognition_id):
+    global detected_students
+
+    student_info = dynamodb.get_item(
+        TableName=DYNAMODB_STUDENT_TABLE_NAME,
+        Key={'RekognitionId': {'S': rekognition_id}}
+    )
+
+    if 'Item' in student_info:
+        student_id = student_info['Item']['StudentId']['S']
+        student_name = student_info['Item']['FullName']['S']
+        student_image = generate_signed_url(S3_BUCKET_NAME, 'index/' + student_id)
+        
+        # Store detected student details
+        detected_students[student_id] = {
+            'name': student_name,
+            'image': student_image
+        }
+
+        print(f"Detected student_id: {student_id} Name: {student_name}")
+        
 
 
 @attendance.route('/detected_students')
