@@ -509,7 +509,7 @@ def check_attendance_record():
                 response_search = rekognition.search_faces(
                     CollectionId=REKOGNITION_COLLECTION_NAME,
                     FaceId=face_id,
-                    FaceMatchThreshold=50,
+                    FaceMatchThreshold=20,
                     MaxFaces=50
                 )
 
