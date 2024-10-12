@@ -568,6 +568,11 @@ def check_attendance_record():
             if mapped_student_id == student_id:
                 emotion = face_emotions.get(bbox_key, 'UNKNOWN')
                 eye_direction = face_eye_directions.get(bbox_key, {'Yaw': 'UNKNOWN', 'Pitch': 'UNKNOWN'})
+                if eye_direction != {'Yaw': 'UNKNOWN', 'Pitch': 'UNKNOWN'}:
+                    eye_direction = {
+                        'Yaw': round(eye_direction['Yaw'], 2),
+                        'Pitch': round(eye_direction['Pitch'], 2)
+                    }
                 break
 
         focused = is_focused(emotion, eye_direction)

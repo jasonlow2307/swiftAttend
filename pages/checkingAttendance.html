@@ -392,16 +392,18 @@
             })
             .then(response => response.text()) // Parse response as text (HTML)
             .then(data => {
+                // Hide loading message
+                document.getElementById("loadingMessage").style.display = "none";
+
                 // Replace the entire document body with the received HTML
                 document.body.innerHTML = data;
+
+                // Rebind JavaScript functionality for new HTML (like toggleCard)
+                bindToggleCardFunctionality();
             })
             .catch(error => {
                 console.error("Error:", error);
                 alert("Error fetching attendance records!");
-            })
-            .finally(() => {
-                // Hide loading message
-                document.getElementById("loadingMessage").style.display = "none";
             });
         });
 
@@ -415,6 +417,16 @@
                 u8arr[n] = bstr.charCodeAt(n);
             }
             return new Blob([u8arr], { type: mime });
+        }
+
+        function bindToggleCardFunctionality() {
+            // Add the toggle functionality for newly loaded HTML
+            const studentCards = document.querySelectorAll('.student-card');
+            studentCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    card.classList.toggle('active');
+                });
+            });
         }
     </script>
 </body>
