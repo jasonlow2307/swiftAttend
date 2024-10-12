@@ -123,6 +123,16 @@
             border-radius: 10px;
         }
 
+        #home {
+            font-size: 25px;
+            color: #003572;
+            margin-top: 20px;
+        }
+
+        #home:hover {
+            color: #001d44;
+        }
+
         @media (max-width: 768px) {
             .student-card {
                 width: 90%;
@@ -175,6 +185,9 @@
                 </div>
             {% endfor %}
         {% endif %}
+        <div style="text-align: center;">
+            <a href="/"><i class="fas fa-home" id="home"></i></a>
+        </div>
     </div>
 </body>
 </html>
