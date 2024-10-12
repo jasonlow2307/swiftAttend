@@ -142,6 +142,7 @@ import mediapipe as mp
 import uuid
 
 # Initialize mediapipe Face Detection
+# Initialize mediapipe Face Detection
 mp_face_detection = mp.solutions.face_detection
 face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
 
@@ -152,7 +153,7 @@ previous_faces = {}  # Dictionary to track previous face locations, IDs, and sta
 face_to_student_map = {}  # Maps AWS Rekognition face IDs to student names/details
 recognized_faces = {} # To keep track of already recognized face IDs
 status = ""  # Status variable to track the current processing stage
-detected_students = {}  # Dictionary to store detected students and their details
+detected_students = {}
 
 # Rekognition and tracking parameters
 FACE_HOLD_TIME = 3  # Time (in seconds) a face must be held before triggering Rekognition
@@ -300,7 +301,7 @@ def process_frame(frame):
 
                 # Update detected students and prevent further calls for this face
                 update_detected_students(rekognition_id)
-                print(f"Face ID {face_id[:8]} recognized. Will not reprocess.")
+                print(f"Face ID {rekognition_id} recognized. Will not reprocess.")
             else:
                 # No match found, increase Rekognition attempts and keep the cooldown active
                 face_data['rekognition_attempts'] += 1
@@ -424,27 +425,21 @@ def check_attendance_record():
     # Check image size
     MAX_IMAGE_SIZE = 5242880  # 5 MB in bytes
     if len(image_bytes) > MAX_IMAGE_SIZE:
-        # Resize the image if it exceeds the size limit
         image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
-        # Example calculation to preserve aspect ratio
         original_width, original_height = image.size
-        max_dimension = 1024  # Example maximum dimension
+        max_dimension = 1024
 
         if original_width > original_height:
-            # Landscape orientation
             new_width = max_dimension
             new_height = int(original_height * (max_dimension / original_width))
         else:
-            # Portrait or square orientation
             new_height = max_dimension
             new_width = int(original_width * (max_dimension / original_height))
-        resized_image = image.resize((new_width, new_height))  # Adjust new_width and new_height
+        
+        resized_image = image.resize((new_width, new_height))
         buffered = io.BytesIO()
-        resized_image.save(buffered, format="JPEG")  # Change format as needed
+        resized_image.save(buffered, format="JPEG")
         image_bytes = buffered.getvalue()
-    else:
-        # Use original image bytes
-        image_bytes = image_bytes
 
     image_base64 = base64.b64encode(image_bytes).decode('utf-8')
     image_data_url = f"data:image/jpeg;base64,{image_base64}"
@@ -453,7 +448,7 @@ def check_attendance_record():
     image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
     draw = ImageDraw.Draw(image)
 
-    # Detect faces and attributes in the image
+    # Detect faces and attributes in the image using detect_faces
     response_faces = rekognition.detect_faces(
         Image={'Bytes': image_bytes},
         Attributes=['ALL']
@@ -463,40 +458,54 @@ def check_attendance_record():
     face_emotions = {}
     face_eye_directions = {}
     bounding_boxes = {}
-
-    # Index faces in the collection
-    response_index = rekognition.index_faces(
-        CollectionId=REKOGNITION_COLLECTION_NAME,
-        Image={'Bytes': image_bytes}
-    )
-
-    face_ids = [face['Face']['FaceId'] for face in response_index.get('FaceRecords', [])]
     detected_student_id = set()
     face_to_student_map = {}
 
-    for face_record in response_index.get('FaceRecords', []):
-        face_id = face_record['Face']['FaceId']
-        bounding_box = face_record['FaceDetail']['BoundingBox']
-        bounding_boxes[face_id] = bounding_box
+    print(f"Detected {len(face_details)} face(s).")
 
-    print("Bounding boxes: ", len(bounding_boxes))
-
+    # Step 2: Draw bounding boxes around detected faces
     for face_detail in face_details:
         bounding_box = face_detail['BoundingBox']
+        width, height = image.size
+        left = int(bounding_box['Left'] * width)
+        top = int(bounding_box['Top'] * height)
+        right = int(left + bounding_box['Width'] * width)
+        bottom = int(top + bounding_box['Height'] * height)
+        color = generate_random_color()  # Custom function to generate random color
+        draw.rectangle([left, top, right, bottom], outline=color, width=3)
+
         emotions = face_detail.get('Emotions', [])
         dominant_emotion = max(emotions, key=lambda x: x['Confidence'])['Type'] if emotions else 'UNKNOWN'
         pose = face_detail.get('Pose', {})
         yaw = pose.get('Yaw', 'UNKNOWN')
         pitch = pose.get('Pitch', 'UNKNOWN')
 
-        # Find the face ID for this face by matching the bounding boxes
-        face_id = next((fid for fid, box in bounding_boxes.items() if box == bounding_box), None)
-        if face_id:
-            face_emotions[face_id] = dominant_emotion
-            face_eye_directions[face_id] = {'Yaw': yaw, 'Pitch': pitch}
+        face_emotions[bbox_to_key(bounding_box)] = dominant_emotion
+        face_eye_directions[bbox_to_key(bounding_box)] = {'Yaw': yaw, 'Pitch': pitch}
 
+        # Crop face from the image for indexing
+        face_image = image.crop((left, top, right, bottom))
+
+        # Convert cropped face to bytes
+        buffered_face = io.BytesIO()
+        face_image.save(buffered_face, format="JPEG")
+        face_bytes = buffered_face.getvalue()
+
+        # Step 3: Index the face to get FaceId
+        response_index = rekognition.index_faces(
+            CollectionId=REKOGNITION_COLLECTION_NAME,
+            Image={'Bytes': face_bytes},
+            MaxFaces=1,
+            DetectionAttributes=['DEFAULT']
+        )
+
+        # Check if face is indexed and get FaceId
+        if response_index.get('FaceRecords'):
+            face_id = response_index['FaceRecords'][0]['Face']['FaceId']
+            print(f"Indexed FaceId: {face_id}")
+
+            # Step 4: Search for matching RekognitionId in DynamoDB
             try:
-                # Search for matches in the collection
                 response_search = rekognition.search_faces(
                     CollectionId=REKOGNITION_COLLECTION_NAME,
                     FaceId=face_id,
@@ -513,18 +522,25 @@ def check_attendance_record():
                         if 'Item' in person_info:
                             student_id = person_info['Item']['StudentId']['S']
                             detected_student_id.add(student_id)
-                            face_to_student_map[face_id] = student_id
+                            face_to_student_map[bbox_to_key(bounding_box)] = student_id
                 else:
                     print(f"No matches found for FaceId {face_id}")
 
             except botocore.exceptions.ClientError as error:
                 if error.response['Error']['Code'] == 'InvalidParameterException':
-                    # Handle the case when the FaceId is not found in the collection
                     print(f"FaceId {face_id} was not found in the Rekognition collection.")
                 else:
-                    # Handle other possible exceptions
                     print(f"An unexpected error occurred: {error}")
+            
+            # Delete the indexed face after getting the FaceId
+            rekognition.delete_faces(
+                CollectionId=REKOGNITION_COLLECTION_NAME,
+                FaceIds=[face_id]
+            )
+        else:
+            print("No FaceRecords found during indexing.")
 
+    # Process attendance records
     student_records = fetch_student_records(initialized_date, initialized_course)
 
     attendance_records = []
@@ -541,10 +557,10 @@ def check_attendance_record():
         # Find emotion and eye direction for the student
         emotion = 'UNKNOWN'
         eye_direction = {'Yaw': 'UNKNOWN', 'Pitch': 'UNKNOWN'}
-        for face_id, mapped_student_id in face_to_student_map.items():
+        for bbox_key, mapped_student_id in face_to_student_map.items():
             if mapped_student_id == student_id:
-                emotion = face_emotions.get(face_id, 'UNKNOWN')
-                eye_direction = face_eye_directions.get(face_id, {'Yaw': 'UNKNOWN', 'Pitch': 'UNKNOWN'})
+                emotion = face_emotions.get(bbox_key, 'UNKNOWN')
+                eye_direction = face_eye_directions.get(bbox_key, {'Yaw': 'UNKNOWN', 'Pitch': 'UNKNOWN'})
                 break
 
         focused = is_focused(emotion, eye_direction)
@@ -559,22 +575,7 @@ def check_attendance_record():
         })
         update_attendance(student_id, attendance_status, initialized_date)
 
-    # Draw bounding boxes around detected faces
-    for face_id, bounding_box in bounding_boxes.items():
-        color = generate_random_color()
-        width, height = image.size
-        left = int(bounding_box['Left'] * width)
-        top = int(bounding_box['Top'] * height)
-        right = int(left + bounding_box['Width'] * width)
-        bottom = int(top + bounding_box['Height'] * height)
-        draw.rectangle([left, top, right, bottom], outline=color, width=3)
-
-    if present_counter == 0:
-        error = "The people in the image are not in the course, please check if the image is correct"
-    else:
-        error = ""
-
-    # Convert modified image to base64
+    # Convert the modified image back to base64
     buffered = io.BytesIO()
     image.save(buffered, format="JPEG")
     modified_image_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
@@ -588,7 +589,11 @@ def check_attendance_record():
     elapsed_time = end_time - start_time
     print(f"Time taken to run check_attendance_record function: {elapsed_time} seconds")
 
-    return render_template('checked_attendance.html', attendance_records=attendance_records, error=error, uploaded_image=modified_image_data_url)
+    return render_template('checked_attendance.html', attendance_records=attendance_records, error='', uploaded_image=modified_image_data_url)
+
+# Helper function to create a unique key for bounding boxes (useful for mapping to face IDs)
+def bbox_to_key(bounding_box):
+    return f"{bounding_box['Left']}_{bounding_box['Top']}_{bounding_box['Width']}_{bounding_box['Height']}"
 
 
 @attendance.route('/ret_form', methods=['POST'])
