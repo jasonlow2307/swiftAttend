@@ -36,8 +36,8 @@
         .student-card {
             background-color: #fff;
             border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            width: 300px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            width: 90%;
             padding: 20px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -50,6 +50,7 @@
         .info {
             display: flex;
             flex-direction: column;
+            flex-grow: 3;
         }
 
         .basic-info {
@@ -88,6 +89,15 @@
             max-height: 150px; /* Adjust based on the content */
         }
 
+        .extra-info {
+            text-align: left;
+        }
+
+        .name p {
+            text-align: left;
+            margin-top: 20px;
+        }
+
         .extra-info p {
             margin: 5px 0;
             font-size: 14px;
@@ -119,11 +129,21 @@
             }
 
             * {
-                font-size: 12px;
+                font-size: 13px;
             }
 
             #icon {
                 margin-top: 20px;
+            }
+        }
+
+        @media (max-width: 426px) {
+            #attendance-container {
+                max-width: 250px;
+            }
+
+            #uploaded-image {
+                max-width: 250px;
             }
         }
     </style>
@@ -142,11 +162,11 @@
                         <div class="basic-info">
                             <div class="name">
                                 <h3>{{ record.FullName }}</h3>
+                                <p>{{ record.Attendance }}</p>
                             </div>
                             <i class="fas fa-chevron-down toggle-icon"></i>
                         </div>
                         <div class="extra-info">
-                            <p><span class="info-label">Attendance:</span> {{ record.Attendance }}</p>
                             <p><span class="info-label">Emotion:</span> {{ record.Emotion or 'N/A' }}</p>
                             <p><span class="info-label">Eye Direction:</span> {{ record.EyeDirection.Yaw }}, {{ record.EyeDirection.Pitch }}</p>
                             <p><span class="info-label">Focus:</span> {{ record.Focused or 'N/A' }}</p>
