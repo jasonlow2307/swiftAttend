@@ -504,33 +504,40 @@ def check_attendance_record():
             face_id = response_index['FaceRecords'][0]['Face']['FaceId']
             print(f"Indexed FaceId: {face_id}")
 
-            # Step 4: Search for matching RekognitionId in DynamoDB
-            try:
-                response_search = rekognition.search_faces(
-                    CollectionId=REKOGNITION_COLLECTION_NAME,
-                    FaceId=face_id,
-                    FaceMatchThreshold=20,
-                    MaxFaces=50
-                )
+            # Step 4: Attempt Rekognition search 3 times
+            face_found = False
+            for attempt in range(3):
+                try:
+                    response_search = rekognition.search_faces(
+                        CollectionId=REKOGNITION_COLLECTION_NAME,
+                        FaceId=face_id,
+                        FaceMatchThreshold=20,
+                        MaxFaces=50
+                    )
 
-                if 'FaceMatches' in response_search and len(response_search['FaceMatches']) > 0:
-                    for match in response_search['FaceMatches']:
-                        person_info = dynamodb.get_item(
-                            TableName=DYNAMODB_STUDENT_TABLE_NAME,
-                            Key={'RekognitionId': {'S': match['Face']['FaceId']}}
-                        )
-                        if 'Item' in person_info:
-                            student_id = person_info['Item']['StudentId']['S']
-                            detected_student_id.add(student_id)
-                            face_to_student_map[bbox_to_key(bounding_box)] = student_id
-                else:
-                    print(f"No matches found for FaceId {face_id}")
+                    if 'FaceMatches' in response_search and len(response_search['FaceMatches']) > 0:
+                        face_found = True
+                        for match in response_search['FaceMatches']:
+                            person_info = dynamodb.get_item(
+                                TableName=DYNAMODB_STUDENT_TABLE_NAME,
+                                Key={'RekognitionId': {'S': match['Face']['FaceId']}}
+                            )
+                            if 'Item' in person_info:
+                                student_id = person_info['Item']['StudentId']['S']
+                                detected_student_id.add(student_id)
+                                face_to_student_map[bbox_to_key(bounding_box)] = student_id
+                        break  # Break out of the loop if a match is found
+                    else:
+                        print(f"No matches found for FaceId {face_id} (Attempt {attempt + 1})")
 
-            except botocore.exceptions.ClientError as error:
-                if error.response['Error']['Code'] == 'InvalidParameterException':
-                    print(f"FaceId {face_id} was not found in the Rekognition collection.")
-                else:
-                    print(f"An unexpected error occurred: {error}")
+                except botocore.exceptions.ClientError as error:
+                    if error.response['Error']['Code'] == 'InvalidParameterException':
+                        print(f"FaceId {face_id} was not found in the Rekognition collection.")
+                    else:
+                        print(f"An unexpected error occurred: {error}")
+
+            if not face_found:
+                print(f"No match found for FaceId {face_id} after 3 attempts.")
             
             # Delete the indexed face after getting the FaceId
             rekognition.delete_faces(
