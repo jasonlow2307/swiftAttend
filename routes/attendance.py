@@ -1,9 +1,6 @@
-from functools import wraps
-import threading
-from flask import Blueprint, redirect, render_template_string, send_from_directory, request, jsonify, render_template, url_for, session, Response
+from flask import Blueprint, render_template_string, send_from_directory, request, jsonify, render_template, url_for, session, Response
 from datetime import datetime, timedelta, timezone
 import io
-
 import numpy as np
 from config import *
 from common import *
@@ -14,7 +11,6 @@ import base64
 from PIL import Image, ImageDraw
 import time
 import cv2
-import face_recognition
 from wrapper import *
 from functions import *
 
