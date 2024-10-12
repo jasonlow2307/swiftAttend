@@ -1,3 +1,4 @@
+import botocore
 from flask import Blueprint, render_template_string, send_from_directory, request, jsonify, render_template, url_for, session, Response
 from datetime import datetime, timedelta, timezone
 import io
@@ -137,32 +138,6 @@ def initialize_class_record():
 
 
 # LIVE ATTENDANCE MODE
-# To store face detection timestamps and student IDs
-face_timestamps = {}
-face_to_student_map = {}
-detected_students = {}
-matched_faces = []
-status = ""
-
-known_face_encodings = []  # List to store face encodings of known faces
-known_face_ids = []  # List to store face encodings of known faces
-
-FACE_PROCESSING_COOLDOWN = 5  # Skip processing for 5 frames
-face_processing_cooldown = {}
-
-# Parameters
-RESIZE_SCALE = 0.5  # Scale to reduce the resolution
-
-def resize_frame(frame, scale=RESIZE_SCALE):
-    width = int(frame.shape[1] * scale)
-    height = int(frame.shape[0] * scale)
-    dimensions = (width, height)
-    resized_frame = cv2.resize(frame, dimensions, interpolation=cv2.INTER_AREA)
-    return resized_frame
-
-# TODO LIMIT REKOGNITION CALL TO 1
-# LINK THE CHECKED ATTENDANCE
-
 import mediapipe as mp
 import uuid
 
@@ -177,6 +152,7 @@ previous_faces = {}  # Dictionary to track previous face locations, IDs, and sta
 face_to_student_map = {}  # Maps AWS Rekognition face IDs to student names/details
 recognized_faces = {} # To keep track of already recognized face IDs
 status = ""  # Status variable to track the current processing stage
+detected_students = {}  # Dictionary to store detected students and their details
 
 # Rekognition and tracking parameters
 FACE_HOLD_TIME = 3  # Time (in seconds) a face must be held before triggering Rekognition
@@ -519,24 +495,35 @@ def check_attendance_record():
             face_emotions[face_id] = dominant_emotion
             face_eye_directions[face_id] = {'Yaw': yaw, 'Pitch': pitch}
 
-            # Search for matches in the collection
-            response_search = rekognition.search_faces(
-                CollectionId=REKOGNITION_COLLECTION_NAME,
-                FaceId=face_id,
-                FaceMatchThreshold=70,
-                MaxFaces=50
-            )
+            try:
+                # Search for matches in the collection
+                response_search = rekognition.search_faces(
+                    CollectionId=REKOGNITION_COLLECTION_NAME,
+                    FaceId=face_id,
+                    FaceMatchThreshold=70,
+                    MaxFaces=50
+                )
 
-            if 'FaceMatches' in response_search and len(response_search['FaceMatches']) > 0:
-                for match in response_search['FaceMatches']:
-                    person_info = dynamodb.get_item(
-                        TableName=DYNAMODB_STUDENT_TABLE_NAME,
-                        Key={'RekognitionId': {'S': match['Face']['FaceId']}}
-                    )
-                    if 'Item' in person_info:
-                        student_id = person_info['Item']['StudentId']['S']
-                        detected_student_id.add(student_id)
-                        face_to_student_map[face_id] = student_id
+                if 'FaceMatches' in response_search and len(response_search['FaceMatches']) > 0:
+                    for match in response_search['FaceMatches']:
+                        person_info = dynamodb.get_item(
+                            TableName=DYNAMODB_STUDENT_TABLE_NAME,
+                            Key={'RekognitionId': {'S': match['Face']['FaceId']}}
+                        )
+                        if 'Item' in person_info:
+                            student_id = person_info['Item']['StudentId']['S']
+                            detected_student_id.add(student_id)
+                            face_to_student_map[face_id] = student_id
+                else:
+                    print(f"No matches found for FaceId {face_id}")
+
+            except botocore.exceptions.ClientError as error:
+                if error.response['Error']['Code'] == 'InvalidParameterException':
+                    # Handle the case when the FaceId is not found in the collection
+                    print(f"FaceId {face_id} was not found in the Rekognition collection.")
+                else:
+                    # Handle other possible exceptions
+                    print(f"An unexpected error occurred: {error}")
 
     student_records = fetch_student_records(initialized_date, initialized_course)
 
