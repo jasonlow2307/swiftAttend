@@ -259,7 +259,7 @@ def call_rekognition(face_image):
     )
     return response.get('FaceMatches', [])
 
-def test_process_frame(frame):
+def process_frame(frame):
     global frame_count, previous_faces, status, recognized_faces
 
     # Skip frames to reduce processing load
