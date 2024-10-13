@@ -156,10 +156,11 @@ status = ""  # Status variable to track the current processing stage
 detected_students = {}
 
 # Rekognition and tracking parameters
-FACE_HOLD_TIME = 3  # Time (in seconds) a face must be held before triggering Rekognition
+FACE_HOLD_TIME = 2  # Time (in seconds) a face must be held before triggering Rekognition
 INITIAL_COOLDOWN = 3  # Initial cooldown time for unrecognized faces
 MAX_REKOGNITION_ATTEMPTS = 5  # Number of Rekognition attempts before increasing cooldown
 INCREASED_COOLDOWN = 10  # Cooldown after max attempts reached
+FACE_REMOVAL_TIME = 5  # Time (in seconds) after which missing faces are removed
 
 # Helper function to resize frames
 def resize_frame(frame, scale=0.5):
@@ -169,7 +170,6 @@ def resize_frame(frame, scale=0.5):
     dimensions = (width, height)
     return cv2.resize(frame, dimensions, interpolation=cv2.INTER_AREA)
 
-# Calculate Euclidean distance between bounding boxes
 def calculate_distance(box1, box2):
     """Calculate Euclidean distance between the centers of two bounding boxes."""
     (x1, y1, w1, h1) = box1
@@ -178,59 +178,43 @@ def calculate_distance(box1, box2):
     center2 = (x2 + w2 // 2, y2 + h2 // 2)
     return np.sqrt((center1[0] - center2[0]) ** 2 + (center1[1] - center2[1]) ** 2)
 
-def track_faces(current_faces, previous_faces, threshold=30):
+def track_faces(current_faces, previous_faces, threshold=50):
     """Track faces between current and previous frames based on bounding box positions."""
-    current_ids = {}
+    tracked_faces = {}
     unmatched_prev_ids = set(previous_faces.keys())
 
-    for curr_id, curr_box in current_faces.items():
+    for curr_id, curr_data in current_faces.items():
         best_match = None
         min_distance = float('inf')
 
-        for prev_id, prev_box in previous_faces.items():
-            distance = calculate_distance(curr_box['box'], prev_box['box'])
+        # Try to match current faces with previous faces by distance
+        for prev_id, prev_data in previous_faces.items():
+            distance = calculate_distance(curr_data['box'], prev_data['box'])
 
             if distance < min_distance and distance < threshold:
                 best_match = prev_id
                 min_distance = distance
 
         if best_match is not None:
-            # If a match is found, update the current ID with existing face attributes
-            curr_box['timestamp'] = previous_faces[best_match]['timestamp']
-            curr_box['recognized'] = previous_faces[best_match]['recognized']
-            curr_box['last_recognition_time'] = previous_faces[best_match].get('last_recognition_time', 0)
-            curr_box['in_cooldown'] = previous_faces[best_match].get('in_cooldown', False)
-            curr_box['rekognition_attempts'] = previous_faces[best_match].get('rekognition_attempts', 0)
-            current_ids[best_match] = curr_box
+            # If a match is found, retain the previous ID and attributes
+            tracked_faces[best_match] = curr_data
+            tracked_faces[best_match]['timestamp'] = previous_faces[best_match]['timestamp']
+            tracked_faces[best_match]['recognized'] = previous_faces[best_match]['recognized']
+            tracked_faces[best_match]['rekognition_attempts'] = previous_faces[best_match]['rekognition_attempts']
+            tracked_faces[best_match]['in_cooldown'] = previous_faces[best_match]['in_cooldown']
+            tracked_faces[best_match]['last_recognition_time'] = previous_faces[best_match].get('last_recognition_time', 0)
             unmatched_prev_ids.discard(best_match)
         else:
-            # Assign a new ID to the face
+            # If no match, consider it as a new face
             new_id = str(uuid.uuid4())
-            curr_box['timestamp'] = time.time()  # Set the current time
-            curr_box['last_recognition_time'] = 0
-            curr_box['recognized'] = False  # Not recognized yet
-            curr_box['in_cooldown'] = False
-            curr_box['rekognition_attempts'] = 0  # No Rekognition attempts yet
-            print(f"New face detected: ID = {new_id}, Timestamp = {curr_box['timestamp']}")
-            current_ids[new_id] = curr_box
+            curr_data['timestamp'] = time.time()
+            tracked_faces[new_id] = curr_data
 
-    # Handle faces in the previous frame that no longer have a match
+    # Retain unmatched previous faces if they are still in the frame
     for prev_id in unmatched_prev_ids:
-        current_ids[prev_id] = previous_faces[prev_id]  # Retain unmatched faces
+        tracked_faces[prev_id] = previous_faces[prev_id]
 
-    return current_ids
-
-def call_rekognition(face_image):
-    """Send the cropped face to AWS Rekognition and return the result."""
-    print("Calling AWS Rekognition...")
-    _, face_bytes = cv2.imencode('.jpg', face_image)
-    response = rekognition.search_faces_by_image(
-        CollectionId=REKOGNITION_COLLECTION_NAME,
-        Image={'Bytes': face_bytes.tobytes()},
-        FaceMatchThreshold=70,
-        MaxFaces=1
-    )
-    return response.get('FaceMatches', [])
+    return tracked_faces
 
 def process_frame(frame):
     global frame_count, previous_faces, status, recognized_faces
@@ -250,10 +234,9 @@ def process_frame(frame):
     # Prepare a dictionary to store the current frame's face bounding boxes
     current_faces = {}
 
-    # If new faces are detected, clear tracked_faces to start fresh
-    if results.detections:
-        previous_faces.clear()  # Clear previous faces when a new detection is made
+    current_time = time.time()
 
+    if results.detections:
         for detection in results.detections:
             bboxC = detection.location_data.relative_bounding_box
             ih, iw, _ = frame.shape
@@ -261,7 +244,7 @@ def process_frame(frame):
             temp_id = str(uuid.uuid4())
             current_faces[temp_id] = {
                 'box': (x, y, w, h), 
-                'timestamp': time.time(), 
+                'timestamp': current_time, 
                 'recognized': False, 
                 'in_cooldown': False, 
                 'rekognition_attempts': 0
@@ -269,10 +252,23 @@ def process_frame(frame):
 
     # Match the current frame's faces with the previous frame's faces to assign consistent IDs
     tracked_faces = track_faces(current_faces, previous_faces)
+
+    # Remove faces that haven't been detected for a while
+    faces_to_remove = []
+    for face_id, face_data in previous_faces.items():
+        # If the face hasn't been seen for more than FACE_REMOVAL_TIME, mark it for removal
+        if current_time - face_data['timestamp'] > FACE_REMOVAL_TIME:
+            faces_to_remove.append(face_id)
+
+    # Remove the faces from previous_faces
+    for face_id in faces_to_remove:
+        del tracked_faces[face_id]
+        print(f"Removed face ID {face_id} due to inactivity.")
+
+    # Update the previous_faces with the tracked_faces
     previous_faces = tracked_faces
 
     # Process each tracked face
-    current_time = time.time()
     for face_id, face_data in tracked_faces.items():
         (x, y, w, h) = face_data['box']
 
@@ -328,6 +324,18 @@ def process_frame(frame):
         cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
     return frame
+
+def call_rekognition(face_image):
+    """Send the cropped face to AWS Rekognition and return the result."""
+    print("Calling AWS Rekognition...")
+    _, face_bytes = cv2.imencode('.jpg', face_image)
+    response = rekognition.search_faces_by_image(
+        CollectionId=REKOGNITION_COLLECTION_NAME,
+        Image={'Bytes': face_bytes.tobytes()},
+        FaceMatchThreshold=70,
+        MaxFaces=1
+    )
+    return response.get('FaceMatches', [])
 
 def update_detected_students(rekognition_id):
     global detected_students
