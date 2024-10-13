@@ -689,7 +689,7 @@
 <body>
     <nav id="main-nav">
         <div class="logo-container">
-            <img id="logo" class="logo" src="../static/logo.png" alt="Logo" onclick="toggleMenu()">
+            <img id="logo" class="logo" src="../static/logo2.png" alt="Logo" onclick="toggleMenu()">
         </div>
         <ul>
             <li><a href="/reglec"><i class="fas fa-chalkboard-teacher nav-icon"></i><span class="nav-text">Register Lecturer</span></a></li>
@@ -850,9 +850,9 @@
             body.classList.toggle("dimmed");
 
             if (rotated) {
-                logo.src = "../static/logo2.png";
-            } else {
                 logo.src = "../static/logo.png";
+            } else {
+                logo.src = "../static/logo2.png";
             }
             rotated = !rotated;
         }

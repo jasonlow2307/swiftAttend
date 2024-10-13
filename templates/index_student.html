@@ -689,7 +689,7 @@
 <body>
     <nav id="main-nav">
         <div class="logo-container">
-            <img id="logo" class="logo" src="../static/logo.png" alt="Logo" onclick="toggleMenu()">
+            <img id="logo" class="logo" src="../static/logo2.png" alt="Logo" onclick="toggleMenu()">
         </div>
         <ul>
             <li><a href="/ret"><i class="fas fa-clipboard-check nav-icon"></i><span class="nav-text">View Attendance</span></a></li>
@@ -762,9 +762,9 @@
             main.classList.toggle('open');
 
             if (rotated) {
-                logo.src = "../static/logo2.png";
-            } else {
                 logo.src = "../static/logo.png";
+            } else {
+                logo.src = "../static/logo2.png";
             }
             rotated = !rotated;
         }
