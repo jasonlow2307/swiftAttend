@@ -177,18 +177,22 @@
                 clearInterval(fetchInterval);
             }
 
-            // Stop the video feed
-            if (videoElement) {
-                videoElement.src = '';
-                videoElement.style.display = 'none';
+            // Stop the video feed and the webcam stream
+            const videoElement = document.getElementById("video-stream");
+            if (videoElement.srcObject) {
+                // Stop all tracks in the video stream
+                videoElement.srcObject.getTracks().forEach(track => track.stop());
+                videoElement.srcObject = null; // Remove the stream from the video element
             }
+            videoElement.style.display = 'none';
 
-            //Stop sending to server
+            // Stop sending frames to the server
             active = false;
 
             statusElement.innerText = 'Session Ended';
             document.getElementById("endSessionButton").style.display = 'none';
 
+            // Send the detected students data to the server
             fetch('/detected_students')
                 .then(response => response.json())
                 .then(data => {
@@ -212,6 +216,27 @@
             .then(response => response.text())
             .then(data => {
                 document.getElementById("body").innerHTML = data;
+
+                bindToggleCardFunctionality();
+
+                styleAttendanceContainer();
+            });
+        }
+
+        function styleAttendanceContainer() {
+            const attendanceContainer = document.getElementById('attendance-container');
+            attendanceContainer.style.margin = 'auto';
+            attendanceContainer.style.maxWidth = '80%';
+            attendanceContainer.style.marginTop = '100px';
+        }
+
+        function bindToggleCardFunctionality() {
+            // Add the toggle functionality for newly loaded HTML
+            const studentCards = document.querySelectorAll('.student-card');
+            studentCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    card.classList.toggle('active');
+                });
             });
         }
 
@@ -222,8 +247,8 @@
             active = true;
         }
 
-        //const socket = io.connect(`http://localhost:5000`);
-        const socket = io.connect(`http://13.212.7.230:5000`);
+        const socket = io.connect(`http://localhost:5000`);
+        //const socket = io.connect(`http://13.212.7.230:5000`);
 
         socket.on('connect', () => {
             console.log('Connected to server');

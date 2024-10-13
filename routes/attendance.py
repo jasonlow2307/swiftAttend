@@ -250,7 +250,10 @@ def process_frame(frame):
     # Prepare a dictionary to store the current frame's face bounding boxes
     current_faces = {}
 
+    # If new faces are detected, clear tracked_faces to start fresh
     if results.detections:
+        previous_faces.clear()  # Clear previous faces when a new detection is made
+
         for detection in results.detections:
             bboxC = detection.location_data.relative_bounding_box
             ih, iw, _ = frame.shape
@@ -276,8 +279,8 @@ def process_frame(frame):
         # Skip Rekognition if face has already been recognized
         if face_data['recognized'] or face_id in recognized_faces:
             # Draw bounding box for recognized face
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
-            cv2.putText(frame, f"Recognized: {face_to_student_map.get(face_id, 'Student')}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)  # Green for recognized
+            cv2.putText(frame, f"Recognized: {face_to_student_map.get(face_id, 'Student')}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             continue
 
         # If face has been in the frame for 3 seconds and is not in cooldown
@@ -319,7 +322,7 @@ def process_frame(frame):
                 print(f"Cooldown expired for Face ID {face_id[:8]}. Ready for another attempt.")
 
         # Draw bounding boxes and labels
-        color = (0, 0, 255) if face_data['recognized'] else (0, 255, 0)
+        color = (0, 255, 0) if face_data['recognized'] else (0, 0, 255)  # Green for recognized, red for unrecognized
         label = face_to_student_map.get(face_id, f"Unknown (Attempts: {face_data['rekognition_attempts']})")
         cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
         cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
@@ -403,6 +406,8 @@ def show_attendance():
             'FullName': student['FullName'],
             'Attendance': attendance_status,
             'SignedURL': signed_url,
+            'Emotion': emotion,
+            'EyeDirection': eye_direction,
         })
     return render_template('checked_attendance.html', attendance_records=attendance_records)
 
