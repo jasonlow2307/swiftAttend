@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
@@ -16,8 +17,8 @@
         }
 
         .container {
-            width: 50%; /* Set the container to take up 60% of the screen */;
-            margin: auto; /* Center the content within the right side */
+            width: 50%; 
+            margin: auto; 
             background-color: white;
             padding: 20px;
             padding-top: 0px;
@@ -43,7 +44,7 @@
         .background img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Ensure the image covers the area without distortion */
+            object-fit: cover;
         }
 
         h1 {
@@ -76,17 +77,16 @@
             border-radius: 5px;
         }
 
-        /* Custom submit button */
         input[type="submit"] {
             display: inline-block;
-            width: calc(100% - 40px); /* Adjusted width */
+            width: calc(100% - 40px);
             background-color: #003572;
             color: white;
             padding: 10px;
             border-radius: 5px;
             border: none;
             cursor: pointer;
-            font-weight: bold; /* Bold text */
+            font-weight: bold;
             transition: background-color 0.3s;
         }
 
@@ -122,40 +122,17 @@
             margin-right: auto;
         }
 
-        /* Adjust styles for file input */
         input[type="file"] {
             width: auto;
             height: auto;
             overflow: hidden;
         }
 
-        .custom-upload-button {
-            display: inline-block;
-            background-color: #003572;
-            color: white;
-            padding: 10px 20px; /* Adjust padding */
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }
-
-        .custom-upload-button:hover {
-            background-color: #001d44;
-        }
-
-        /* Hide default file input button */
-        input[type="file"]::-webkit-file-upload-button {
-            display: none;
-        }
-
-        /* Adjust label styles for file input */
         .custom-upload-label {
             display: inline-block;
             background-color: #003572;
             color: white;
-            padding: 10px 20px; /* Adjust padding */
+            padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
@@ -172,6 +149,52 @@
             margin-right: auto;
             margin-bottom: 20px;
             border-radius: 10px;
+        }
+
+        .question-mark {
+            display: inline-block;
+            margin-left: 5px;
+            font-size: 30px;
+            color: #003572;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            margin-top: 3px;
+        }
+
+        .question-mark:hover {
+            color: #001d44;
+        }
+
+        .password {
+            display: flex;
+        }
+
+        /* Smooth Collapsible section for password requirements */
+        .content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, padding 0.4s ease-out;
+            padding: 0 10px;
+            margin-top: 5px;
+            background-color: white;
+            border-left: 3px solid #003572;
+            border-right: 3px solid #003572;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .content.show {
+            max-height: 200px; /* Adjust height based on content */
+            padding: 10px 10px;
+        }
+
+        .content ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .content ul li {
+            margin-bottom: 5px;
+            color: #555;
         }
 
         @media (max-width: 768px) {
@@ -217,12 +240,27 @@
                     {% endfor %}
                 </p>
                 <p>
-                    {{ form.password.label }}<br>
-                    {{ form.password(size=32) }}<br>
+                    {{ form.password.label }}
+                    <div class="password">
+                        {{ form.password(size=32) }}<br>    
+                        <i class="fas fa-question-circle question-mark" id="passwordHelpIcon"></i><br>
+                    </div>
                     {% for error in form.password.errors %}
                         <span class="error-message">{{ error }}</span><br>
                     {% endfor %}
                 </p>
+
+                <!-- Expandable Password Requirements Section -->
+                <div class="content" id="passwordHelp">
+                    <ul>
+                        <li>Minimum length: 8 characters</li>
+                        <li>At least 1 number</li>
+                        <li>At least 1 special character</li>
+                        <li>At least 1 uppercase letter</li>
+                        <li>At least 1 lowercase letter</li>
+                    </ul>
+                </div>
+
                 <p>
                     {{ form.given_name.label }}<br>
                     {{ form.given_name(size=32) }}<br>
@@ -254,12 +292,25 @@
                 </p>                        
                 <p>{{ form.submit(class="btn btn-primary") }}</p>
             </form>
-            <p style="display: none;">{{ error }}</p>
             <p>Already have an account?</p>
             <a href="{{ url_for('auth.login') }}"><p>Log In</p></a>
         </div>
     </div>
+
+    <!-- JavaScript to enable smooth collapse/expand functionality -->
     <script>
+        // Toggle password requirements on question mark icon click
+        document.getElementById('passwordHelpIcon').addEventListener('click', function() {
+            var content = document.getElementById('passwordHelp');
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                content.style.borderBottom = 'none';
+            } else {
+                content.classList.add('show');
+                content.style.borderBottom = '3px solid #003572';
+            }
+        });
+
         // Function to preview image before upload
         document.getElementById('{{ form.image.id }}').addEventListener('change', function(e) {
             var reader = new FileReader();
