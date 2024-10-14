@@ -299,6 +299,7 @@ def process_frame(frame):
                 recognized_faces[face_id] = rekognition_id
 
                 # Update detected students and prevent further calls for this face
+                status = "Recognized " + str(rekognition_id[:8])
                 update_detected_students(rekognition_id)
                 print(f"Face ID {rekognition_id} recognized. Will not reprocess.")
             else:
