@@ -257,16 +257,16 @@
 
             .info {
                 margin-top: 5px;
-                margin-bottom: 80px;
+                margin-bottom: 120px;
             }
 
             .scan-qr-button {
-                margin-top: 100px;
+                margin-top: 140px;
                 margin-right: 120px;
             }
 
             .qr-button {
-                margin-top: 100px;
+                margin-top: 140px;
                 margin-right: 80px;
             }
 
@@ -566,11 +566,13 @@
             }
 
             for (var i = 0; i < bannerElements.length; i++) {
-                bannerElements[i].onclick = function () {
+                bannerElements[i].onclick = function (event) {
+                    event.preventDefault(); // Prevent default behavior (like a page reload)
+                    
                     var selectedBanner = this.getAttribute('data-banner');
                     var studentId = '{{ profile.StudentId }}'; 
 
-                    // Ensure the modal remains open and prevent any page reload
+                    // Make the fetch request to update the banner without reloading
                     fetch('/set_banner', {
                         method: 'POST',
                         headers: {
@@ -584,7 +586,9 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
+                            // Update the banner on the page without reloading
                             document.querySelector('.banner').style.backgroundImage = 'url(' + selectedBanner + ')';
+                            // Optionally close the modal here
                             modal.style.display = "none";  
                         }
                     })
@@ -593,9 +597,10 @@
                     });
                 };
             }
-            
+
             document.getElementById('more-banners').onclick = fetchMoreBanners;
         }
+
 
         // For fetch more banners
         function fetchMoreBanners() {
