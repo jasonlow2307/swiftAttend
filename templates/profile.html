@@ -117,7 +117,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(270deg, blue, purple, pink);
+            background: linear-gradient(270deg, #AEC6CF, #C3B1E1, pink);
             background-size: 600% 600%;
             animation: gradientAnimation 2s ease infinite;
             display: none;
@@ -535,7 +535,7 @@
 
             var bannerElements = document.getElementsByClassName("banner-option");
             for (var i = 0; i < bannerElements.length; i++) {
-                bannerElements[i].style.background = 'linear-gradient(270deg, blue, purple, pink)';
+                bannerElements[i].style.background = 'linear-gradient(270deg, #AEC6CF, #C3B1E1, pink)';
                 bannerElements[i].style.backgroundSize = '600% 600%';
                 bannerElements[i].style.animation = 'gradientAnimation 5s ease infinite';
                 bannerElements[i].style.width = '215px'; 
@@ -603,8 +603,15 @@
 
 
         // For fetch more banners
-        function fetchMoreBanners() {
+        function fetchMoreBanners(event) {
+            // Prevent the default behavior if it's tied to an anchor or button click
+            if (event) {
+                event.preventDefault();
+            }
+
             console.log(current_banners);
+
+            // Fetch request to get more banners
             fetch('/get_more_banners', {
                 method: 'POST',
                 headers: {
@@ -619,7 +626,8 @@
                 var bannerOptionsContainer = document.getElementById('banner-options');
                 bannerOptionsContainer.innerHTML = ''; 
 
-                current_banners = JSON.stringify(data.banners); // Update current_banners with new banners and convert to string
+                // Update current_banners with new banners
+                current_banners = JSON.stringify(data.banners);
                 console.log(current_banners);
 
                 data.banners.forEach(function (banner) {
@@ -628,15 +636,19 @@
                     img.setAttribute('data-banner', banner);
                     img.style.borderRadius = '15px';
                     img.style.margin = '10px';
-                    img.style.background = 'linear-gradient(270deg, blue, purple, pink)';
+                    img.style.background = 'linear-gradient(270deg, #AEC6CF, #C3B1E1, pink);';
                     img.style.backgroundSize = '600% 600%';
                     img.style.animation = 'gradientAnimation 2s ease infinite';
                     img.style.display = 'block';
+                    img.style.width = '215px';
+                    img.style.height = '300px';
                     bannerOptionsContainer.appendChild(img);
 
                     img.onclick = function () {
                         var selectedBanner = this.getAttribute('data-banner');
                         var studentId = '{{ profile.StudentId }}';
+
+                        // Fetch request to update the banner
                         fetch('/set_banner', {
                             method: 'POST',
                             headers: {
@@ -650,7 +662,8 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.status === 'success') {
-                                document.querySelector('.banner').style.backgroundImage = 'url(' + this.src + ')';
+                                // Update banner image without page reload
+                                document.querySelector('.banner').style.backgroundImage = 'url(' + selectedBanner + ')';
                                 document.getElementById("myModal").style.display = "none";
                             }
                         });
@@ -666,10 +679,22 @@
                         bannerImgElements[i].style.animation = 'none';
                         bannerImgElements[i].style.display = 'block';
                         bannerImgElements[i].style.objectFit = 'cover';
+                        bannerImgElements[i].style.width= '215px';
+                        bannerImgElements[i].style.height= '300px';
                     }
                 }, 3000); // Display gradient animation for 2 seconds
+            })
+            .catch(error => {
+                console.error('Error fetching more banners:', error);
             });
         }
+
+        // Ensure the more banners button does not cause a page reload
+        document.getElementById('more-banners').onclick = function(event) {
+            event.preventDefault(); // Prevent default click behavior
+            fetchMoreBanners(event);
+        };
+
 
         // For charts
         document.addEventListener('DOMContentLoaded', function () {
