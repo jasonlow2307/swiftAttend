@@ -10,3 +10,4 @@ opencv_contrib_python==4.10.0.84
 opencv_python-headless
 Pillow==10.4.0
 WTForms==3.1.2
+email_validator

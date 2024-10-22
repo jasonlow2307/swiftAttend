@@ -154,6 +154,7 @@ Each course will be displayed on its card with basic information when browsing t
 - opencv_python-headless
 - Pillow==10.4.0
 - WTForms==3.1.2
+- email_validator
 <br>
 
 1. Repository cloning and virtual environment setup

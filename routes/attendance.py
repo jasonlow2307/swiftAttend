@@ -46,7 +46,11 @@ def check_attendance():
 @attendance.route('/ret')
 @login_required
 def retrieve():
-    courses = fetch_courses_from_dynamodb()
+    role = session.get('role')
+    if (role == "student"):
+        courses = fetch_courses_from_dynamodb(student_id=session.get('id'))        
+    else:
+        courses = fetch_courses_from_dynamodb()
     return render_template('retrieveAttendance.html', courses=courses)
 
 @attendance.route('/create')
