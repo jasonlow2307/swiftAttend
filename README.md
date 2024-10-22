@@ -142,19 +142,27 @@ Each course will be displayed on its card with basic information when browsing t
 ## <a name="Usage"></a>🛠️ Usage
 ### Requirements
 - Python 
-- boto3 1.34.91 or later
-- botocore 1.34.91 or later
-- Flask 3.0.3 or later
-- flask_wtf 1.2.1 or later
-- Pillow 10.4.0 or later
-- WTForms 3.1.2 or later
+- boto3==1.34.91
+- botocore==1.34.91
+- Flask==3.0.3
+- Flask_Cors==5.0.0
+- Flask_SocketIO==5.3.6
+- flask_wtf==1.2.1
+- mediapipe==0.10.14
+- numpy==2.1.2
+- opencv_contrib_python==4.10.0.84
+- opencv_python-headless
+- Pillow==10.4.0
+- WTForms==3.1.2
 <br>
 
-1. Repository cloning and dependency installation
+1. Repository cloning and virtual environment setup
 ```bash
 git clone https://github.com/jasonlow2307/swiftAttend.git
 cd swiftAttend
-pip install -r requirements.txt
+python -m venv venv  # Create virtual environment
+venv\Scripts\activate # For Windows
+pip install -r requirements.txt  # Install dependencies
 ```
 2. Starting web server
 ```bash
