@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" type="image/png" href="../static/logo.png">
@@ -51,7 +52,8 @@
             border-spacing: 0;
         }
 
-        th, td {
+        th,
+        td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #ddd;
@@ -86,14 +88,15 @@
         a:hover {
             color: #001d44;
         }
-        
+
         #status {
             color: #003572;
             font-size: 18px;
             margin-top: 20px;
         }
-        
-        #endSessionButton, #showAttendanceButton {
+
+        #endSessionButton,
+        #showAttendanceButton {
             background-color: #003572;
             color: white;
             border: none;
@@ -104,11 +107,13 @@
             margin-top: 20px;
         }
 
-        #endSessionButton:hover, #showAttendanceButton:hover {
+        #endSessionButton:hover,
+        #showAttendanceButton:hover {
             background-color: #001d44;
         }
     </style>
 </head>
+
 <body id="body">
     <div id="camera-feed-container">
         <h1>Live Attendance Taking</h1>
@@ -147,7 +152,7 @@
 
                     table.innerHTML = "<tr><th>Image</th><th>ID</th><th>Name</th></tr>";
                     statusElement.innerText = `Status: ${data.status}`;
-                    
+
                     if (Object.keys(data.detected_students).length === 0) {
                         tableContainer.style.display = 'none';
                     } else {
@@ -204,23 +209,23 @@
                         },
                         body: JSON.stringify({ students: students }),
                     })
-                    .then(response => response.json())
-                    .then(result => {
-                        alert(result.message); // Display server response
-                    });
+                        .then(response => response.json())
+                        .then(result => {
+                            alert(result.message); // Display server response
+                        });
                 });
         }
 
         function showAttendance() {
             fetch('/show_attendance')
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById("body").innerHTML = data;
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById("body").innerHTML = data;
 
-                bindToggleCardFunctionality();
+                    bindToggleCardFunctionality();
 
-                styleAttendanceContainer();
-            });
+                    styleAttendanceContainer();
+                });
         }
 
         function styleAttendanceContainer() {
@@ -234,21 +239,21 @@
             // Add the toggle functionality for newly loaded HTML
             const studentCards = document.querySelectorAll('.student-card');
             studentCards.forEach(card => {
-                card.addEventListener('click', function() {
+                card.addEventListener('click', function () {
                     card.classList.toggle('active');
                 });
             });
         }
 
-        window.onload = function() {
+        window.onload = function () {
             videoElement = document.getElementById('processed-stream');
             fetchInterval = setInterval(fetchDetectedStudents, 5000);
             // Start sending frames to server
             active = true;
         }
 
-        const socket = io.connect(`http://localhost:5000`);
-        //const socket = io.connect(`http://54.254.218.53:5000`);
+        //const socket = io.connect(`http://localhost:5000`);
+        const socket = io.connect(`http://122.248.227.21:5000`);
 
         socket.on('connect', () => {
             console.log('Connected to server');
@@ -261,7 +266,7 @@
 
         function sendFrameToServer(frame) {
             const reader = new FileReader();
-            reader.onloadend = function() {
+            reader.onloadend = function () {
                 const base64data = reader.result.split(',')[1];
                 socket.emit('frame', base64data);
             }
@@ -280,7 +285,7 @@
                 video.srcObject = stream;
                 const mediaStream = stream.getTracks()[0];
                 const imageCapture = new ImageCapture(mediaStream);
-                
+
                 // Capture a frame every 100ms and send it to the server
                 setInterval(() => {
                     imageCapture.grabFrame()
@@ -288,7 +293,7 @@
                             return frameToBlob(frame);
                         })
                         .then(blob => {
-                            if (active){
+                            if (active) {
                                 sendFrameToServer(blob);
                             }
                         })
@@ -311,4 +316,5 @@
         }
     </script>
 </body>
+
 </html>

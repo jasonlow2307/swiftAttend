@@ -5,7 +5,7 @@ Flask_Cors==5.0.0
 Flask_SocketIO==5.3.6
 flask_wtf==1.2.1
 mediapipe==0.10.14
-numpy==2.1.2
+numpy==1.24.4
 opencv_contrib_python==4.10.0.84
 opencv_python-headless
 Pillow==10.4.0
