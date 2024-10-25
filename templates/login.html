@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <meta charset="UTF-8">
@@ -16,8 +17,8 @@
         }
 
         .container {
-            width: 50%; 
-            margin: auto; 
+            width: 50%;
+            margin: auto;
             padding: 20px;
             border-radius: 10px;
             max-width: 400px;
@@ -42,31 +43,51 @@
             color: #333;
         }
 
-        input[type="text"],
-        input[type="password"],
-        input[type="email"] {
+        .input-group {
+            position: relative;
             width: calc(100% - 40px);
+            margin: auto;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
             padding: 10px;
             margin-bottom: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
 
+        .password-input {
+            padding-right: 40px;
+            /* Space for the eye icon */
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: -13px;
+            top: 70px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 16px;
+            color: #888;
+        }
+
         /* Custom submit button */
         input[type="submit"] {
             display: inline-block;
-            width: calc(100% - 40px); /* Adjusted width */
+            width: calc(100% - 40px);
             background-color: #003572;
             color: white;
             padding: 10px;
             border-radius: 5px;
             border: none;
             cursor: pointer;
-            font-weight: bold; /* Bold text */
+            font-weight: bold;
             transition: background-color 0.3s;
-            margin-top: 20px; /* Add this line to increase space above the button */
+            margin-top: 20px;
         }
-
 
         input[type="submit"]:hover {
             background-color: #001d44;
@@ -115,12 +136,14 @@
             .container {
                 width: 100%;
             }
-            .background{
+
+            .background {
                 display: none;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="main-container">
         <div class="background">
@@ -131,19 +154,40 @@
             <form method="POST">
                 {{ form.hidden_tag() }}
                 <p>
+                <div class="input-group">
                     {{ form.email.label }}<br>
-                    {{ form.email(size=32) }}<br>
+                    {{ form.email(size=32) }}
+                </div>
+                <div class="input-group">
                     {{ form.password.label }}<br>
-                    {{ form.password(size=32) }}<br>
-                    {{ form.submit(class="btn btn-primary") }}
+                    {{ form.password(size=32, id="password", class="password-input") }}
+                    <span class="toggle-password" onclick="togglePassword()">👁️</span>
+                </div>
+                {{ form.submit(class="btn btn-primary") }}
                 </p>
                 <p>Don't have an account?</p>
-                <a href = "register"><p>Register</p></a>
+                <a href="register">
+                    <p>Register</p>
+                </a>
                 {% if error %}
-                    <p class="error-message">{{ error }}</p>
+                <p class="error-message">{{ error }}</p>
                 {% endif %}
             </form>
         </div>
     </div>
+    <script>
+        function togglePassword() {
+            const passwordField = document.getElementById("password");
+            const toggleIcon = document.querySelector(".toggle-password");
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                toggleIcon.textContent = "🙈"; // Change icon to "hide"
+            } else {
+                passwordField.type = "password";
+                toggleIcon.textContent = "👁️"; // Change icon to "show"
+            }
+        }
+    </script>
 </body>
+
 </html>
