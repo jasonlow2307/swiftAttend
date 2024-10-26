@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <meta charset="UTF-8">
@@ -62,16 +63,16 @@
 
         input[type="submit"] {
             display: inline-block;
-            width: calc(100% - 40px); 
+            width: calc(100% - 40px);
             background-color: #003572;
             color: white;
             padding: 10px;
             border-radius: 5px;
             border: none;
             cursor: pointer;
-            font-weight: bold; 
+            font-weight: bold;
             transition: background-color 0.3s;
-            margin-top: 20px; 
+            margin-top: 20px;
         }
 
         input[type="submit"]:hover {
@@ -105,6 +106,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h2>Confirm Registration</h2>
@@ -115,11 +117,11 @@
                 {{ form.code.label }}<br>
                 {{ form.code(size=32) }}<br>
                 {% if form.code.errors %}
-                    <ul>
+                <ul>
                     {% for error in form.code.errors %}
-                        <li>{{ error }}</li>
+                    <li>{{ error }}</li>
                     {% endfor %}
-                    </ul>
+                </ul>
                 {% endif %}
             </div>
             <div>
@@ -127,8 +129,9 @@
             </div>
         </form>
         {% if error %}
-            <p class="error-message">{{ error }}</p>
+        <p class="error-message">{{ error }}</p>
         {% endif %}
     </div>
 </body>
+
 </html>

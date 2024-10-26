@@ -232,6 +232,44 @@
             color: #001d44;
         }
 
+        .loading-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 10px;
+            background-color: #003572;
+            z-index: 1000;
+            display: none;
+        }
+
+        .loading-bar.active {
+            display: block;
+            animation: loadingAnimation 2s ease-in-out forwards;
+        }
+
+        @keyframes loadingAnimation {
+            0% {
+                width: 0;
+            }
+
+            25% {
+                width: 30%;
+            }
+
+            50% {
+                width: 60%;
+            }
+
+            75% {
+                width: 80%;
+            }
+
+            100% {
+                width: 100%;
+            }
+        }
+
         @media (max-width: 768px) {
             h1 {
                 font-size: 20px;
@@ -256,6 +294,7 @@
 
 <body>
     <div class="main-container">
+        <div class="loading-bar" id="loadingBar"></div>
         <div class="background">
             <img src="/static/banners/stationeries_1.jpeg" alt="background">
         </div>
@@ -266,7 +305,8 @@
                 {{ error }}
             </div>
             {% endif %}
-            <form method="POST" action="{{ url_for('auth.register') }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ url_for('auth.register') }}" enctype="multipart/form-data"
+                onsubmit="showLoadingBar()">
                 {{ form.hidden_tag() }}
                 <p>
                     {{ form.email.label }}<br>
@@ -374,6 +414,11 @@
                 passwordField.type = "password";
                 toggleIcon.textContent = "👁️"; // Change icon to "show"
             }
+        }
+
+        function showLoadingBar() {
+            const loadingBar = document.getElementById("loadingBar");
+            loadingBar.classList.add("active"); // Apply the animation
         }
     </script>
 </body>

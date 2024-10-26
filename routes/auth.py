@@ -104,24 +104,25 @@ def registerStd():
 
 @auth.route('/confirm', methods=['GET', 'POST'])
 def confirm():
-    form = ConfirmForm()
+    confirm_form = ConfirmForm()
     email = session.get('email')
     print("Email")
     print(email)
-    if form.validate_on_submit():
+    if confirm_form.validate_on_submit():
         # Retrieve the user's email from the session
-        confirmation_code = form.code.data
+        confirmation_code = confirm_form.code.data
         try:
             response = cognito.confirm_sign_up(
                 ClientId=COGNITO_CLIENT_ID,
                 Username=email,
                 ConfirmationCode=confirmation_code,
             )
-            return redirect(url_for('auth.login'))
+            login_form = LoginForm()
+            return render_template('login.html', form=login_form, status="first_time_login")
         except ClientError as e:
             error = e.response['Error']['Message']
-            return render_template('confirm.html', form=form, error=error)
-    return render_template('confirm.html', form=form)
+            return render_template('confirm.html', form=confirm_form, error=error)
+    return render_template('confirm.html', form=confirm_form)
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
