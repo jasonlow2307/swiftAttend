@@ -126,6 +126,45 @@
             object-fit: cover;
         }
 
+        .loading-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 10px;
+            background-color: #003572;
+            z-index: 1000;
+            display: none;
+        }
+
+        .loading-bar.active {
+            display: block;
+            animation: loadingAnimation 2s ease-in-out forwards;
+        }
+
+        @keyframes loadingAnimation {
+            0% {
+                width: 0;
+            }
+
+            25% {
+                width: 30%;
+            }
+
+            50% {
+                width: 60%;
+            }
+
+            75% {
+                width: 80%;
+            }
+
+            100% {
+                width: 100%;
+            }
+        }
+
+
         @media (max-width: 768px) {
             .container {
                 width: 70%;
@@ -145,13 +184,14 @@
 </head>
 
 <body>
+    <div class="loading-bar" id="loadingBar"></div>
     <div class="main-container">
         <div class="background">
             <img src="/static/banners/stationeries_1.jpeg" alt="background">
         </div>
         <div class="container">
             <h1>Login</h1>
-            <form method="POST">
+            <form method="POST" onsubmit="showLoadingBar()">
                 {{ form.hidden_tag() }}
                 <p>
                 <div class="input-group">
@@ -181,11 +221,16 @@
             const toggleIcon = document.querySelector(".toggle-password");
             if (passwordField.type === "password") {
                 passwordField.type = "text";
-                toggleIcon.textContent = "🙈"; // Change icon to "hide"
+                toggleIcon.textContent = "🙈";
             } else {
                 passwordField.type = "password";
-                toggleIcon.textContent = "👁️"; // Change icon to "show"
+                toggleIcon.textContent = "👁️";
             }
+        }
+
+        function showLoadingBar() {
+            const loadingBar = document.getElementById("loadingBar");
+            loadingBar.classList.add("active"); // Apply the animation
         }
     </script>
 </body>
