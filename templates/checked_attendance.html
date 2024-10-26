@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <meta charset="UTF-8">
@@ -31,6 +32,7 @@
             border-radius: 25px;
             max-height: 600px;
             overflow-y: auto;
+            width: 700px;
         }
 
         .student-card {
@@ -86,7 +88,8 @@
         }
 
         .student-card.active .extra-info {
-            max-height: 150px; /* Adjust based on the content */
+            max-height: 150px;
+            /* Adjust based on the content */
         }
 
         .extra-info {
@@ -145,6 +148,10 @@
             #icon {
                 margin-top: 20px;
             }
+
+            #attendance-container {
+                width: 400px;
+            }
         }
 
         @media (max-width: 426px) {
@@ -158,36 +165,40 @@
         }
     </style>
 </head>
+
 <body>
     <div id="attendance-container">
-    <h1>Attendance Records</h1>
+        <h1>Attendance Records</h1>
         {% if attendance_records %}
-            {% if uploaded_image %}
-                <img id="uploaded-image" src="{{ uploaded_image }}" alt="Uploaded Image">
-            {% endif %}
-            {% for record in attendance_records %}
-                <div class="student-card" onclick="toggleCard(this)">
-                    <img src="{{ record.SignedURL }}" alt="Student Image">
-                    <div class="info">
-                        <div class="basic-info">
-                            <div class="name">
-                                <h3>{{ record.FullName }}</h3>
-                                <p>{{ record.Attendance }}</p>
-                            </div>
-                            <i class="fas fa-chevron-down toggle-icon"></i>
-                        </div>
+        {% if uploaded_image %}
+        <img id="uploaded-image" src="{{ uploaded_image }}" alt="Uploaded Image">
+        {% endif %}
+        {% for record in attendance_records %}
+        <div class="student-card" onclick="toggleCard(this)">
+            <img src="{{ record.SignedURL }}" alt="Student Image">
+            <div class="info">
+                <div class="basic-info">
+                    <div class="name">
+                        <h3>{{ record.FullName }}</h3>
+                        <p>{{ record.Attendance }}</p>
+                    </div>
+                    <!-- <i class="fas fa-chevron-down toggle-icon"></i> -->
+                </div>
+                <!-- 
                         <div class="extra-info">
                             <p><span class="info-label">Emotion:</span> {{ record.Emotion or 'N/A' }}</p>
                             <p><span class="info-label">Eye Direction:</span> {{ record.EyeDirection.Yaw }}, {{ record.EyeDirection.Pitch }}</p>
                             <p><span class="info-label">Focus:</span> {{ record.Focused or 'N/A' }}</p>
                         </div>
-                    </div>
-                </div>
-            {% endfor %}
+                    -->
+            </div>
+        </div>
+        {% endfor %}
         {% endif %}
         <div style="text-align: center;">
             <a href="/"><i class="fas fa-home" id="home"></i></a>
         </div>
     </div>
 </body>
+
 </html>
