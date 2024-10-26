@@ -417,6 +417,7 @@ def show_attendance():
 
         attendance_records.append({
             'FullName': student['FullName'],
+            'StudentId': student['StudentId'],
             'Attendance': attendance_status,
             'SignedURL': signed_url,
             'Emotion': emotion,
@@ -597,6 +598,7 @@ def check_attendance_record():
 
         attendance_records.append({
             'FullName': student['FullName'],
+            'StudentId': student['StudentId'],
             'Attendance': attendance_status,
             'SignedURL': signed_url,
             'Emotion': emotion,
