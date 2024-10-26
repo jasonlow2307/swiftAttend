@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
@@ -17,8 +18,8 @@
         }
 
         .container {
-            width: 50%; 
-            margin: auto; 
+            width: 50%;
+            margin: auto;
             background-color: white;
             padding: 20px;
             padding-top: 0px;
@@ -36,7 +37,7 @@
         }
 
         .background {
-            width: 50%; 
+            width: 50%;
             align-items: center;
             display: flex;
         }
@@ -151,20 +152,6 @@
             border-radius: 10px;
         }
 
-        .question-mark {
-            display: inline-block;
-            margin-left: 5px;
-            font-size: 30px;
-            color: #003572;
-            cursor: pointer;
-            transition: color 0.3s ease;
-            margin-top: 3px;
-        }
-
-        .question-mark:hover {
-            color: #001d44;
-        }
-
         .password {
             display: flex;
         }
@@ -183,7 +170,8 @@
         }
 
         .content.show {
-            max-height: 200px; /* Adjust height based on content */
+            max-height: 200px;
+            /* Adjust height based on content */
             padding: 10px 10px;
         }
 
@@ -195,6 +183,53 @@
         .content ul li {
             margin-bottom: 5px;
             color: #555;
+        }
+
+        .password-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin: auto;
+        }
+
+        .input-wrapper {
+            position: relative;
+            flex-grow: 1;
+            /* Makes the input take up available space */
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 10px;
+            padding-right: 35px;
+            /* Space for the toggle icon */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 40%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 16px;
+            color: #888;
+        }
+
+        .question-mark {
+            display: inline-block;
+            margin-left: 5px;
+            margin-bottom: 10px;
+            font-size: 30px;
+            color: #003572;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            margin-top: 3px;
+        }
+
+        .question-mark:hover {
+            color: #001d44;
         }
 
         @media (max-width: 768px) {
@@ -218,6 +253,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="main-container">
         <div class="background">
@@ -236,18 +272,23 @@
                     {{ form.email.label }}<br>
                     {{ form.email(size=32) }}<br>
                     {% for error in form.email.errors %}
-                        <span class="error-message">{{ error }}</span><br>
+                    <span class="error-message">{{ error }}</span><br>
                     {% endfor %}
                 </p>
                 <p>
-                    {{ form.password.label }}
-                    <div class="password">
-                        {{ form.password(size=32) }}<br>    
-                        <i class="fas fa-question-circle question-mark" id="passwordHelpIcon"></i><br>
+                <div class="input-group">
+                    {{ form.password.label }}<br>
+                    <div class="password-container">
+                        <div class="input-wrapper">
+                            {{ form.password(size=32, id="password", class="password-input") }}
+                            <span class="toggle-password" onclick="togglePassword('password')">👁️</span>
+                        </div>
+                        <i class="fas fa-question-circle question-mark" id="passwordHelpIcon"></i>
                     </div>
-                    {% for error in form.password.errors %}
-                        <span class="error-message">{{ error }}</span><br>
-                    {% endfor %}
+                </div>
+                {% for error in form.password.errors %}
+                <span class="error-message">{{ error }}</span><br>
+                {% endfor %}
                 </p>
 
                 <!-- Expandable Password Requirements Section -->
@@ -265,21 +306,21 @@
                     {{ form.given_name.label }}<br>
                     {{ form.given_name(size=32) }}<br>
                     {% for error in form.given_name.errors %}
-                        <span class="error-message">{{ error }}</span><br>
+                    <span class="error-message">{{ error }}</span><br>
                     {% endfor %}
                 </p>
                 <p>
                     {{ form.family_name.label }}<br>
                     {{ form.family_name(size=32) }}<br>
                     {% for error in form.family_name.errors %}
-                        <span class="error-message">{{ error }}</span><br>
+                    <span class="error-message">{{ error }}</span><br>
                     {% endfor %}
                 </p>
                 <p>
                     {{ form.role.label }}<br>
                     {{ form.role() }}<br>
                     {% for error in form.role.errors %}
-                        <span class="error-message">{{ error }}</span><br>
+                    <span class="error-message">{{ error }}</span><br>
                     {% endfor %}
                 </p>
                 <p>
@@ -287,20 +328,22 @@
                     <img id="imagePreview" src="#" alt="Image Preview" style="display: none;">
                     {{ form.image() }}<br>
                     {% for error in form.image.errors %}
-                        <span class="error-message">{{ error }}</span><br>
+                    <span class="error-message">{{ error }}</span><br>
                     {% endfor %}
-                </p>                        
+                </p>
                 <p>{{ form.submit(class="btn btn-primary") }}</p>
             </form>
             <p>Already have an account?</p>
-            <a href="{{ url_for('auth.login') }}"><p>Log In</p></a>
+            <a href="{{ url_for('auth.login') }}">
+                <p>Log In</p>
+            </a>
         </div>
     </div>
 
     <!-- JavaScript to enable smooth collapse/expand functionality -->
     <script>
         // Toggle password requirements on question mark icon click
-        document.getElementById('passwordHelpIcon').addEventListener('click', function() {
+        document.getElementById('passwordHelpIcon').addEventListener('click', function () {
             var content = document.getElementById('passwordHelp');
             if (content.classList.contains('show')) {
                 content.classList.remove('show');
@@ -312,14 +355,27 @@
         });
 
         // Function to preview image before upload
-        document.getElementById('{{ form.image.id }}').addEventListener('change', function(e) {
+        document.getElementById('{{ form.image.id }}').addEventListener('change', function (e) {
             var reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 document.getElementById('imagePreview').src = e.target.result;
                 document.getElementById('imagePreview').style.display = 'block';
             }
             reader.readAsDataURL(e.target.files[0]);
         });
+
+        function togglePassword(id) {
+            const passwordField = document.getElementById(id);
+            const toggleIcon = passwordField.nextElementSibling;
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                toggleIcon.textContent = "🙈"; // Change icon to "hide"
+            } else {
+                passwordField.type = "password";
+                toggleIcon.textContent = "👁️"; // Change icon to "show"
+            }
+        }
     </script>
 </body>
+
 </html>
