@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import FileField, StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Email
-from flask import Blueprint, render_template, redirect, send_from_directory, url_for, session, request
+from flask import Blueprint, flash, render_template, redirect, send_from_directory, url_for, session, request
 from common import *
 from config import *
 import io
@@ -117,8 +117,8 @@ def confirm():
                 Username=email,
                 ConfirmationCode=confirmation_code,
             )
-            login_form = LoginForm()
-            return render_template('login.html', form=login_form, status="first_time_login")
+            flash("Registration successful! Please log in.", "success")
+            return redirect(url_for('auth.login'))
         except ClientError as e:
             error = e.response['Error']['Message']
             return render_template('confirm.html', form=confirm_form, error=error)

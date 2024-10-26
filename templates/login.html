@@ -293,12 +293,14 @@
             loadingBar.classList.add("active");
         }
 
-        // Show Success Popup if First Time Login
+        // Show Success Popup if Flash Message is Present
         document.addEventListener("DOMContentLoaded", function () {
-            const status = "{{ status }}"; // Assuming `status` is passed from backend
-            if (status === "first_time_login") {
-                document.getElementById("successPopup").style.display = "flex";
-            }
+            const flashMessages = {{ get_flashed_messages(with_categories = True) | tojson
+        }};
+        const successMessage = flashMessages.find(msg => msg[0] === "success");
+        if (successMessage) {
+            document.getElementById("successPopup").style.display = "flex";
+        }
         });
 
         // Close Popup
