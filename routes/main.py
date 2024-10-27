@@ -11,6 +11,7 @@ main = Blueprint('main', __name__)
 def index():
     role = session.get('role')
     id = session.get('id')
+    print("ID", id)
     if role == 'student':
         user = fetch_users_from_dynamodb("students", [id])[0]
         user['Image'] = generate_signed_url(S3_BUCKET_NAME, 'index/' + id)
