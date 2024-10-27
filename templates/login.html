@@ -189,6 +189,27 @@
             background-color: #001d44;
         }
 
+        .google-btn {
+            display: inline-flex;
+            align-items: center;
+            background-color: white;
+            color: 003572;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .google-btn:hover {
+            background-color: #f1f3f4;
+        }
+
+        .google-icon {
+            margin-right: 8px;
+            width: 25px;
+        }
+
 
         @keyframes loadingAnimation {
             0% {
@@ -261,7 +282,9 @@
                 <p class="error-message">{{ error }}</p>
                 {% endif %}
             </form>
-            <a href="{{ google_login_url }}" class="btn btn-primary">Login with Google</a>
+            <a href="{{ google_login_url }}" class="google-btn">
+                <img class="google-icon" src="../static/google_icon.png"> Login with Google
+            </a>        
         </div>
     </div>
 
