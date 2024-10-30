@@ -189,7 +189,7 @@
             background-color: #001d44;
         }
 
-        .google-btn {
+        .federated-button {
             display: inline-flex;
             align-items: center;
             background-color: white;
@@ -201,13 +201,13 @@
             transition: background-color 0.3s;
         }
 
-        .google-btn:hover {
+        .federated-button:hover {
             background-color: #f1f3f4;
         }
 
-        .google-icon {
+        .google-icon, .microsoft-icon {
             margin-right: 8px;
-            width: 25px;
+            width: 30px;
         }
 
 
@@ -282,9 +282,14 @@
                 <p class="error-message">{{ error }}</p>
                 {% endif %}
             </form>
-            <a href="{{ google_login_url }}" class="google-btn">
-                <img class="google-icon" src="../static/google_icon.png"> Login with Google
-            </a>        
+            <div class="federated-login">
+                <a href="{{ google_login_url }}" class="federated-button">
+                    <img class="google-icon" src="../static/google_icon.png">
+                </a>   
+                <a href="#" class="federated-button">
+                    <img class="microsoft-icon" src="../static/microsoft_icon.png">
+                </a>   
+            </div>     
         </div>
     </div>
 
