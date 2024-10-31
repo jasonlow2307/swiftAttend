@@ -14,7 +14,7 @@ import requests
 auth = Blueprint('auth', __name__)
 
 class RegisterForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
+    email = StringField('Email', validators=[DataRequired(), Email()], render_kw={"autofocus": True})
     password = PasswordField('Password', validators=[DataRequired()])
     given_name = StringField('Given Name', validators=[DataRequired()])
     family_name = StringField('Family Name', validators=[DataRequired()])
@@ -32,7 +32,7 @@ class ConfirmForm(FlaskForm):
     submit = SubmitField('Confirm')
 
 class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()], render_kw={"autofocus": True})
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
