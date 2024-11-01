@@ -13,7 +13,11 @@ def index():
     id = session.get('id')
     print("ID", id)
     if role == 'student':
-        user = fetch_users_from_dynamodb("students", [id])[0]
+        users = fetch_users_from_dynamodb("students", [id])
+        if users:
+            user = users[0]
+        else:
+            user = {}
         user['Image'] = generate_signed_url(S3_BUCKET_NAME, 'index/' + id)
         courses = fetch_courses_from_dynamodb(student_id=id)
         rate = 0

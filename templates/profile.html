@@ -504,18 +504,27 @@
         }
 
         // Close modal functionality
-        var span = document.getElementsByClassName("close")[0];
-        span.onclick = function() {
-            var qrModal = document.getElementById("qrModal");
-            qrModal.style.display = "none";
-        }
+        var spanElements = document.getElementsByClassName("close");
+        Array.from(spanElements).forEach(function(span) {
+            span.onclick = function(event) {
+                event.preventDefault(); // Prevent any default navigation behavior
+                this.parentElement.parentElement.style.display = "none";
+            };
+        });
+
 
         window.onclick = function(event) {
             var qrModal = document.getElementById("qrModal");
-            if (event.target == qrModal) {
+            var scanQrModal = document.getElementById("scan-qr-modal");
+
+            // Check if the click target is exactly the modal overlay (outside the content)
+            if (event.target === qrModal || event.target === scanQrModal) {
+                event.preventDefault(); // Prevent any default navigation behavior
                 qrModal.style.display = "none";
+                scanQrModal.style.display = "none";
+                stopQrScanner();
             }
-        }
+        };
 
         let current_banners = JSON.stringify({{ banners | tojson }});;
         document.addEventListener('DOMContentLoaded', function () {
