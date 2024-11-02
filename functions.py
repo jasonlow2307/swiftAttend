@@ -2,13 +2,22 @@ from datetime import datetime
 import logging
 import re
 from common import *
-from config import *
 from botocore.exceptions import ClientError
 from collections import defaultdict
+import random
+import os
+from dotenv import load_dotenv
 
 
 ############################ Custom Functions ###########################
 # Adding/removing student id from a course student field
+
+load_dotenv()
+DYNAMODB_CLASSES_TABLE_NAME = os.getenv('DYNAMODB_CLASSES_TABLE_NAME')
+DYNAMODB_STUDENT_TABLE_NAME = os.getenv('DYNAMODB_STUDENT_TABLE_NAME')
+DYNAMODB_LECTURER_TABLE_NAME = os.getenv('DYNAMODB_LECTURER_TABLE_NAME')
+DYNAMODB_ATTENDANCE_TABLE_NAME = os.getenv('DYNAMODB_ATTENDANCE_TABLE_NAME')
+
 def edit_student_in_course(student_id, course_code, add=True):
     matched_course = fetch_courses_from_dynamodb(course_code=course_code)
     if not add:
@@ -275,3 +284,15 @@ def generate_signed_url(bucket_name, object_key, expiration=3600):
     except ClientError as e:
         print('Error generating presigned URL:', e)
         return None
+    
+def get_random_emoji():
+    emojis = [
+    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '😊', '😇', '🙂', '🙃', '😉', '😌',
+    '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😜', '🤪', '😝', '🤑', '🤗', '🤭',
+    '🤓', '😎', '🥳', '😺', '😸', '😹', '😻', '😽', '🙀', '🤖', '🎃', '👻', '🎉',
+    '🎊', '🎁', '🎈', '🎄', '🎇', '🌟', '🌞', '🌝', '🌸', '🌺', '🌼', '🌷', '🍀'
+    ]   
+    return random.choice(emojis)
+
+
+

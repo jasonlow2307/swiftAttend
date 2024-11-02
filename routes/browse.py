@@ -1,13 +1,16 @@
 import os
 from flask import Blueprint, jsonify, render_template, request
 from common import *
-from config import *
+from functions import get_random_emoji
 from wrapper import *
 from functions import *
 import random
 import json
 
 browse = Blueprint('browse', __name__)
+
+load_dotenv()
+S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
 
 @browse.route('/courses')
 @login_required
@@ -96,13 +99,6 @@ def remove_student():
 
     return jsonify({'success': True, 'message': 'Student removed successfully!'}), 200
 
-emojis = [
-    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '😊', '😇', '🙂', '🙃', '😉', '😌',
-    '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😜', '🤪', '😝', '🤑', '🤗', '🤭',
-    '🤓', '😎', '🥳', '😺', '😸', '😹', '😻', '😽', '🙀', '🤖', '🎃', '👻', '🎉',
-    '🎊', '🎁', '🎈', '🎄', '🎇', '🌟', '🌞', '🌝', '🌸', '🌺', '🌼', '🌷', '🍀'
-]
-
 banners = []
 
 # Profile page
@@ -150,8 +146,7 @@ def profile():
             lecturer = fetch_users_from_dynamodb("lecturer", user_ids=[course['Lecturer']])[0]
             course['Lecturer'] = f"{lecturer['FullName']['S']} ({course['Lecturer']})"
 
-            random_emoji = random.choice(emojis)
-            course['CourseName'] = f"{random_emoji} {course['CourseName']}"
+            course['CourseName'] = f"{get_random_emoji()} {course['CourseName']}"
 
             course['StudentCount'] = course['Students'].count('|') + 1
         print(courses)
@@ -161,8 +156,7 @@ def profile():
             course['Lecturer'] = f"{profile['FullName']} ({course['Lecturer']})"
             course['StudentCount'] = course['Students'].count('|') + 1
             # Add a random emoji to the course name
-            random_emoji = random.choice(emojis)
-            course['CourseName'] = f"{random_emoji} {course['CourseName']}"
+            course['CourseName'] = f"{get_random_emoji()} {course['CourseName']}"
 
     # Load banners
     for filename in os.listdir('static/banners'):

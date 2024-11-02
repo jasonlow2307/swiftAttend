@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from flask_socketio import SocketIO, emit
 import cv2
@@ -6,11 +8,15 @@ import base64
 import face_recognition
 import time
 from common import *
-from config import *
 from attendance import generate_signed_url
 
 app = Flask(__name__)
 socketio = SocketIO(app)
+
+load_dotenv()
+DYNAMODB_STUDENT_TABLE_NAME = os.getenv('DYNAMODB_STUDENT_TABLE_NAME')
+S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
+REKOGNITION_COLLECTION_NAME = os.getenv('REKOGNITION_COLLECTION_NAME')
 
 @app.route('/')
 def index():

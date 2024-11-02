@@ -1,9 +1,10 @@
+import os
+from dotenv import load_dotenv
 from flask_wtf import FlaskForm
 from wtforms import FileField, StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Email
 from flask import Blueprint, flash, render_template, redirect, send_from_directory, url_for, session, request
 from common import *
-from config import *
 import io
 from botocore.exceptions import ClientError
 from datetime import datetime, timedelta, timezone
@@ -12,6 +13,12 @@ from wrapper import *
 import requests
 
 auth = Blueprint('auth', __name__)
+
+load_dotenv()
+COGNITO_CLIENT_ID = os.getenv('COGNITO_CLIENT_ID')
+S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
+DYNAMODB_STUDENT_TABLE_NAME = os.getenv('DYNAMODB_STUDENT_TABLE_NAME')
+DYNAMODB_LECTURER_TABLE_NAME = os.getenv('DYNAMODB_LECTURER_TABLE_NAME')
 
 class RegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()], render_kw={"autofocus": True})

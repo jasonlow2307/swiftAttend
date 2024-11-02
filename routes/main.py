@@ -1,18 +1,14 @@
 import random
 from flask import Blueprint, jsonify, render_template, request
 from common import *
-from config import *
+from functions import get_random_emoji
 from wrapper import *
 from functions import *
 
 main = Blueprint('main', __name__)
 
-emojis = [
-    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '😊', '😇', '🙂', '🙃', '😉', '😌',
-    '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😜', '🤪', '😝', '🤑', '🤗', '🤭',
-    '🤓', '😎', '🥳', '😺', '😸', '😹', '😻', '😽', '🙀', '🤖', '🎃', '👻', '🎉',
-    '🎊', '🎁', '🎈', '🎄', '🎇', '🌟', '🌞', '🌝', '🌸', '🌺', '🌼', '🌷', '🍀'
-]
+load_dotenv()
+S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
 
 @main.route('/')
 @login_required
@@ -30,7 +26,7 @@ def index():
         courses = fetch_courses_from_dynamodb(student_id=id)
         rate = 0
         for course in courses:
-            course['CourseName'] = random.choice(emojis) + " " + course['CourseName']
+            course['CourseName'] = get_random_emoji() + " " + course['CourseName']
             present_counter = 0
             total_records = 0
             attendance_records = retrieve_student_records(course=course['CourseCode'])
@@ -106,10 +102,10 @@ def bot_send():
     user_input = data['message']
 
     response = lex_client.recognize_text(
-        botId='3KIS3PKPUN',  # Replace with your bot ID
-        botAliasId='TSTALIASID',  # Replace with your bot alias
+        botId='3KIS3PKPUN',  
+        botAliasId='TSTALIASID', 
         localeId='en_US',
-        sessionId='test',  # Use a unique session ID
+        sessionId='test',  
         text=user_input
     )
 

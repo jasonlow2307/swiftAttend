@@ -3,7 +3,6 @@ from flask import Blueprint, render_template_string, send_from_directory, reques
 from datetime import datetime, timedelta, timezone
 import io
 import numpy as np
-from config import *
 from common import *
 import ast
 import random
@@ -21,6 +20,10 @@ attendance = Blueprint('attendance', __name__)
 initialized_date = ''
 initialized_course = ''
 initialized = False
+
+load_dotenv()
+REKOGNITION_COLLECTION_NAME = os.getenv('REKOGNITION_COLLECTION_NAME')
+S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
 
 @attendance.route('/init')
 @role_required(['lecturer', 'admin'])
