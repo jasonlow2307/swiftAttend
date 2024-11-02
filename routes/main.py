@@ -1,4 +1,3 @@
-import random
 from flask import Blueprint, jsonify, render_template, request
 from common import *
 from wrapper import *
