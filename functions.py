@@ -17,6 +17,7 @@ DYNAMODB_CLASSES_TABLE_NAME = os.getenv('DYNAMODB_CLASSES_TABLE_NAME')
 DYNAMODB_STUDENT_TABLE_NAME = os.getenv('DYNAMODB_STUDENT_TABLE_NAME')
 DYNAMODB_LECTURER_TABLE_NAME = os.getenv('DYNAMODB_LECTURER_TABLE_NAME')
 DYNAMODB_ATTENDANCE_TABLE_NAME = os.getenv('DYNAMODB_ATTENDANCE_TABLE_NAME')
+S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
 
 def edit_student_in_course(student_id, course_code, add=True):
     matched_course = fetch_courses_from_dynamodb(course_code=course_code)
@@ -293,6 +294,60 @@ def get_random_emoji():
     '🎊', '🎁', '🎈', '🎄', '🎇', '🌟', '🌞', '🌝', '🌸', '🌺', '🌼', '🌷', '🍀'
     ]   
     return random.choice(emojis)
+
+# For index
+def get_student_data(id):
+    users = fetch_users_from_dynamodb("students", [id])
+    user = users[0] if users else {}
+    user['Image'] = generate_signed_url(S3_BUCKET_NAME, 'index/' + id)
+    
+    courses = fetch_courses_from_dynamodb(student_id=id)
+    for course in courses:
+        course['CourseName'] = get_random_emoji() + " " + course['CourseName']
+        present_counter = 0
+        total_records = 0
+        attendance_records = retrieve_student_records(course=course['CourseCode'])
+        
+        if attendance_records:
+            for record in attendance_records:
+                if str(record['StudentId']) == id:
+                    total_records += 1
+                    if record['Attendance'] == 'PRESENT':
+                        present_counter += 1
+            attendance_rate = round(present_counter / total_records * 100, 2) if total_records else 0
+            course['AttendanceRate'] = attendance_rate
+        else:
+            course['AttendanceRate'] = "NA"
+    
+    course_codes = [course['CourseCode'] for course in courses]
+    attendance = [
+        record for course_code in course_codes
+        for record in retrieve_student_records(course=course_code)
+        if str(record['StudentId']) == id
+    ]
+    
+    rate = calculate_monthly_attendance(attendance) if attendance else 0
+    return user, courses, rate
+
+def get_lecturer_data(id):
+    user = fetch_users_from_dynamodb("lecturers", [id])[0]
+    courses = fetch_courses_from_dynamodb(lecturer_id=id)
+    
+    for course in courses:
+        present_counter = 0
+        attendance_records = retrieve_student_records(course=course['CourseCode'])
+        course['StudentCount'] = course['Students'].count('|') + 1
+        if attendance_records:
+            present_counter = sum(1 for record in attendance_records if record['Attendance'] == 'PRESENT')
+            attendance_rate = round(present_counter / len(attendance_records) * 100, 2)
+            course['AttendanceRate'] = attendance_rate
+    
+    course_codes = [course['CourseCode'] for course in courses]
+    attendance = [retrieve_student_records(course=course_code) for course_code in course_codes]
+    
+    rate = calculate_monthly_attendance(attendance[0]) if attendance else 0
+    return user, courses, rate
+
 
 
 

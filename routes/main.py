@@ -1,7 +1,6 @@
 import random
 from flask import Blueprint, jsonify, render_template, request
 from common import *
-from functions import get_random_emoji
 from wrapper import *
 from functions import *
 
@@ -9,83 +8,30 @@ main = Blueprint('main', __name__)
 
 load_dotenv()
 S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
+BOT_ID=os.getenv('BOT_ID')
+BOT_ALIAS_ID=os.getenv('BOT_ALIAS_ID')
+LOCALE_ID=os.getenv('LOCALE_ID')
+SESSION_ID=os.getenv('SESSION_ID')
 
 @main.route('/')
 @login_required
 def index():
     role = session.get('role')
     id = session.get('id')
-    print("ID", id)
+    print("DASHBOARD LOADED FOR ID: ", id)
+
     if role == 'student':
-        users = fetch_users_from_dynamodb("students", [id])
-        if users:
-            user = users[0]
-        else:
-            user = {}
-        user['Image'] = generate_signed_url(S3_BUCKET_NAME, 'index/' + id)
-        courses = fetch_courses_from_dynamodb(student_id=id)
-        rate = 0
-        for course in courses:
-            course['CourseName'] = get_random_emoji() + " " + course['CourseName']
-            present_counter = 0
-            total_records = 0
-            attendance_records = retrieve_student_records(course=course['CourseCode'])
-            if len(attendance_records) != 0:
-                for record in attendance_records:
-                    if str(record['StudentId']) == id:
-                        total_records += 1
-                        if record['Attendance'] == 'PRESENT':
-                            present_counter += 1
-                if total_records != 0:
-                    attendance_rate = round(present_counter / total_records * 100, 2)
-                else:
-                    attendance_rate = 0
-                course['AttendanceRate'] = attendance_rate
-            else:
-                course['AttendanceRate'] = "NA"
-            courseCodes = [course['CourseCode'] for course in courses]
-
-            attendance = []
-
-            for course in courseCodes:
-                records = retrieve_student_records(course=course)
-                for record in records:
-                    if str(record['StudentId']) == id:
-                        attendance.append(record)
-
-            if len(attendance) > 0:
-                rate = calculate_monthly_attendance(attendance)
+        user, courses, rate = get_student_data(id)
     elif role == 'lecturer':
-        user = fetch_users_from_dynamodb("lecturers", [id])[0]
-        courses = fetch_courses_from_dynamodb(lecturer_id=id)
-        for course in courses:
-            present_counter = 0
-            attendance_records = retrieve_student_records(course=course['CourseCode'])
-            course['StudentCount'] = course['Students'].count('|') + 1
-            if len(attendance_records) != 0:
-                for record in attendance_records:
-                    if record['Attendance'] == 'PRESENT':
-                        present_counter += 1
-                attendance_rate = round(present_counter / len(attendance_records) * 100, 2)
-                course['AttendanceRate'] = attendance_rate
-        courseCodes = [course['CourseCode'] for course in courses]
-
-        attendance = []
-
-        for course in courseCodes:
-            attendance.append(retrieve_student_records(course=course))
-    
-        if attendance:
-            rate = calculate_monthly_attendance(attendance[0])
-        else:
-            rate = 0
+        user, courses, rate = get_lecturer_data(id)
     else:
         user = {'FullName': {'S': "Admin"}}
+        courses = []
+        rate = 0
 
     welcome_message = f"Welcome back, {user['FullName']['S']} ({id})"
 
     if role == 'student':
-        print(courses)
         return render_template('index_student.html', user=user, courses=courses, rate=rate)
     elif role == 'lecturer':
         return render_template('index_lecturer.html', user=user, courses=courses, rate=rate)
@@ -102,10 +48,10 @@ def bot_send():
     user_input = data['message']
 
     response = lex_client.recognize_text(
-        botId='3KIS3PKPUN',  
-        botAliasId='TSTALIASID', 
-        localeId='en_US',
-        sessionId='test',  
+        botId=BOT_ID,  
+        botAliasId=BOT_ALIAS_ID, 
+        localeId=LOCALE_ID,
+        sessionId=SESSION_ID,  
         text=user_input
     )
 
