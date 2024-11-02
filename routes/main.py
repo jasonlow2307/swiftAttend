@@ -89,6 +89,7 @@ def index():
     welcome_message = f"Welcome back, {user['FullName']['S']} ({id})"
 
     if role == 'student':
+        print(courses)
         return render_template('index_student.html', user=user, courses=courses, rate=rate)
     elif role == 'lecturer':
         return render_template('index_lecturer.html', user=user, courses=courses, rate=rate)

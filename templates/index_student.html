@@ -763,18 +763,23 @@
         </div>
         <div class="dashboard">
             <div class="box">
-                <h2>Your Attendance</h2>
-                <canvas id="attendanceChart"></canvas>
-                <p>Overview of your attendance records</p>
+                <h2>Attendance Over Time</h2>
+                <canvas id="attendanceOverTimeChart"></canvas>
+                <p>Overview of your attendance rate over time</p>
             </div>
             <div class="box">
-                <h2>Your Courses</h2>
+                <h2>Courses</h2>
                 <ul>
                     {% for course in courses %}
                     <li class="course">{{ course.CourseName }}</li>
                     {% endfor %}
                 </ul>
                 <p>List of courses you are enrolled in</p>
+            </div>
+            <div class="box">
+                <h2>Attendance Per Course</h2>
+                <canvas id="attendancePerCourseChart"></canvas>
+                <p>Overview of your attendance per course</p>
             </div>
         </div>
     </main>
@@ -925,11 +930,11 @@
             }
         }
 
-        const attendanceCtx = document.getElementById('attendanceChart');
+        const attendanceOverTimeCtx = document.getElementById('attendanceOverTimeChart');
         const attendanceRateLabel = Object.keys({{ rate | tojson}});
         const attendanceRateData = Object.values({{ rate | tojson }});
 
-        const attendanceChart = new Chart(attendanceCtx, {
+        const attendanceOverTimeChart = new Chart(attendanceOverTimeCtx, {
             type: 'line',
             data: {
                 labels: attendanceRateLabel,
@@ -951,6 +956,52 @@
                 }
             }
         });
+
+        // Convert CourseCode and AttendanceRate to JSON data
+        const attendancePerCourseLabel = {{ courses | map(attribute='CourseCode') | list | tojson }};
+        const attendancePerCourseData = {{ courses | map(attribute='AttendanceRate') | list | tojson }};
+        
+        // Reference the correct canvas element
+        const attendancePerCourseCtx = document.getElementById('attendancePerCourseChart').getContext('2d');
+
+        // Create the bar chart
+        const attendancePerCourseChart = new Chart(attendancePerCourseCtx, {
+            type: 'bar',  // Use 'bar' for a bar chart instead of 'line'
+            data: {
+                labels: attendancePerCourseLabel,
+                datasets: [{
+                    label: 'Attendance Rate (%)',
+                    data: attendancePerCourseData,
+                    backgroundColor: 'rgba(0, 53, 114, 0.2)',
+                    borderColor: '#003572',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Attendance Rate (%)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Course Code'
+                        }
+                    }
+                }
+            }
+        });
+
 
         // Function to toggle the 'closed' class based on screen size
         function toggleNavOnLoad() {
