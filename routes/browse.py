@@ -107,6 +107,7 @@ banners = []
 
 # Profile page
 @browse.route('/profile', methods=['GET'])
+@login_required
 def profile():
     global banners
     profile = fetch_users_from_dynamodb(session.get('role'), [session.get('id')])[0]
