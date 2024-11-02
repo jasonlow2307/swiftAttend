@@ -594,6 +594,12 @@
             /* Lift effect */
         }
 
+        .course {
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
         /* Media Queries for Different Screen Sizes */
         @media (max-width: 768px) {
             .dashboard {
@@ -765,7 +771,7 @@
                 <h2>Your Courses</h2>
                 <ul>
                     {% for course in courses %}
-                    <li>{{ course.CourseName }}</li>
+                    <li class="course">{{ course.CourseName }}</li>
                     {% endfor %}
                 </ul>
                 <p>List of courses you are enrolled in</p>

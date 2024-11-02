@@ -1,3 +1,4 @@
+import random
 from flask import Blueprint, jsonify, render_template, request
 from common import *
 from config import *
@@ -5,6 +6,13 @@ from wrapper import *
 from functions import *
 
 main = Blueprint('main', __name__)
+
+emojis = [
+    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '😊', '😇', '🙂', '🙃', '😉', '😌',
+    '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😜', '🤪', '😝', '🤑', '🤗', '🤭',
+    '🤓', '😎', '🥳', '😺', '😸', '😹', '😻', '😽', '🙀', '🤖', '🎃', '👻', '🎉',
+    '🎊', '🎁', '🎈', '🎄', '🎇', '🌟', '🌞', '🌝', '🌸', '🌺', '🌼', '🌷', '🍀'
+]
 
 @main.route('/')
 @login_required
@@ -22,6 +30,7 @@ def index():
         courses = fetch_courses_from_dynamodb(student_id=id)
         rate = 0
         for course in courses:
+            course['CourseName'] = random.choice(emojis) + " " + course['CourseName']
             present_counter = 0
             total_records = 0
             attendance_records = retrieve_student_records(course=course['CourseCode'])
