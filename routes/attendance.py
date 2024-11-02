@@ -333,41 +333,6 @@ def process_frame(frame):
 
     return frame
 
-def call_rekognition(face_image):
-    """Send the cropped face to AWS Rekognition and return the result."""
-    print("Calling AWS Rekognition...")
-    _, face_bytes = cv2.imencode('.jpg', face_image)
-    response = rekognition.search_faces_by_image(
-        CollectionId=REKOGNITION_COLLECTION_NAME,
-        Image={'Bytes': face_bytes.tobytes()},
-        FaceMatchThreshold=70,
-        MaxFaces=1
-    )
-    return response.get('FaceMatches', [])
-
-def update_detected_students(rekognition_id):
-    global detected_students
-
-    student_info = dynamodb.get_item(
-        TableName=DYNAMODB_STUDENT_TABLE_NAME,
-        Key={'RekognitionId': {'S': rekognition_id}}
-    )
-
-    if 'Item' in student_info:
-        student_id = student_info['Item']['StudentId']['S']
-        student_name = student_info['Item']['FullName']['S']
-        student_image = generate_signed_url(S3_BUCKET_NAME, 'index/' + student_id)
-        
-        # Store detected student details
-        detected_students[student_id] = {
-            'name': student_name,
-            'image': student_image
-        }
-
-        print(f"Detected student_id: {student_id} Name: {student_name}")
-        
-
-
 @attendance.route('/detected_students')
 def get_detected_students():
     return jsonify({
@@ -444,25 +409,8 @@ def check_attendance_record():
     image_file = request.files['image']
     image_bytes = image_file.read()
 
-    # Check image size
-    MAX_IMAGE_SIZE = 5242880  # 5 MB in bytes
-    if len(image_bytes) > MAX_IMAGE_SIZE:
-        image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
-        original_width, original_height = image.size
-        max_dimension = 1024
-
-        if original_width > original_height:
-            new_width = max_dimension
-            new_height = int(original_height * (max_dimension / original_width))
-        else:
-            new_height = max_dimension
-            new_width = int(original_width * (max_dimension / original_height))
-        
-        resized_image = image.resize((new_width, new_height))
-        buffered = io.BytesIO()
-        resized_image.save(buffered, format="JPEG")
-        image_bytes = buffered.getvalue()
-
+    image_bytes = resize_image_if_large(image_bytes)
+    
     image_base64 = base64.b64encode(image_bytes).decode('utf-8')
     image_data_url = f"data:image/jpeg;base64,{image_base64}"
 
@@ -682,3 +630,55 @@ def is_focused(emotion, eye_direction):
     is_looking_straight = abs(eye_direction['Yaw']) <= yaw_threshold and abs(eye_direction['Pitch']) <= pitch_threshold
     
     return is_emotion_focused and is_looking_straight
+
+def call_rekognition(face_image):
+    """Send the cropped face to AWS Rekognition and return the result."""
+    print("Calling AWS Rekognition...")
+    _, face_bytes = cv2.imencode('.jpg', face_image)
+    response = rekognition.search_faces_by_image(
+        CollectionId=REKOGNITION_COLLECTION_NAME,
+        Image={'Bytes': face_bytes.tobytes()},
+        FaceMatchThreshold=70,
+        MaxFaces=1
+    )
+    return response.get('FaceMatches', [])
+
+def update_detected_students(rekognition_id):
+    global detected_students
+
+    student_info = dynamodb.get_item(
+        TableName=DYNAMODB_STUDENT_TABLE_NAME,
+        Key={'RekognitionId': {'S': rekognition_id}}
+    )
+
+    if 'Item' in student_info:
+        student_id = student_info['Item']['StudentId']['S']
+        student_name = student_info['Item']['FullName']['S']
+        student_image = generate_signed_url(S3_BUCKET_NAME, 'index/' + student_id)
+        
+        # Store detected student details
+        detected_students[student_id] = {
+            'name': student_name,
+            'image': student_image
+        }
+
+        print(f"Detected student_id: {student_id} Name: {student_name}")
+        
+def resize_image_if_large(image_bytes, max_dimension=1024, max_size=5 * 1024 * 1024):
+    """Resize an image if it exceeds the specified maximum size."""
+    if len(image_bytes) <= max_size:
+        return image_bytes
+    image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+    original_width, original_height = image.size
+
+    if original_width > original_height:
+        new_width = max_dimension
+        new_height = int(original_height * (max_dimension / original_width))
+    else:
+        new_height = max_dimension
+        new_width = int(original_width * (max_dimension / original_height))
+
+    resized_image = image.resize((new_width, new_height))
+    buffered = io.BytesIO()
+    resized_image.save(buffered, format="JPEG")
+    return buffered.getvalue()

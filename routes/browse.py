@@ -126,22 +126,7 @@ def profile():
     if session.get('role') == 'student':
         courses = fetch_courses_from_dynamodb(student_id=session.get('id'))
         for course in courses:
-            present_counter = 0
-            total_records = 0
-            attendance_records = retrieve_student_records(course=course['CourseCode'])
-            if len(attendance_records) != 0:
-                for record in attendance_records:
-                    if str(record['StudentId']) == session.get('id'):
-                        total_records += 1
-                        if record['Attendance'] == 'PRESENT':
-                            present_counter += 1
-                if total_records == 0:
-                    attendance_rate = 0
-                else:
-                    attendance_rate = round(present_counter / total_records * 100, 2)
-                course['AttendanceRate'] = attendance_rate
-            else:
-                course['AttendanceRate'] = "NA"
+            course['AttendanceRate'] = calculate_attendance_rate(course['CourseCode'], session.get('id'))
             # Setting Lecturer Name
             lecturer = fetch_users_from_dynamodb("lecturer", user_ids=[course['Lecturer']])[0]
             course['Lecturer'] = f"{lecturer['FullName']['S']} ({course['Lecturer']})"
@@ -243,22 +228,10 @@ def view_profile():
         courses = fetch_courses_from_dynamodb(student_id=id)
         attendance_rates = []
         for course in courses:
-            present_counter = 0
-            total_records = 0
-            attendance_records = retrieve_student_records(course=course['CourseCode'])
-            if len(attendance_records) != 0:
-                for record in attendance_records:
-                    if str(record['StudentId']) == id:
-                        total_records += 1
-                        if record['Attendance'] == 'PRESENT':
-                            present_counter += 1
-                if total_records == 0:
-                    attendance_rate = 0
-                else:
-                    attendance_rate = round(present_counter / total_records * 100, 2)
-                attendance_rates.append(attendance_rate)
-            else:
-                attendance_rates.append(0)
+            attendance_rate = calculate_attendance_rate(course['CourseCode'], id)
+            if attendance_rate == 'NA':
+                attendance_rate = 0
+            attendance_rates.append(attendance_rate)
         profile['OverallAttendanceRate'] = sum(attendance_rates) / len(attendance_rates) if attendance_rates else 0
 
     profile['image'] = image
@@ -267,6 +240,21 @@ def view_profile():
 
     return jsonify(profile)
 
+def calculate_attendance_rate(course_code, student_id):
+    """Calculate the attendance rate for a specific student in a course."""
+    present_counter = 0
+    total_records = 0
+    attendance_records = retrieve_student_records(course=course_code)
+    
+    for record in attendance_records:
+        if str(record['StudentId']) == student_id:
+            total_records += 1
+            if record['Attendance'] == 'PRESENT':
+                present_counter += 1
+                
+    if total_records == 0:
+        return "NA"
+    return round(present_counter / total_records * 100, 2)
 
     
     
