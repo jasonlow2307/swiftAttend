@@ -245,6 +245,27 @@ def view_profile():
         profile['LecturerId'] = profile['LecturerId']['S']
     else:
         profile['StudentId'] = profile['StudentId']['S']
+        courses = fetch_courses_from_dynamodb(student_id=id)
+        attendance_rates = []
+        for course in courses:
+            present_counter = 0
+            total_records = 0
+            attendance_records = retrieve_student_records(course=course['CourseCode'])
+            if len(attendance_records) != 0:
+                for record in attendance_records:
+                    if str(record['StudentId']) == id:
+                        total_records += 1
+                        if record['Attendance'] == 'PRESENT':
+                            present_counter += 1
+                if total_records == 0:
+                    attendance_rate = 0
+                else:
+                    attendance_rate = round(present_counter / total_records * 100, 2)
+                attendance_rates.append(attendance_rate)
+            else:
+                attendance_rates.append(0)
+        profile['OverallAttendanceRate'] = sum(attendance_rates) / len(attendance_rates) if attendance_rates else 0
+
     profile['image'] = image
 
     print(profile)
