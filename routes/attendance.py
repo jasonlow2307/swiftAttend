@@ -13,6 +13,7 @@ import time
 import cv2
 from wrapper import *
 from functions import *
+import uuid
 
 attendance = Blueprint('attendance', __name__)
 
@@ -24,6 +25,7 @@ initialized = False
 load_dotenv()
 REKOGNITION_COLLECTION_NAME = os.getenv('REKOGNITION_COLLECTION_NAME')
 S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
+ATTENDANCE_PROCESSING_LOGS_TABLE_NAME = os.getenv('ATTENDANCE_PROCESSING_LOGS_TABLE_NAME')
 
 @attendance.route('/init')
 @role_required(['lecturer', 'admin'])
@@ -425,6 +427,9 @@ def check_attendance_record():
     )
 
     face_details = response_faces.get('FaceDetails', [])
+    num_faces_detected = len(face_details)  # Get the number of faces detected
+    print(f"Detected {num_faces_detected} face(s).")
+
     face_emotions = {}
     face_eye_directions = {}
     bounding_boxes = {}
@@ -572,6 +577,9 @@ def check_attendance_record():
     elapsed_time = end_time - start_time
     print(f"Time taken to run check_attendance_record function: {elapsed_time} seconds")
 
+    # Log the processing time and face count to DynamoDB
+    log_processing_time_and_faces(elapsed_time, num_faces_detected)
+
     return render_template('checked_attendance.html', attendance_records=attendance_records, error='', uploaded_image=modified_image_data_url)
 
 # Helper function to create a unique key for bounding boxes (useful for mapping to face IDs)
@@ -682,3 +690,22 @@ def resize_image_if_large(image_bytes, max_dimension=1024, max_size=5 * 1024 * 1
     buffered = io.BytesIO()
     resized_image.save(buffered, format="JPEG")
     return buffered.getvalue()
+
+def log_processing_time_and_faces(elapsed_time, num_faces_detected):
+    """Logs the processing time and face count to DynamoDB."""
+    log_id = str(uuid.uuid4())  # Generate a unique LogId
+    timestamp = datetime.now().isoformat()
+
+    try:
+        dynamodb.put_item(
+            TableName=ATTENDANCE_PROCESSING_LOGS_TABLE_NAME,
+            Item={
+                'LogId': {'S': log_id},
+                'ProcessingTime': {'N': str(elapsed_time)},
+                'FacesDetected': {'N': str(num_faces_detected)},
+                'Timestamp': {'S': timestamp}
+            }
+        )
+        print("Log entry added to DynamoDB.")
+    except Exception as e:
+        print(f"Failed to log entry to DynamoDB: {e}")
