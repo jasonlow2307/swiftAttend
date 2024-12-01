@@ -70,6 +70,7 @@ def create_class():
 
     first_five_students = students[:5]
     remaining_students = students[5:]
+    print(remaining_students)
 
     return render_template('createClass.html', first_five_students=first_five_students, remaining_students=remaining_students, lecturers = lecturers)
 
