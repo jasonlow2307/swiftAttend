@@ -30,13 +30,14 @@
 
 - [x] Prototype
 - [x] Basic UI
+- [x] AI Chatbot
+- [x] Live Attendance Tracking
 
-### Capstone Project 2 Plan
+### Future Plan
 
-- [ ] AI Chatbot
 - [ ] Mobile App
-- [ ] Live Attendance Tracking
 - [ ] Improved UI
+- [ ] Cost Optimization
       <br><br>
 
 ## <a name="Introduction"></a>📖 Introduction
@@ -137,8 +138,8 @@ For capturing image and uploading image, after submitting the image, the attenda
 </figure>
 <br><br>
 <figure>
-  <img src="imgs/live_unknown.png">
-  <img src="imgs/live_detected.png">
+  <img src="imgs/live_unknown.png" style="width: 450px">
+  <img src="imgs/live_detected.png" style="width: 450px">
 </figure>
 For live mode, it will start the camera will will track every face that appears in the frame. The attendance of students that appeared in the frame will be stored until the lecturer ends the session.
 
