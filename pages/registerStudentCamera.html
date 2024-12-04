@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link rel="icon" type="image/png" href="../static/logo.png" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registration</title>
+    <style>
+      body {
+        background-color: #f0f0f0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .container {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 400px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+      }
+
+      h2 {
+        margin-top: 0;
+        color: #003572;
+        font-weight: bold;
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      video {
+        width: 100%;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        margin-top: 10px;
+      }
+
+      canvas {
+        display: none;
+        margin-bottom: 10px;
+      }
+
+      input[type="text"],
+      input[type="submit"] {
+        width: calc(100% - 16px);
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        box-sizing: border-box;
+        transition: border-color 0.3s, box-shadow 0.3s;
+        margin-bottom: 10px;
+      }
+
+      input[type="submit"] {
+        background-color: #003572;
+        color: white;
+        cursor: pointer;
+        border: none;
+      }
+
+      input[type="submit"]:hover {
+        background-color: #001d44;
+      }
+
+      button {
+        margin: 5px;
+        padding: 10px 20px;
+        margin-bottom: 20px;
+        background-color: #003572;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #001d44;
+      }
+
+      #canvas {
+        margin-top: 10px;
+        display: none; /* Initially hide the canvas */
+        width: 100%;
+        border-radius: 5px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+      }
+
+      #icon {
+        padding-right: 10px;
+        font-size: 30px;
+        color: #003572;
+        margin-bottom: 20px;
+      }
+
+      #home {
+        font-size: 25px;
+        color: #003572;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          width: 90%;
+        }
+      }
+
+      @media (max-width: 426px) {
+        h2 {
+          font-size: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <i class="fas fa-user-graduate nav-icon" id="icon"></i>
+        <h2>Student Registration</h2>
+      </div>
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+      <div>
+        <button id="captureButton">Capture</button>
+        <button id="switchCameraButton">Switch Camera</button>
+        <button id="captureAgainButton" type="button" style="display: none">
+          Capture Again
+        </button>
+      </div>
+      <form id="registrationForm" enctype="multipart/form-data">
+        <input
+          type="text"
+          name="name"
+          placeholder="Enter Your Name"
+          required
+        /><br />
+        <input type="hidden" name="role" value="student" />
+        <input type="hidden" name="image" id="imageData" />
+        <input type="submit" value="Submit" />
+      </form>
+      <a href="/"><i class="fas fa-home" id="home"></i></a>
+    </div>
+
+    <script>
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const captureButton = document.getElementById("captureButton");
+      const switchCameraButton = document.getElementById("switchCameraButton");
+      const imageDataInput = document.getElementById("imageData");
+
+      let currentStream = null;
+      let useFrontCamera = true;
+
+      async function startCamera() {
+        if (currentStream) {
+          currentStream.getTracks().forEach((track) => track.stop());
+        }
+
+        const constraints = {
+          video: {
+            facingMode: useFrontCamera ? "user" : "environment",
+          },
+        };
+
+        try {
+          currentStream = await navigator.mediaDevices.getUserMedia(
+            constraints
+          );
+          video.srcObject = currentStream;
+        } catch (error) {
+          console.error("Error accessing camera:", error);
+          alert("Could not access the camera. Please check your permissions.");
+        }
+      }
+
+      function captureImage() {
+        const context = canvas.getContext("2d");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert the canvas image to a Blob
+        canvas.toBlob((blob) => {
+          // Create a File object from the Blob
+          const file = new File([blob], "captured_image.png", {
+            type: "image/png",
+          });
+
+          // Store the File object in a global variable to add it to FormData on submission
+          window.capturedImageFile = file;
+
+          // Update the UI
+          video.style.display = "none";
+          canvas.style.display = "block";
+          captureButton.style.display = "none";
+          switchCameraButton.style.display = "none";
+          document.getElementById("captureAgainButton").style.display =
+            "inline-block";
+        }, "image/png");
+
+        alert("Image captured successfully!");
+      }
+
+      captureButton.addEventListener("click", captureImage);
+
+      switchCameraButton.addEventListener("click", () => {
+        useFrontCamera = !useFrontCamera;
+        startCamera();
+      });
+
+      // Handle form submission
+      document
+        .getElementById("registrationForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault(); // Prevent default form submission
+          const formData = new FormData(this);
+
+          // Append the captured image file to the FormData
+          if (window.capturedImageFile) {
+            formData.append("image", window.capturedImageFile);
+          } else {
+            alert("Please capture an image before submitting.");
+            return;
+          }
+
+          // Send form data to server using fetch API
+          fetch("/reg_open_day", {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => {
+              if (response.ok) {
+                alert("Registration successful!");
+              } else {
+                alert("Error registering!");
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Error registering!");
+            });
+        });
+      // Start the camera on page load
+      startCamera();
+    </script>
+  </body>
+</html>

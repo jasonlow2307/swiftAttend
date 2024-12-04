@@ -19,6 +19,7 @@ COGNITO_CLIENT_ID = os.getenv('COGNITO_CLIENT_ID')
 S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
 DYNAMODB_STUDENT_TABLE_NAME = os.getenv('DYNAMODB_STUDENT_TABLE_NAME')
 DYNAMODB_LECTURER_TABLE_NAME = os.getenv('DYNAMODB_LECTURER_TABLE_NAME')
+DYNAMODB_CLASSES_TABLE_NAME = os.getenv('DYNAMODB_CLASSES_TABLE_NAME')
 
 class RegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()], render_kw={"autofocus": True})
@@ -114,6 +115,11 @@ def registerLec():
 @login_required
 def registerStd():
     return send_from_directory('.', 'pages/registerStudent.html')
+
+@auth.route('/regstdcam')
+@login_required
+def registerStdCamera():
+    return send_from_directory('.', 'pages/registerStudentCamera.html')
 
 @auth.route('/confirm', methods=['GET', 'POST'])
 def confirm():
@@ -291,6 +297,65 @@ def save_lecturer_registration():
     id = generate_id(role)
 
     # Use the generated ID in your code
+    bucket_name = S3_BUCKET_NAME
+    key = f'index/{id}'
+    image_bytes = image.read()
+    s3.upload_fileobj(
+        io.BytesIO(image_bytes),
+        bucket_name,
+        key,
+        ExtraArgs={'Metadata': {'FullName': name, 'id': id, 'role': role}}
+    )
+
+    return '', 200
+
+
+@auth.route('/reg_open_day', methods=['POST'])
+def save_lecturer_registration_open_day():
+    # Extract data from the request
+    image = request.files['image']
+    name = request.form['name']
+    role = request.form['role']
+
+    # Generate the unique ID for the registrant
+    id = generate_id(role)
+
+    # Define the table name
+    classes_table = DYNAMODB_CLASSES_TABLE_NAME
+
+    # Define partition and sort key values (adjust as per your schema)
+    partition_key = {'CourseCode': {'S': 'OD'}}
+    sort_key = {'CourseName': {'S': 'Open Day'}}  # Replace with the actual sort key value
+
+    # Fetch the current value of the Students field
+    try:
+        response = dynamodb.get_item(
+            TableName=classes_table,
+            Key={**partition_key, **sort_key}
+        )
+        current_students = response['Item'].get('Students', {}).get('S', '')  # Default to an empty string if missing
+
+        # Append the new ID
+        updated_students = f"{current_students}|{id}" if current_students else id
+        print(f"Updated Students field: {updated_students}")
+
+        # Update the Students field with the new value
+        dynamodb.update_item(
+            TableName=classes_table,
+            Key={**partition_key, **sort_key},
+            UpdateExpression="SET #students = :updated_value",
+            ExpressionAttributeNames={
+                "#students": "Students"
+            },
+            ExpressionAttributeValues={
+                ":updated_value": {"S": updated_students}
+            }
+        )
+    except Exception as e:
+        print(f"Error updating Students field in DynamoDB: {e}")
+        return {"error": "Failed to update class information"}, 500
+    
+    # Upload the image to S3
     bucket_name = S3_BUCKET_NAME
     key = f'index/{id}'
     image_bytes = image.read()
