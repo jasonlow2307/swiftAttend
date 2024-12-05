@@ -21,26 +21,47 @@ S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
 
 def edit_student_in_course(student_id, course_code, add=True):
     matched_course = fetch_courses_from_dynamodb(course_code=course_code)
-    if not add:
-        matched_course['Students'] = re.sub(r'\|' + re.escape(student_id), '', matched_course['Students'])
-        print(str(student_id) + " removed")
-    else:
-        matched_course['Students'] += '|' + student_id
-        print(str(student_id) + " added")
-    update_classes_table(course_code, matched_course['CourseName'], matched_course['Students'])
-    print(matched_course['Students'])
+    
+    if not matched_course:
+        print(f"Course with code {course_code} not found.")
+        return {'success': False, 'message': f"Course {course_code} not found."}, 404
 
-# Update record in classes table
+    students = matched_course['Students']
+    
+    if not add:
+        # Handle removing the student ID
+        student_list = students.split('|')  # Split into a list
+        if student_id in student_list:
+            student_list.remove(student_id)  # Remove the student ID if present
+            print(f"{student_id} removed")
+        else:
+            print(f"{student_id} not found in course {course_code}")
+        students = '|'.join(student_list)  # Join back into a string
+    else:
+        # Handle adding the student ID
+        if student_id not in students.split('|'):
+            students += ('|' if students else '') + student_id  # Append with a delimiter if needed
+            print(f"{student_id} added")
+        else:
+            print(f"{student_id} is already in the course {course_code}")
+
+    # Update the DynamoDB table
+    update_classes_table(course_code, matched_course['CourseName'], students)
+    print(students)
+
 def update_classes_table(course_code, course_name, students):
     dynamodb.update_item(
         TableName=DYNAMODB_CLASSES_TABLE_NAME,
-        Key={'CourseCode': {'S': course_code}, 'CourseName': {'S': course_name}},
+        Key={
+            'CourseCode': {'S': course_code},
+            'CourseName': {'S': course_name}
+        },
         UpdateExpression='SET Students = :students',
         ExpressionAttributeValues={':students': {'S': students}},
-        ReturnValues='UPDATED_NEW'  # You can specify the desired return values as needed
+        ReturnValues='UPDATED_NEW'
     )
-
-    return {'success': True, 'message': f'Students updated for course {course_code} successfully!'}, 200
+    print(f"Students updated for course {course_code} successfully!")
+    return {'success': True, 'message': f"Students updated for course {course_code} successfully!"}, 200
 
 # For /init
 # Fetch all classes from the classes table
