@@ -192,7 +192,7 @@ face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
 
 # Global variables for face tracking and status
 frame_count = 0
-process_every_nth_frame = 4  # Process every 4th frame to optimize performance
+process_every_nth_frame = 8  # Process every 4th frame to optimize performance
 previous_faces = {}  # Dictionary to track previous face locations, IDs, and status
 face_to_student_map = {}  # Maps AWS Rekognition face IDs to student names/details
 recognized_faces = {} # To keep track of already recognized face IDs
@@ -289,19 +289,19 @@ def process_frame(frame):
             bboxC = detection.location_data.relative_bounding_box
             ih, iw, _ = frame.shape
             x, y, w, h = int(bboxC.xmin * iw), int(bboxC.ymin * ih), int(bboxC.width * iw), int(bboxC.height * ih)
-            temp_id = str(uuid.uuid4())
             
             # Extract face region for Rekognition
             face_img = frame[y:y+h, x:x+w]
+            face_id = str(uuid.uuid4())  # Default temporary ID
             
             # Check embeddings first if available
             if current_embedding is not None:
                 embedding_matched = False
-                for face_id, stored_embedding in stored_embeddings.items():
+                for stored_id, stored_embedding in stored_embeddings.items():
                     if is_same_person(current_embedding, stored_embedding):
-                        temp_id = face_id  # Use existing ID if face matches
+                        face_id = stored_id  # Use the stored ID instead of generating new one
                         embedding_matched = True
-                        print(f"Face matched with stored embedding {face_id}")
+                        print(f"Face matched with stored embedding {stored_id}")
                         break
                 
                 if not embedding_matched:
@@ -309,42 +309,25 @@ def process_frame(frame):
                     matches = call_rekognition(face_img)
                     if matches:
                         match = matches[0]
-                        rekognition_id = match['Face']['FaceId']
-                        temp_id = rekognition_id
-                        update_detected_students(rekognition_id)
-                        # Store the embedding after Rekognition confirmation
-                        stored_embeddings[temp_id] = current_embedding
-                        print(f"New face recognized and embedding stored with ID {temp_id}")
+                        face_id = match['Face']['FaceId']  # Use Rekognition FaceId
+                        update_detected_students(face_id)
+                        stored_embeddings[face_id] = current_embedding
+                        recognized_faces[face_id] = True  # Mark as recognized
+                        print(f"New face recognized with Rekognition ID: {face_id}")
 
-            current_faces[temp_id] = {
+            current_faces[face_id] = {
                 'box': (x, y, w, h), 
                 'timestamp': current_time, 
-                'recognized': False if temp_id not in recognized_faces else True,
+                'recognized': face_id in recognized_faces,
                 'in_cooldown': False,
                 'rekognition_attempts': 0,
                 'embedding': current_embedding
             }
 
-    # Track faces between frames
-    tracked_faces = track_faces(current_faces, previous_faces)
-
-    # Remove inactive faces and their embeddings
-    faces_to_remove = []
-    for face_id, face_data in previous_faces.items():
-        if current_time - face_data['timestamp'] > FACE_REMOVAL_TIME:
-            faces_to_remove.append(face_id)
-            if face_id in stored_embeddings:
-                del stored_embeddings[face_id]
-
-    for face_id in faces_to_remove:
-        del tracked_faces[face_id]
-        print(f"Removed face ID {face_id} due to inactivity.")
-
-    previous_faces = tracked_faces
-
-    # Draw rectangles and labels
-    for face_id, face_data in tracked_faces.items():
+    # Draw rectangles and labels directly (remove tracking)
+    for face_id, face_data in current_faces.items():
         (x, y, w, h) = face_data['box']
+        print(f"Drawing for FACE_ID: {face_id}")
 
         if face_id in recognized_faces:
             # Draw green rectangle for recognized faces
@@ -354,7 +337,7 @@ def process_frame(frame):
         elif face_id in stored_embeddings:
             # Draw blue rectangle for faces matched by embedding
             cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-            cv2.putText(frame, "Matching...", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+            cv2.putText(frame, "Already Recognized...", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
         else:
             # Draw red rectangle for unrecognized faces
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
