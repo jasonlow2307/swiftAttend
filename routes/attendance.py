@@ -261,17 +261,10 @@ def track_faces(current_faces, previous_faces, threshold=50):
     return tracked_faces
 
 stored_embeddings = {}  # Store known embeddings
+last_face_status = {}
 
 def process_frame(frame):
-    global frame_count, previous_faces, status, recognized_faces, stored_embeddings
-
-    # Get face embedding from the current frame
-    current_embedding = extract_face_embedding(frame)
-
-    # Skip frames to reduce processing load
-    frame_count += 1
-    if frame_count % process_every_nth_frame != 0:
-        return frame
+    global frame_count, previous_faces, status, recognized_faces, stored_embeddings, last_face_status
 
     # Resize frame for faster processing
     frame = resize_frame(frame, scale=0.4)
@@ -279,6 +272,51 @@ def process_frame(frame):
 
     # Perform face detection
     results = face_detection.process(rgb_frame)
+
+    # Skip frames to reduce processing load
+    frame_count += 1
+    if frame_count % process_every_nth_frame != 0:
+        if results.detections:
+            for detection in results.detections:
+                bboxC = detection.location_data.relative_bounding_box
+                ih, iw, _ = frame.shape
+                x, y, w, h = int(bboxC.xmin * iw), int(bboxC.ymin * ih), int(bboxC.width * iw), int(bboxC.height * ih)
+                
+                # Find closest matching face from last_face_status
+                closest_face = None
+                min_distance = float('inf')
+                
+                for stored_box, status_data in last_face_status.items():
+                    stored_x, stored_y, stored_w, stored_h = stored_box
+                    distance = ((x - stored_x) ** 2 + (y - stored_y) ** 2) ** 0.5
+                    
+                    if distance < min_distance and distance < 50:  # 50 pixel threshold
+                        min_distance = distance
+                        closest_face = status_data
+
+                if closest_face:
+                    # Use the stored status for drawing
+                    if closest_face['status'] == 'recognized':
+                        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                        cv2.putText(frame, closest_face['label'], 
+                                  (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    elif closest_face['status'] == 'stored':
+                        cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+                        cv2.putText(frame, "Already Recognized...", 
+                                  (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+                    else:
+                        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
+                        cv2.putText(frame, "Processing...", 
+                                  (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                else:
+                    # New face, draw red box
+                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
+                    cv2.putText(frame, "Processing...", 
+                              (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+        return frame
+    
+    # Get face embedding from the current frame
+    current_embedding = extract_face_embedding(frame)
 
     # Prepare a dictionary to store the current frame's face bounding boxes
     current_faces = {}
@@ -342,6 +380,17 @@ def process_frame(frame):
             # Draw red rectangle for unrecognized faces
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
             cv2.putText(frame, "Processing...", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+    new_face_status = {}
+    for face_id, face_data in current_faces.items():
+        (x, y, w, h) = face_data['box']
+        status_data = {
+            'status': 'recognized' if face_id in recognized_faces else 'stored' if face_id in stored_embeddings else 'processing',
+            'label': f"Recognized: {face_to_student_map.get(face_id, 'Student')}" if face_id in recognized_faces else "Processing..."
+        }
+        new_face_status[(x, y, w, h)] = status_data
+    
+    last_face_status = new_face_status
 
     return frame
 
