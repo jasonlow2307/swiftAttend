@@ -11,6 +11,10 @@ from routes.main import main
 from routes.browse import browse
 from common import dynamodb
 
+import warnings
+warnings.filterwarnings('ignore', message='SymbolDatabase.GetPrototype.*')
+
+
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -48,21 +52,21 @@ app.jinja_env.filters['escapejs'] = escapejs
 
 
 if __name__ == '__main__':
-    # Scan the table to get all items
-    response = dynamodb.scan(
-        TableName='swiftAttendStudents',
-        ProjectionExpression='RekognitionId'
-    )
+    # # Scan the table to get all items
+    # response = dynamodb.scan(
+    #     TableName='swiftAttendStudents',
+    #     ProjectionExpression='RekognitionId'
+    # )
 
-    # Update each item to set BannerImg to 'NA'
-    for item in response['Items']:
-        rekognition_id = item['RekognitionId']['S']
-        dynamodb.update_item(
-            TableName='swiftAttendStudents',
-            Key={'RekognitionId': {'S': rekognition_id}},
-            UpdateExpression='SET BannerImg = :val',
-            ExpressionAttributeValues={':val': {'S': 'NA'}}
-        )
+    # # Update each item to set BannerImg to 'NA'
+    # for item in response['Items']:
+    #     rekognition_id = item['RekognitionId']['S']
+    #     dynamodb.update_item(
+    #         TableName='swiftAttendStudents',
+    #         Key={'RekognitionId': {'S': rekognition_id}},
+    #         UpdateExpression='SET BannerImg = :val',
+    #         ExpressionAttributeValues={':val': {'S': 'NA'}}
+    #     )
 
 
 

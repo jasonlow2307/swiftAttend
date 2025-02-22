@@ -1,3 +1,8 @@
+setuptools>=69.0.3
+wheel>=0.42.0
+pip>=24.0
+packaging>=23.2
+requests>=2.31.0
 boto3==1.34.91
 botocore==1.34.91
 Flask==3.0.3
@@ -5,9 +10,11 @@ Flask_Cors==5.0.0
 Flask_SocketIO==5.3.6
 flask_wtf==1.2.1
 mediapipe==0.10.14
-numpy==1.24.4
-opencv_contrib_python==4.10.0.84
-opencv_python-headless
+numpy
+opencv-contrib-python==4.10.0.84
+opencv-python-headless==4.10.0.84
 Pillow==10.4.0
 WTForms==3.1.2
 email_validator
+python-dotenv
+scikit-learn

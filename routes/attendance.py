@@ -150,6 +150,40 @@ def initialize_class_record():
 # LIVE ATTENDANCE MODE
 import mediapipe as mp
 import uuid
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import normalize
+
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1, refine_landmarks=True)
+
+KEY_LANDMARKS = [33, 133, 362, 263, 1, 13, 14, 61, 291]
+
+def extract_face_embedding(frame):
+    """Extracts a face embedding using MediaPipe Face Mesh"""
+    h, w, _ = frame.shape
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = face_mesh.process(rgb_frame)
+
+    if results.multi_face_landmarks:
+        for face_landmarks in results.multi_face_landmarks:
+            # Extract key landmark coordinates
+            embedding = []
+            for idx in KEY_LANDMARKS:
+                landmark = face_landmarks.landmark[idx]
+                embedding.append((landmark.x * w, landmark.y * h))  # Convert to pixel coordinates
+            
+            # Flatten & Normalize embedding
+            embedding = np.array(embedding).flatten()
+            embedding = normalize([embedding])[0]  # Normalize to unit vector
+            return embedding  # Return the face embedding
+
+    return None  # No face detected
+
+def is_same_person(embedding1, embedding2, threshold=0.8):
+    """Compares two embeddings and returns True if they belong to the same person."""
+    similarity = cosine_similarity([embedding1], [embedding2])[0][0]
+    return similarity >= threshold
+
 
 # Initialize mediapipe Face Detection
 # Initialize mediapipe Face Detection
@@ -226,8 +260,13 @@ def track_faces(current_faces, previous_faces, threshold=50):
 
     return tracked_faces
 
+stored_embeddings = {}  # Store known embeddings
+
 def process_frame(frame):
-    global frame_count, previous_faces, status, recognized_faces
+    global frame_count, previous_faces, status, recognized_faces, stored_embeddings
+
+    # Get face embedding from the current frame
+    current_embedding = extract_face_embedding(frame)
 
     # Skip frames to reduce processing load
     frame_count += 1
@@ -243,7 +282,6 @@ def process_frame(frame):
 
     # Prepare a dictionary to store the current frame's face bounding boxes
     current_faces = {}
-
     current_time = time.time()
 
     if results.detections:
@@ -252,87 +290,75 @@ def process_frame(frame):
             ih, iw, _ = frame.shape
             x, y, w, h = int(bboxC.xmin * iw), int(bboxC.ymin * ih), int(bboxC.width * iw), int(bboxC.height * ih)
             temp_id = str(uuid.uuid4())
+            
+            # Extract face region for Rekognition
+            face_img = frame[y:y+h, x:x+w]
+            
+            # Check embeddings first if available
+            if current_embedding is not None:
+                embedding_matched = False
+                for face_id, stored_embedding in stored_embeddings.items():
+                    if is_same_person(current_embedding, stored_embedding):
+                        temp_id = face_id  # Use existing ID if face matches
+                        embedding_matched = True
+                        print(f"Face matched with stored embedding {face_id}")
+                        break
+                
+                if not embedding_matched:
+                    # If no embedding match, try Rekognition
+                    matches = call_rekognition(face_img)
+                    if matches:
+                        match = matches[0]
+                        rekognition_id = match['Face']['FaceId']
+                        temp_id = rekognition_id
+                        update_detected_students(rekognition_id)
+                        # Store the embedding after Rekognition confirmation
+                        stored_embeddings[temp_id] = current_embedding
+                        print(f"New face recognized and embedding stored with ID {temp_id}")
+
             current_faces[temp_id] = {
                 'box': (x, y, w, h), 
                 'timestamp': current_time, 
-                'recognized': False, 
-                'in_cooldown': False, 
-                'rekognition_attempts': 0
+                'recognized': False if temp_id not in recognized_faces else True,
+                'in_cooldown': False,
+                'rekognition_attempts': 0,
+                'embedding': current_embedding
             }
 
-    # Match the current frame's faces with the previous frame's faces to assign consistent IDs
+    # Track faces between frames
     tracked_faces = track_faces(current_faces, previous_faces)
 
-    # Remove faces that haven't been detected for a while
+    # Remove inactive faces and their embeddings
     faces_to_remove = []
     for face_id, face_data in previous_faces.items():
-        # If the face hasn't been seen for more than FACE_REMOVAL_TIME, mark it for removal
         if current_time - face_data['timestamp'] > FACE_REMOVAL_TIME:
             faces_to_remove.append(face_id)
+            if face_id in stored_embeddings:
+                del stored_embeddings[face_id]
 
-    # Remove the faces from previous_faces
     for face_id in faces_to_remove:
         del tracked_faces[face_id]
         print(f"Removed face ID {face_id} due to inactivity.")
 
-    # Update the previous_faces with the tracked_faces
     previous_faces = tracked_faces
 
-    # Process each tracked face
+    # Draw rectangles and labels
     for face_id, face_data in tracked_faces.items():
         (x, y, w, h) = face_data['box']
 
-        # Skip Rekognition if face has already been recognized
-        if face_data['recognized'] or face_id in recognized_faces:
-            # Draw bounding box for recognized face
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)  # Green for recognized
-            cv2.putText(frame, f"Recognized: {face_to_student_map.get(face_id, 'Student')}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            continue
-
-        # If face has been in the frame for 3 seconds and is not in cooldown
-        if not face_data['in_cooldown'] and (current_time - face_data['timestamp']) >= FACE_HOLD_TIME:
-            print(f"Face ID {face_id[:8]} ready for Rekognition (attempt {face_data['rekognition_attempts'] + 1}).")
-
-            # Set cooldown before calling Rekognition
-            face_data['in_cooldown'] = True
-            face_data['last_recognition_time'] = current_time
-
-            # Call AWS Rekognition for recognition
-            face_region = frame[y:y + h, x:x + w]
-            matches = call_rekognition(face_region)
-            if matches:
-                rekognition_id = matches[0]['Face']['FaceId']
-                face_data['recognized'] = True
-                face_to_student_map[face_id] = f"Student_{rekognition_id[:8]}"
-                
-                # Update recognized_faces to prevent future Rekognition calls
-                recognized_faces[face_id] = rekognition_id
-
-                # Update detected students and prevent further calls for this face
-                status = "Recognized " + str(rekognition_id[:8])
-                update_detected_students(rekognition_id)
-                print(f"Face ID {rekognition_id} recognized. Will not reprocess.")
-            else:
-                # No match found, increase Rekognition attempts and keep the cooldown active
-                face_data['rekognition_attempts'] += 1
-                print(f"Face ID {face_id[:8]} not recognized. Setting cooldown.")
-
-        # Check if cooldown period has expired
-        if face_data['in_cooldown']:
-            cooldown_time = INITIAL_COOLDOWN if face_data['rekognition_attempts'] <= MAX_REKOGNITION_ATTEMPTS else INCREASED_COOLDOWN
-            time_since_last_recognition = current_time - face_data['last_recognition_time']
-            
-            print(f"Face ID {face_id[:8]} is in cooldown. Time since last recognition: {time_since_last_recognition:.2f} seconds.")
-
-            if time_since_last_recognition >= cooldown_time:
-                face_data['in_cooldown'] = False
-                print(f"Cooldown expired for Face ID {face_id[:8]}. Ready for another attempt.")
-
-        # Draw bounding boxes and labels
-        color = (0, 255, 0) if face_data['recognized'] else (0, 0, 255)  # Green for recognized, red for unrecognized
-        label = face_to_student_map.get(face_id, f"Unknown (Attempts: {face_data['rekognition_attempts']})")
-        cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-        cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+        if face_id in recognized_faces:
+            # Draw green rectangle for recognized faces
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            cv2.putText(frame, f"Recognized: {face_to_student_map.get(face_id, 'Student')}", 
+                       (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        elif face_id in stored_embeddings:
+            # Draw blue rectangle for faces matched by embedding
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+            cv2.putText(frame, "Matching...", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+        else:
+            # Draw red rectangle for unrecognized faces
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
+            cv2.putText(frame, "Processing...", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
     return frame
 
@@ -640,9 +666,28 @@ def is_focused(emotion, eye_direction):
     
     return is_emotion_focused and is_looking_straight
 
+# Add at the top with other global variables
+last_rekognition_call = 0  # Track the last time Rekognition was called
+REKOGNITION_COOLDOWN = 2  # Cooldown period in seconds
+
+
 def call_rekognition(face_image):
-    """Send the cropped face to AWS Rekognition and return the result."""
+    """Send the cropped face to AWS Rekognition and return the result with cooldown."""
+    global last_rekognition_call
+    
+    current_time = time.time()
+    time_since_last_call = current_time - last_rekognition_call
+
+    print(f"TIME SINCE LAST CALL: {time_since_last_call:.2f}s (Cooldown: {REKOGNITION_COOLDOWN}s)")
+    
+    # Check if enough time has passed since the last call
+    if time_since_last_call < REKOGNITION_COOLDOWN:
+        print(f"Skipping Rekognition call - cooldown active ({REKOGNITION_COOLDOWN - time_since_last_call:.1f}s remaining)")
+        return []
+    
+    last_rekognition_call = time.time()  # 🔴 Update BEFORE calling API
     print("Calling AWS Rekognition...")
+
     _, face_bytes = cv2.imencode('.jpg', face_image)
     response = rekognition.search_faces_by_image(
         CollectionId=REKOGNITION_COLLECTION_NAME,
@@ -650,7 +695,11 @@ def call_rekognition(face_image):
         FaceMatchThreshold=70,
         MaxFaces=1
     )
+
+    time.sleep(0.5)
+    
     return response.get('FaceMatches', [])
+
 
 def update_detected_students(rekognition_id):
     global detected_students
