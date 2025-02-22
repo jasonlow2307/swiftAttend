@@ -115,10 +115,19 @@ def create_class_record():
 
 @attendance.route('/init_form', methods=['POST'])
 def initialize_class_record():
-    global initialized_date
-    global initialized_course
-    global initialized
+    global initialized_date, initialized_course, initialized
+    global stored_embeddings, recognized_faces, last_face_status, detected_students
+    global frame_count, previous_faces
 
+    # Clear all tracking and recognition data
+    stored_embeddings = {}  # Clear stored face embeddings
+    recognized_faces = {}   # Clear recognized faces
+    last_face_status = {}   # Clear face status tracking
+    detected_students = {}   # Clear detected students
+    previous_faces = {}     # Clear face tracking
+    frame_count = 0        # Reset frame counter
+
+    # Get form data
     date = request.form['date']
     selected_course = request.form['course']
     selected_course = ast.literal_eval(selected_course)
@@ -129,7 +138,6 @@ def initialize_class_record():
     initialized = True                           
 
     student_ids = selected_course['Students'].split('|')
-
     matched_students = fetch_users_from_dynamodb("students", student_ids)
 
     # Calculate the TTL timestamp (30 minutes from now)
@@ -143,9 +151,9 @@ def initialize_class_record():
     }
     
     save_class_record(class_record)
-
+    
+    print("Initialized new session - cleared all face tracking and recognition data")
     return jsonify({'success': True, 'message': 'Class initialized successfully!'}), 200
-
 
 # LIVE ATTENDANCE MODE
 import mediapipe as mp
