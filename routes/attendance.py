@@ -268,6 +268,57 @@ def track_faces(current_faces, previous_faces, threshold=50):
 
     return tracked_faces
 
+def draw_modern_rectangle(frame, x, y, w, h, color, label, thickness=2, alpha=0.2):
+    """Draw a modern-looking rectangle with overlay and text"""
+    # Create overlay for transparent fill
+    overlay = frame.copy()
+    
+    # Draw filled rectangle with transparency
+    cv2.rectangle(overlay, (x, y), (x+w, y+h), color, -1)
+    
+    # Draw border with rounded corners (simulate by drawing lines)
+    corner_length = 20  # Length of corner lines
+    
+    # Top left corner
+    cv2.line(frame, (x+corner_length, y), (x, y), color, thickness)
+    cv2.line(frame, (x, y), (x, y+corner_length), color, thickness)
+    
+    # Top right corner
+    cv2.line(frame, (x+w-corner_length, y), (x+w, y), color, thickness)
+    cv2.line(frame, (x+w, y), (x+w, y+corner_length), color, thickness)
+    
+    # Bottom left corner
+    cv2.line(frame, (x, y+h-corner_length), (x, y+h), color, thickness)
+    cv2.line(frame, (x, y+h), (x+corner_length, y+h), color, thickness)
+    
+    # Bottom right corner
+    cv2.line(frame, (x+w, y+h-corner_length), (x+w, y+h), color, thickness)
+    cv2.line(frame, (x+w, y+h), (x+w-corner_length, y+h), color, thickness)
+    
+    # Blend the overlay with the original frame
+    cv2.addWeighted(overlay, alpha, frame, 1-alpha, 0, frame)
+    
+    # Add text with background
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.3
+    font_thickness = 1.5
+    text_size = cv2.getTextSize(label, font, font_scale, font_thickness)[0]
+    text_w, text_h = text_size
+    
+    # Draw text background
+    cv2.rectangle(frame, 
+                 (x, y-text_h-10),
+                 (x+text_w+10, y),
+                 color, -1)
+    
+    # Draw text
+    cv2.putText(frame, label,
+                (x+5, y-7),
+                font, font_scale, (255, 255, 255),
+                font_thickness)
+
+    return frame
+
 stored_embeddings = {}  # Store known embeddings
 last_face_status = {}
 
@@ -305,22 +356,22 @@ def process_frame(frame):
                 if closest_face:
                     # Use the stored status for drawing
                     if closest_face['status'] == 'recognized':
-                        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-                        cv2.putText(frame, closest_face['label'], 
-                                  (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                        frame = draw_modern_rectangle(frame, x, y, w, h, 
+                                                (0, 255, 0), 
+                                                closest_face['label'])
                     elif closest_face['status'] == 'stored':
-                        cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-                        cv2.putText(frame, "Already Recognized...", 
-                                  (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+                        frame = draw_modern_rectangle(frame, x, y, w, h,
+                                                (255, 0, 0),
+                                                "Already Recognized...")
                     else:
-                        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
-                        cv2.putText(frame, "Processing...", 
-                                  (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                        frame = draw_modern_rectangle(frame, x, y, w, h,
+                                                (0, 0, 255),
+                                                "Processing...")
                 else:
                     # New face, draw red box
-                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
-                    cv2.putText(frame, "Processing...", 
-                              (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                    frame = draw_modern_rectangle(frame, x, y, w, h,
+                                            (0, 0, 255),
+                                            "Processing...")
         return frame
     
     # Get face embedding from the current frame
@@ -377,17 +428,19 @@ def process_frame(frame):
 
         if face_id in recognized_faces:
             # Draw green rectangle for recognized faces
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            cv2.putText(frame, f"Recognized: {face_to_student_map.get(face_id, 'Student')}", 
-                       (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            frame = draw_modern_rectangle(frame, x, y, w, h,
+                                    (0, 255, 0),
+                                    f"Recognized: {face_to_student_map.get(face_id, 'Student')}")
         elif face_id in stored_embeddings:
             # Draw blue rectangle for faces matched by embedding
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-            cv2.putText(frame, "Already Recognized...", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+            frame = draw_modern_rectangle(frame, x, y, w, h,
+                                    (255, 0, 0),
+                                    "Already Recognized...")
         else:
             # Draw red rectangle for unrecognized faces
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
-            cv2.putText(frame, "Processing...", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            frame = draw_modern_rectangle(frame, x, y, w, h,
+                                    (0, 0, 255),
+                                    "Processing...")
 
     new_face_status = {}
     for face_id, face_data in current_faces.items():
