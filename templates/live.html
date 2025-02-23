@@ -1,320 +1,351 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="icon" type="image/png" href="../static/logo.png">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link rel="icon" type="image/png" href="../static/logo.png" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Live Attendance Taking</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 0;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+        margin: 0;
+        padding: 0;
+      }
 
-        h1 {
-            color: #003572;
-            text-align: center;
-            margin-top: 20px;
-        }
+      h1 {
+        color: #003572;
+        text-align: center;
+        margin-top: 20px;
+      }
 
-        #camera-feed-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 20px;
-        }
+      #camera-feed-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+      }
 
-        #processed-stream {
-            width: 80%;
-            max-width: 800px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+      #processed-stream {
+        width: 80%;
+        max-width: 800px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
 
-        #studentsTableContainer {
-            display: none;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-top: 20px;
-            width: 100%;
-            max-width: 800px;
-        }
+      #studentsTableContainer {
+        display: none;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-top: 20px;
+        width: 100%;
+        max-width: 800px;
+      }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            border-spacing: 0;
-        }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+      }
 
-        th,
-        td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
+      th,
+      td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
 
-        th {
-            background-color: #003572;
-            color: white;
-            font-weight: bold;
-            text-align: center;
-        }
+      th {
+        background-color: #003572;
+        color: white;
+        font-weight: bold;
+        text-align: center;
+      }
 
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
 
-        img {
-            max-width: 200px;
-            height: auto;
-            border-radius: 5px;
-        }
+      img {
+        max-width: 200px;
+        height: auto;
+        border-radius: 5px;
+      }
 
-        a {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            color: #003572;
-            text-decoration: none;
-            font-weight: bold;
-        }
+      a {
+        display: block;
+        text-align: center;
+        margin-top: 20px;
+        color: #003572;
+        text-decoration: none;
+        font-weight: bold;
+      }
 
-        a:hover {
-            color: #001d44;
-        }
+      a:hover {
+        color: #001d44;
+      }
 
-        #status {
-            color: #003572;
-            font-size: 18px;
-            margin-top: 20px;
-        }
+      #status {
+        color: #003572;
+        font-size: 18px;
+        margin-top: 20px;
+      }
 
-        #endSessionButton,
-        #showAttendanceButton {
-            background-color: #003572;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
+      #endSessionButton,
+      #showAttendanceButton {
+        background-color: #003572;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 20px;
+      }
 
-        #endSessionButton:hover,
-        #showAttendanceButton:hover {
-            background-color: #001d44;
-        }
+      #endSessionButton:hover,
+      #showAttendanceButton:hover {
+        background-color: #001d44;
+      }
     </style>
-</head>
+  </head>
 
-<body id="body">
+  <body id="body">
     <div id="camera-feed-container">
-        <h1>Live Attendance Taking</h1>
-        <video id="video-stream" autoplay width="640" height="480" style="display: none;"></video>
-        <img id="processed-stream" src="" alt="Processed Stream" width="640" height="480">
-        <div id="status">Status: Loading...</div> <!-- Status will be updated here -->
-        <div id="studentsTableContainer">
-            <h2>Detected Students</h2>
-            <table id="studentsTable">
-                <tr>
-                    <th>Image</th>
-                    <th>ID</th>
-                    <th>Name</th>
-                </tr>
-            </table>
-        </div>
-        <button id="endSessionButton" onclick="endSession()">End Session</button> <!-- End session button -->
-        <button id="showAttendanceButton" style="display: none;" onclick="showAttendance()">Show Attendance</button>
-        <a href="/"><i class="fas fa-home" id="home"></i></a>
+      <h1>Live Attendance Taking</h1>
+      <video
+        id="video-stream"
+        autoplay
+        width="640"
+        height="480"
+        style="display: none"
+      ></video>
+      <img
+        id="processed-stream"
+        src=""
+        alt="Processed Stream"
+        width="640"
+        height="480"
+      />
+      <div id="status">Status: Loading...</div>
+      <!-- Status will be updated here -->
+      <div id="studentsTableContainer">
+        <h2>Detected Students</h2>
+        <table id="studentsTable">
+          <tr>
+            <th>Image</th>
+            <th>ID</th>
+            <th>Name</th>
+          </tr>
+        </table>
+      </div>
+      <button id="endSessionButton" onclick="endSession()">End Session</button>
+      <!-- End session button -->
+      <button
+        id="showAttendanceButton"
+        style="display: none"
+        onclick="showAttendance()"
+      >
+        Show Attendance
+      </button>
+      <a href="/"><i class="fas fa-home" id="home"></i></a>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
     <script>
-        let videoElement;
-        let fetchInterval;
-        let statusElement;
-        let showAttendanceButton;
-        let active;
+      let videoElement;
+      let fetchInterval;
+      let statusElement;
+      let showAttendanceButton;
+      let active;
 
-        function fetchDetectedStudents() {
-            fetch('/detected_students')
-                .then(response => response.json())
-                .then(data => {
-                    let table = document.getElementById("studentsTable");
-                    let tableContainer = document.getElementById("studentsTableContainer");
-                    let statusElement = document.getElementById("status");
+      function fetchDetectedStudents() {
+        fetch("/detected_students")
+          .then((response) => response.json())
+          .then((data) => {
+            let table = document.getElementById("studentsTable");
+            let tableContainer = document.getElementById(
+              "studentsTableContainer"
+            );
+            let statusElement = document.getElementById("status");
 
-                    table.innerHTML = "<tr><th>Image</th><th>ID</th><th>Name</th></tr>";
-                    statusElement.innerText = `Status: ${data.status}`;
+            table.innerHTML = "<tr><th>Image</th><th>ID</th><th>Name</th></tr>";
+            statusElement.innerText = `Status: ${data.status}`;
 
-                    if (Object.keys(data.detected_students).length === 0) {
-                        tableContainer.style.display = 'none';
-                    } else {
-                        tableContainer.style.display = 'block';
-                        for (let student_id in data.detected_students) {
-                            let student = data.detected_students[student_id];
-                            let row = table.insertRow();
-                            let cell1 = row.insertCell(0);
-                            let cell2 = row.insertCell(1);
-                            let cell3 = row.insertCell(2);
-                            cell1.innerHTML = `<img src="${student.image}" width="150">`;
-                            cell2.innerHTML = student_id;
-                            cell3.innerHTML = student.name;
-                        }
-                    }
-                });
-        }
-
-        function endSession() {
-            statusElement = document.getElementById("status");
-            showAttendanceButton = document.getElementById("showAttendanceButton");
-
-            showAttendanceButton.style.display = 'block';
-
-            // Clear the fetch interval
-            if (fetchInterval) {
-                clearInterval(fetchInterval);
+            if (Object.keys(data.detected_students).length === 0) {
+              tableContainer.style.display = "none";
+            } else {
+              tableContainer.style.display = "block";
+              for (let student_id in data.detected_students) {
+                let student = data.detected_students[student_id];
+                let row = table.insertRow();
+                let cell1 = row.insertCell(0);
+                let cell2 = row.insertCell(1);
+                let cell3 = row.insertCell(2);
+                cell1.innerHTML = `<img src="${student.image}" width="150">`;
+                cell2.innerHTML = student_id;
+                cell3.innerHTML = student.name;
+              }
             }
+          });
+      }
 
-            // Stop the video feed and the webcam stream
-            const videoElement = document.getElementById("video-stream");
-            if (videoElement.srcObject) {
-                // Stop all tracks in the video stream
-                videoElement.srcObject.getTracks().forEach(track => track.stop());
-                videoElement.srcObject = null; // Remove the stream from the video element
-            }
-            videoElement.style.display = 'none';
+      function endSession() {
+        statusElement = document.getElementById("status");
+        showAttendanceButton = document.getElementById("showAttendanceButton");
 
-            // Stop sending frames to the server
-            active = false;
+        showAttendanceButton.style.display = "block";
 
-            statusElement.innerText = 'Session Ended';
-            document.getElementById("endSessionButton").style.display = 'none';
-
-            // Send the detected students data to the server
-            fetch('/detected_students')
-                .then(response => response.json())
-                .then(data => {
-                    let students = Object.keys(data.detected_students);
-                    fetch('/end_session', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ students: students }),
-                    })
-                        .then(response => response.json())
-                        .then(result => {
-                            alert(result.message); // Display server response
-                        });
-                });
+        // Clear the fetch interval
+        if (fetchInterval) {
+          clearInterval(fetchInterval);
         }
 
-        function showAttendance() {
-            fetch('/show_attendance')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById("body").innerHTML = data;
-
-                    bindToggleCardFunctionality();
-
-                    styleAttendanceContainer();
-                });
+        // Stop the video feed and the webcam stream
+        const videoElement = document.getElementById("video-stream");
+        if (videoElement.srcObject) {
+          // Stop all tracks in the video stream
+          videoElement.srcObject.getTracks().forEach((track) => track.stop());
+          videoElement.srcObject = null; // Remove the stream from the video element
         }
+        videoElement.style.display = "none";
 
-        function styleAttendanceContainer() {
-            const attendanceContainer = document.getElementById('attendance-container');
-            attendanceContainer.style.margin = 'auto';
-            attendanceContainer.style.maxWidth = '80%';
-            attendanceContainer.style.marginTop = '100px';
-        }
+        // Stop sending frames to the server
+        active = false;
 
-        function bindToggleCardFunctionality() {
-            // Add the toggle functionality for newly loaded HTML
-            const studentCards = document.querySelectorAll('.student-card');
-            studentCards.forEach(card => {
-                card.addEventListener('click', function () {
-                    card.classList.toggle('active');
-                });
-            });
-        }
+        statusElement.innerText = "Session Ended";
+        document.getElementById("endSessionButton").style.display = "none";
 
-        window.onload = function () {
-            videoElement = document.getElementById('processed-stream');
-            fetchInterval = setInterval(fetchDetectedStudents, 5000);
-            // Start sending frames to server
-            active = true;
-        }
-
-        const socket = io.connect(`http://localhost:5000`);
-        //const socket = io.connect(`http://13.212.26.240:5000`);
-
-        socket.on('connect', () => {
-            console.log('Connected to server');
-        });
-
-        socket.on('processed_frame', (data) => {
-            const img = document.getElementById('processed-stream');
-            img.src = 'data:image/jpeg;base64,' + data;
-        });
-
-        function sendFrameToServer(frame) {
-            const reader = new FileReader();
-            reader.onloadend = function () {
-                const base64data = reader.result.split(',')[1];
-                socket.emit('frame', base64data);
-            }
-            reader.readAsDataURL(frame);
-        }
-
-        // Access the webcam
-        const video = document.getElementById('video-stream');
-        navigator.mediaDevices.getUserMedia({
-            video: {
-                width: { ideal: 640 },  // Lower resolution, adjust as needed
-                height: { ideal: 480 }
-            }
-        })
-            .then(stream => {
-                video.srcObject = stream;
-                const mediaStream = stream.getTracks()[0];
-                const imageCapture = new ImageCapture(mediaStream);
-
-                // Capture a frame every 100ms and send it to the server
-                setInterval(() => {
-                    imageCapture.grabFrame()
-                        .then(frame => {
-                            return frameToBlob(frame);
-                        })
-                        .then(blob => {
-                            if (active) {
-                                sendFrameToServer(blob);
-                            }
-                        })
-                        .catch(error => console.error('Error grabbing frame:', error));
-                }, 16);
+        // Send the detected students data to the server
+        fetch("/detected_students")
+          .then((response) => response.json())
+          .then((data) => {
+            let students = Object.keys(data.detected_students);
+            fetch("/end_session", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ students: students }),
             })
-            .catch(error => console.error('Error accessing webcam:', error));
+              .then((response) => response.json())
+              .then((result) => {
+                alert(result.message); // Display server response
+              });
+          });
+      }
 
-        function frameToBlob(frame) {
-            return new Promise((resolve, reject) => {
-                const canvas = document.createElement('canvas');
-                canvas.width = frame.width;
-                canvas.height = frame.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(frame, 0, 0);
-                canvas.toBlob(blob => {
-                    resolve(blob);
-                }, 'image/jpeg', 0.8);
-            });
-        }
+      function showAttendance() {
+        fetch("/show_attendance")
+          .then((response) => response.text())
+          .then((data) => {
+            document.getElementById("body").innerHTML = data;
+
+            bindToggleCardFunctionality();
+
+            styleAttendanceContainer();
+          });
+      }
+
+      function styleAttendanceContainer() {
+        const attendanceContainer = document.getElementById(
+          "attendance-container"
+        );
+        attendanceContainer.style.margin = "auto";
+        attendanceContainer.style.maxWidth = "80%";
+        attendanceContainer.style.marginTop = "100px";
+      }
+
+      function bindToggleCardFunctionality() {
+        // Add the toggle functionality for newly loaded HTML
+        const studentCards = document.querySelectorAll(".student-card");
+        studentCards.forEach((card) => {
+          card.addEventListener("click", function () {
+            card.classList.toggle("active");
+          });
+        });
+      }
+
+      window.onload = function () {
+        videoElement = document.getElementById("processed-stream");
+        fetchInterval = setInterval(fetchDetectedStudents, 100);
+        // Start sending frames to server
+        active = true;
+      };
+
+      const socket = io.connect(`http://localhost:5000`);
+      //const socket = io.connect(`http://13.212.26.240:5000`);
+
+      socket.on("connect", () => {
+        console.log("Connected to server");
+      });
+
+      socket.on("processed_frame", (data) => {
+        const img = document.getElementById("processed-stream");
+        img.src = "data:image/jpeg;base64," + data;
+      });
+
+      function sendFrameToServer(frame) {
+        const reader = new FileReader();
+        reader.onloadend = function () {
+          const base64data = reader.result.split(",")[1];
+          socket.emit("frame", base64data);
+        };
+        reader.readAsDataURL(frame);
+      }
+
+      // Access the webcam
+      const video = document.getElementById("video-stream");
+      navigator.mediaDevices
+        .getUserMedia({
+          video: {
+            width: { ideal: 640 }, // Lower resolution, adjust as needed
+            height: { ideal: 480 },
+          },
+        })
+        .then((stream) => {
+          video.srcObject = stream;
+          const mediaStream = stream.getTracks()[0];
+          const imageCapture = new ImageCapture(mediaStream);
+
+          // Capture a frame every 100ms and send it to the server
+          setInterval(() => {
+            imageCapture
+              .grabFrame()
+              .then((frame) => {
+                return frameToBlob(frame);
+              })
+              .then((blob) => {
+                if (active) {
+                  sendFrameToServer(blob);
+                }
+              })
+              .catch((error) => console.error("Error grabbing frame:", error));
+          }, 16);
+        })
+        .catch((error) => console.error("Error accessing webcam:", error));
+
+      function frameToBlob(frame) {
+        return new Promise((resolve, reject) => {
+          const canvas = document.createElement("canvas");
+          canvas.width = frame.width;
+          canvas.height = frame.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(frame, 0, 0);
+          canvas.toBlob(
+            (blob) => {
+              resolve(blob);
+            },
+            "image/jpeg",
+            0.8
+          );
+        });
+      }
     </script>
-</body>
-
+  </body>
 </html>

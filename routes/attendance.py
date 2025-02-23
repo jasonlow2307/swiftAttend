@@ -300,8 +300,8 @@ def draw_modern_rectangle(frame, x, y, w, h, color, label, thickness=2, alpha=0.
     
     # Add text with background
     font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 0.3
-    font_thickness = 1.5
+    font_scale = 0.5
+    font_thickness = 2
     text_size = cv2.getTextSize(label, font, font_scale, font_thickness)[0]
     text_w, text_h = text_size
     
@@ -332,9 +332,14 @@ def process_frame(frame):
     # Perform face detection
     results = face_detection.process(rgb_frame)
 
+    if not results.detections:
+        status = "No faces detected"
+        return frame
+
     # Skip frames to reduce processing load
     frame_count += 1
     if frame_count % process_every_nth_frame != 0:
+        status = "Scanning..."
         if results.detections:
             for detection in results.detections:
                 bboxC = detection.location_data.relative_bounding_box
@@ -376,6 +381,7 @@ def process_frame(frame):
     
     # Get face embedding from the current frame
     current_embedding = extract_face_embedding(frame)
+    status = "Processing..."
 
     # Prepare a dictionary to store the current frame's face bounding boxes
     current_faces = {}
@@ -398,11 +404,12 @@ def process_frame(frame):
                     if is_same_person(current_embedding, stored_embedding):
                         face_id = stored_id  # Use the stored ID instead of generating new one
                         embedding_matched = True
-                        print(f"Face matched with stored embedding {stored_id}")
+                        status = "Face matched with stored embedding"
                         break
                 
                 if not embedding_matched:
                     # If no embedding match, try Rekognition
+                    status = "Checking with AWS Rekognition..."
                     matches = call_rekognition(face_img)
                     if matches:
                         match = matches[0]
@@ -411,6 +418,9 @@ def process_frame(frame):
                         stored_embeddings[face_id] = current_embedding
                         recognized_faces[face_id] = True  # Mark as recognized
                         print(f"New face recognized with Rekognition ID: {face_id}")
+                        status = f"New student recognized!"
+                    else:
+                        status = "No matching student found"
 
             current_faces[face_id] = {
                 'box': (x, y, w, h), 
@@ -420,6 +430,14 @@ def process_frame(frame):
                 'rekognition_attempts': 0,
                 'embedding': current_embedding
             }
+            
+     # Update final status based on recognition results
+    if len(recognized_faces) > 0:
+        status = f"Found {len(recognized_faces)} student(s)"
+    elif len(stored_embeddings) > 0:
+        status = "Faces stored, waiting for recognition"
+    else:
+        status = "Ready to process new faces"
 
     # Draw rectangles and labels directly (remove tracking)
     for face_id, face_data in current_faces.items():
