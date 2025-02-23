@@ -26,6 +26,7 @@ load_dotenv()
 REKOGNITION_COLLECTION_NAME = os.getenv('REKOGNITION_COLLECTION_NAME')
 S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
 ATTENDANCE_PROCESSING_LOGS_TABLE_NAME = os.getenv('ATTENDANCE_PROCESSING_LOGS_TABLE_NAME')
+ATTENDANCE_LIVE_PROCESSING_LOGS_TABLE_NAME = os.getenv('ATTENDANCE_LIVE_PROCESSING_LOGS_TABLE_NAME')
 
 @attendance.route('/init')
 @role_required(['lecturer', 'admin'])
@@ -405,6 +406,7 @@ def process_frame(frame):
                         face_id = stored_id  # Use the stored ID instead of generating new one
                         embedding_matched = True
                         status = "Face matched with stored embedding"
+                        print(f"Face matched with stored embedding for ID: {face_id}")
                         break
                 
                 if not embedding_matched:
@@ -430,7 +432,7 @@ def process_frame(frame):
                 'rekognition_attempts': 0,
                 'embedding': current_embedding
             }
-            
+
      # Update final status based on recognition results
     if len(recognized_faces) > 0:
         status = f"Found {len(recognized_faces)} student(s)"
@@ -782,34 +784,72 @@ last_rekognition_call = 0  # Track the last time Rekognition was called
 REKOGNITION_COOLDOWN = 2  # Cooldown period in seconds
 
 
+# Add to global variables
+DAILY_API_CALL_LIMIT = 100
+
+def get_daily_api_call_count():
+    """Get the number of API calls made today."""
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    try:
+        response = dynamodb.query(
+            TableName=ATTENDANCE_LIVE_PROCESSING_LOGS_TABLE_NAME,
+            IndexName='DateIndex',  # You'll need to create this GSI
+            KeyConditionExpression='#date = :date',
+            ExpressionAttributeNames={
+                '#date': 'Date'
+            },
+            ExpressionAttributeValues={
+                ':date': {'S': today}
+            }
+        )
+        return len(response.get('Items', []))
+    except Exception as e:
+        print(f"Error querying daily API calls: {e}")
+        return 0
+
 def call_rekognition(face_image):
-    """Send the cropped face to AWS Rekognition and return the result with cooldown."""
+    """Send the cropped face to AWS Rekognition with daily limit and cooldown."""
     global last_rekognition_call
     
+    # Check daily API call limit
+    daily_calls = get_daily_api_call_count()
+    if daily_calls >= DAILY_API_CALL_LIMIT:
+        print(f"Daily API call limit reached ({DAILY_API_CALL_LIMIT})")
+        return []
+    
+    # Check cooldown
     current_time = time.time()
     time_since_last_call = current_time - last_rekognition_call
 
     print(f"TIME SINCE LAST CALL: {time_since_last_call:.2f}s (Cooldown: {REKOGNITION_COOLDOWN}s)")
+    print(f"API calls today: {daily_calls}/{DAILY_API_CALL_LIMIT}")
     
-    # Check if enough time has passed since the last call
     if time_since_last_call < REKOGNITION_COOLDOWN:
         print(f"Skipping Rekognition call - cooldown active ({REKOGNITION_COOLDOWN - time_since_last_call:.1f}s remaining)")
         return []
     
-    last_rekognition_call = time.time()  # 🔴 Update BEFORE calling API
+    last_rekognition_call = time.time()
     print("Calling AWS Rekognition...")
-
-    _, face_bytes = cv2.imencode('.jpg', face_image)
-    response = rekognition.search_faces_by_image(
-        CollectionId=REKOGNITION_COLLECTION_NAME,
-        Image={'Bytes': face_bytes.tobytes()},
-        FaceMatchThreshold=70,
-        MaxFaces=1
-    )
-
-    time.sleep(0.5)
     
-    return response.get('FaceMatches', [])
+    try:
+        # Log before making the call
+        log_live_processing_time_and_faces()
+        
+        _, face_bytes = cv2.imencode('.jpg', face_image)
+        response = rekognition.search_faces_by_image(
+            CollectionId=REKOGNITION_COLLECTION_NAME,
+            Image={'Bytes': face_bytes.tobytes()},
+            FaceMatchThreshold=70,
+            MaxFaces=1
+        )
+
+        time.sleep(0.5)
+        return response.get('FaceMatches', [])
+        
+    except Exception as e:
+        print(f"Error calling Rekognition: {e}")
+        return []
 
 
 def update_detected_students(rekognition_id):
@@ -868,5 +908,32 @@ def log_processing_time_and_faces(elapsed_time, num_faces_detected):
             }
         )
         print("Log entry added to DynamoDB.")
+    except Exception as e:
+        print(f"Failed to log entry to DynamoDB: {e}")
+
+def log_live_processing_time_and_faces():
+    """Logs the processing time and face count to DynamoDB with better time filtering."""
+    log_id = str(uuid.uuid4())
+    now = datetime.now()
+    
+    # Create separate fields for filtering
+    timestamp = now.isoformat()
+    date = now.strftime('%Y-%m-%d')
+    hour = now.strftime('%H')
+    year_month = now.strftime('%Y-%m')
+
+    try:
+        dynamodb.put_item(
+            TableName=ATTENDANCE_LIVE_PROCESSING_LOGS_TABLE_NAME,
+            Item={
+                'LogId': {'S': log_id},
+                'Timestamp': {'S': timestamp},
+                'Date': {'S': date},         # For daily filtering
+                'Hour': {'S': hour},         # For hourly filtering
+                'YearMonth': {'S': year_month},  # For monthly filtering
+                'UnixTime': {'N': str(int(now.timestamp()))}  # For range queries
+            }
+        )
+        print(f"Log entry added to DynamoDB at {timestamp}")
     except Exception as e:
         print(f"Failed to log entry to DynamoDB: {e}")
