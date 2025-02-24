@@ -163,6 +163,116 @@
       let statusElement;
       let showAttendanceButton;
       let active;
+      let isPageVisible = true;
+      let isPageActive = true;
+
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      window.addEventListener("beforeunload", handlePageUnload);
+      window.addEventListener("pagehide", handlePageHide);
+
+      // Add these functions to handle different page states
+      function handleVisibilityChange() {
+        if (document.hidden) {
+          isPageVisible = false;
+          cleanupResources();
+        } else {
+          isPageVisible = true;
+          // Only restart if the page is still active
+          if (isPageActive) {
+            initializeCamera();
+          }
+        }
+      }
+
+      function handlePageUnload(event) {
+        isPageActive = false;
+        cleanupResources();
+      }
+
+      function handlePageHide(event) {
+        isPageActive = false;
+        cleanupResources();
+      }
+
+      function cleanupResources() {
+        // Stop frame capture
+        if (frameCapture) {
+          clearInterval(frameCapture);
+        }
+
+        // Stop fetch interval
+        if (fetchInterval) {
+          clearInterval(fetchInterval);
+        }
+
+        // Stop video tracks
+        if (video && video.srcObject) {
+          video.srcObject.getTracks().forEach((track) => track.stop());
+          video.srcObject = null;
+        }
+
+        active = false;
+
+        // Notify server about session end
+        fetch("/end_session", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ automatic: true }),
+        }).catch((err) => console.error("Error ending session:", err));
+      }
+
+      function initializeCamera() {
+        if (!isPageVisible || !isPageActive) return;
+
+        active = true;
+        navigator.mediaDevices
+          .getUserMedia({
+            video: {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+            },
+          })
+          .then((stream) => {
+            video.srcObject = stream;
+            video.play();
+
+            const canvas = document.createElement("canvas");
+            canvas.width = 640;
+            canvas.height = 480;
+            const ctx = canvas.getContext("2d");
+
+            frameCapture = setInterval(() => {
+              try {
+                if (
+                  active &&
+                  video.readyState === video.HAVE_ENOUGH_DATA &&
+                  isPageVisible &&
+                  isPageActive
+                ) {
+                  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                  canvas.toBlob(
+                    (blob) => {
+                      if (active) {
+                        sendFrameToServer(blob);
+                      }
+                    },
+                    "image/jpeg",
+                    0.8
+                  );
+                }
+              } catch (error) {
+                console.error("Error capturing frame:", error);
+              }
+            }, 100);
+          })
+          .catch((error) => {
+            console.error("Error accessing webcam:", error);
+            document.getElementById("status").innerText =
+              "Error: Could not access webcam. Please check permissions.";
+          });
+      }
 
       function fetchDetectedStudents() {
         fetch("/detected_students")
@@ -209,6 +319,7 @@
         if (frameCapture) {
           clearInterval(frameCapture);
         }
+        cleanupResources();
 
         // Stop the video feed and the webcam stream
         const videoElement = document.getElementById("video-stream");
@@ -278,8 +389,9 @@
       window.onload = function () {
         videoElement = document.getElementById("processed-stream");
         fetchInterval = setInterval(fetchDetectedStudents, 100);
-        // Start sending frames to server
-        active = true;
+        isPageVisible = true;
+        isPageActive = true;
+        initializeCamera();
       };
 
       // const socket = io.connect(`http://localhost:5000`);
