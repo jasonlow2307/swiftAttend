@@ -305,6 +305,7 @@
 
       // Student detection updates
       function fetchDetectedStudents() {
+        console.log("Fetching detected students");
         fetch("/detected_students")
           .then((response) => response.json())
           .then((data) => {
@@ -319,8 +320,10 @@
 
             if (Object.keys(data.detected_students).length === 0) {
               tableContainer.style.display = "none";
+              console.log("No student recognized");
             } else {
               tableContainer.style.display = "block";
+              console.log("Updating student table");
               for (let student_id in data.detected_students) {
                 let student = data.detected_students[student_id];
                 let row = table.insertRow();
