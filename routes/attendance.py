@@ -27,6 +27,7 @@ REKOGNITION_COLLECTION_NAME = os.getenv('REKOGNITION_COLLECTION_NAME')
 S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
 ATTENDANCE_PROCESSING_LOGS_TABLE_NAME = os.getenv('ATTENDANCE_PROCESSING_LOGS_TABLE_NAME')
 ATTENDANCE_LIVE_PROCESSING_LOGS_TABLE_NAME = os.getenv('ATTENDANCE_LIVE_PROCESSING_LOGS_TABLE_NAME')
+ATTENDANCE_LIVE_STUDENT_DETECTION_LOGS_TABLE_NAME = os.getenv('ATTENDANCE_LIVE_STUDENT_DETECTION_LOGS_TABLE_NAME')
 
 @attendance.route('/init')
 @role_required(['lecturer', 'admin'])
@@ -535,12 +536,26 @@ def live():
     
 @attendance.route('/end_session', methods=['POST'])
 def end_session():
-    data = request.get_json()
-    students = data.get('students', [])
-    for student_id in students:
-        update_attendance(student_id, 'PRESENT', initialized_date)
-        print(f"Attendance updated for {student_id}")
-    return jsonify({'success': True, 'message': 'Attendance updated successfully!'}), 200
+    """Handle session cleanup without updating attendance"""
+    global initialized
+    try:
+        # Perform any cleanup needed
+        initialized = False
+        
+        # Get final statistics
+        total_detected = len(detected_students)
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Session ended successfully. Detected {total_detected} students.'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error ending session: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error ending session'
+        }), 500
 
 @attendance.route('/show_attendance', methods=['GET'])
 def show_attendance():
@@ -892,25 +907,61 @@ def call_rekognition(face_image):
 
 
 def update_detected_students(rekognition_id):
-    global detected_students
+    """Update detected students and their attendance in real-time"""
+    global detected_students, initialized_date
 
-    student_info = dynamodb.get_item(
-        TableName=DYNAMODB_STUDENT_TABLE_NAME,
-        Key={'RekognitionId': {'S': rekognition_id}}
-    )
+    try:
+        # Get student info from DynamoDB
+        student_info = dynamodb.get_item(
+            TableName=DYNAMODB_STUDENT_TABLE_NAME,
+            Key={'RekognitionId': {'S': rekognition_id}}
+        )
 
-    if 'Item' in student_info:
-        student_id = student_info['Item']['StudentId']['S']
-        student_name = student_info['Item']['FullName']['S']
-        student_image = generate_signed_url(S3_BUCKET_NAME, 'index/' + student_id)
+        if 'Item' in student_info:
+            student_id = student_info['Item']['StudentId']['S']
+            student_name = student_info['Item']['FullName']['S']
+            student_image = generate_signed_url(S3_BUCKET_NAME, 'index/' + student_id)
+            
+            # Only update if this student hasn't been detected before
+            if student_id not in detected_students:
+                # Store detected student details
+                detected_students[student_id] = {
+                    'name': student_name,
+                    'image': student_image,
+                    'detection_time': datetime.now().isoformat()
+                }
+
+                # Update attendance record immediately
+                update_attendance(student_id, 'PRESENT', initialized_date)
+                print(f"Attendance marked for student_id: {student_id} Name: {student_name}")
+
+                # Log the real-time detection
+                log_student_detection(student_id, student_name)
+
+    except Exception as e:
+        print(f"Error updating detected student: {e}")
+
+
+def log_student_detection(student_id, student_name):
+    """Log student detection for monitoring"""
+    try:
+        detection_id = str(uuid.uuid4())
+        timestamp = datetime.now().isoformat()
         
-        # Store detected student details
-        detected_students[student_id] = {
-            'name': student_name,
-            'image': student_image
-        }
-
-        print(f"Detected student_id: {student_id} Name: {student_name}")
+        dynamodb.put_item(
+            TableName=ATTENDANCE_LIVE_STUDENT_DETECTION_LOGS_TABLE_NAME,
+            Item={
+                'LogId': {'S': detection_id},
+                'StudentId': {'S': student_id},
+                'StudentName': {'S': student_name},
+                'Timestamp': {'S': timestamp},
+                'Date': {'S': timestamp.split('T')[0]},
+                'DetectionType': {'S': 'LIVE'},
+                'UnixTime': {'N': str(int(time.time()))}
+            }
+        )
+    except Exception as e:
+        print(f"Failed to log student detection: {e}")
         
 def resize_image_if_large(image_bytes, max_dimension=1024, max_size=5 * 1024 * 1024):
     """Resize an image if it exceeds the specified maximum size."""
