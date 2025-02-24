@@ -162,8 +162,146 @@
       let fetchInterval;
       let statusElement;
       let showAttendanceButton;
-      let active;
+      let active = false;
+      let isPageVisible = true;
+      let isPageActive = true;
 
+      // Event listeners for page state
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      window.addEventListener("beforeunload", handlePageUnload);
+      window.addEventListener("pagehide", handlePageHide);
+
+      // Initialize socket connection
+      // const socket = io.connect(`http://13.250.19.116:5000`);
+      const socket = io.connect(`http://localhost:5000`);
+
+      socket.on("connect", () => {
+        console.log("Connected to server");
+      });
+
+      socket.on("processed_frame", (data) => {
+        const img = document.getElementById("processed-stream");
+        img.src = "data:image/jpeg;base64," + data;
+      });
+
+      // Page state handlers
+      function handleVisibilityChange() {
+        if (document.hidden) {
+          isPageVisible = false;
+          cleanupResources();
+        } else {
+          isPageVisible = true;
+          if (isPageActive) {
+            setTimeout(initializeCamera, 1000);
+          }
+        }
+      }
+
+      function handlePageUnload(event) {
+        isPageActive = false;
+        cleanupResources();
+      }
+
+      function handlePageHide(event) {
+        isPageActive = false;
+        cleanupResources();
+      }
+
+      // Resource management
+      function cleanupResources() {
+        active = false;
+
+        if (frameCapture) {
+          clearInterval(frameCapture);
+          frameCapture = null;
+        }
+
+        if (fetchInterval) {
+          clearInterval(fetchInterval);
+          fetchInterval = null;
+        }
+
+        if (video && video.srcObject) {
+          video.srcObject.getTracks().forEach((track) => track.stop());
+          video.srcObject = null;
+        }
+
+        // Notify server about session end
+        fetch("/end_session", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ automatic: true }),
+        }).catch((err) => console.error("Error ending session:", err));
+      }
+
+      // Camera initialization and frame capture
+      function initializeCamera() {
+        if (!isPageVisible || !isPageActive) return;
+
+        cleanupResources();
+
+        video = document.getElementById("video-stream");
+        active = true;
+
+        navigator.mediaDevices
+          .getUserMedia({
+            video: {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+            },
+          })
+          .then((stream) => {
+            video.srcObject = stream;
+            return video.play();
+          })
+          .then(() => {
+            const canvas = document.createElement("canvas");
+            canvas.width = 640;
+            canvas.height = 480;
+            const ctx = canvas.getContext("2d");
+
+            frameCapture = setInterval(() => {
+              if (!active || !isPageVisible || !isPageActive) return;
+
+              try {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                  canvas.toBlob(
+                    (blob) => {
+                      if (active && blob && blob.size > 0) {
+                        sendFrameToServer(blob);
+                      }
+                    },
+                    "image/jpeg",
+                    0.8
+                  );
+                }
+              } catch (error) {
+                console.error("Frame capture error:", error);
+                cleanupResources();
+              }
+            }, 100);
+          })
+          .catch((error) => {
+            console.error("Camera initialization error:", error);
+            document.getElementById("status").innerText =
+              "Error: Could not access webcam. Please check permissions.";
+          });
+      }
+
+      // Frame processing and sending
+      function sendFrameToServer(frame) {
+        const reader = new FileReader();
+        reader.onloadend = function () {
+          const base64data = reader.result.split(",")[1];
+          socket.emit("frame", base64data);
+        };
+        reader.readAsDataURL(frame);
+      }
+
+      // Student detection updates
       function fetchDetectedStudents() {
         fetch("/detected_students")
           .then((response) => response.json())
@@ -277,9 +415,6 @@
         // Start sending frames to server
         active = true;
       };
-
-      const socket = io.connect(`http://localhost:5000`);
-      //const socket = io.connect(`http://13.212.26.240:5000`);
 
       socket.on("connect", () => {
         console.log("Connected to server");
