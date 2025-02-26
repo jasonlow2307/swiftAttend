@@ -118,13 +118,11 @@ def create_class_record():
 @attendance.route('/init_form', methods=['POST'])
 def initialize_class_record():
     global initialized_date, initialized_course, initialized
-    global stored_embeddings, recognized_faces, last_face_status, detected_students
+    global  recognized_faces, detected_students
     global frame_count, previous_faces
 
     # Clear all tracking and recognition data
-    stored_embeddings = {}  # Clear stored face embeddings
     recognized_faces = {}   # Clear recognized faces
-    last_face_status = {}   # Clear face status tracking
     detected_students = {}   # Clear detected students
     previous_faces = {}     # Clear face tracking
     frame_count = 0        # Reset frame counter
@@ -321,196 +319,124 @@ def draw_modern_rectangle(frame, x, y, w, h, color, label, thickness=2, alpha=0.
 
     return frame
 
-stored_embeddings = {}  # Store known embeddings
-last_face_status = {}
+face_tracking = {}
+# Add these global variables at the top
+FACE_DETECTION_CONFIG = {
+    'hold_time': 2,        # Time in seconds before recognition
+    'position_threshold': 50,  # Pixel distance threshold
+    'recognition_cooldown': 2, # Cooldown between recognition attempts
+    'debug_mode': True     # Enable/disable debug prints
+}
 
 def process_frame(frame):
-    """Process a single frame for face detection and recognition"""
-    global frame_count, previous_faces, status, recognized_faces, stored_embeddings, last_face_status
-
+    """Process frame with simplified face detection and recognition flow"""
+    global face_tracking
+    current_time = time.time()
+    
     try:
-        # Validate frame
         if frame is None or frame.size == 0:
-            print("Warning: Received empty frame")
-            status = "No frame received"
             return frame
 
-        # Resize frame for faster processing
-        try:
-            frame = resize_frame(frame, scale=0.4)
-        except Exception as e:
-            print(f"Error resizing frame: {e}")
-            status = "Frame processing error"
-            return frame
-
-        # Convert to RGB with error handling
-        try:
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            if rgb_frame is None:
-                print("Error: RGB conversion failed")
-                status = "Frame conversion error"
-                return frame
-        except Exception as e:
-            print(f"Error converting frame to RGB: {e}")
-            status = "Frame conversion error"
-            return frame
-
-        # Perform face detection with timeout
-        try:
-            results = face_detection.process(rgb_frame)
-        except ValueError as e:
-            if "Empty packets are not allowed" in str(e):
-                print("Warning: Empty frame received from browser")
-                status = "Browser connection issue"
-                return frame
-        except Exception as e:
-            print(f"Error in face detection: {e}")
-            status = "Face detection error"
-            return frame
+        # 1. Detect faces using MediaPipe
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = face_detection.process(rgb_frame)
 
         if not results.detections:
-            status = "No faces detected"
+            face_tracking.clear()
             return frame
 
-        # Skip frames to reduce processing load
-        frame_count += 1
-        if frame_count % process_every_nth_frame != 0:
-            status = "Scanning..."
-            if results.detections:
-                for detection in results.detections:
-                    bboxC = detection.location_data.relative_bounding_box
-                    ih, iw, _ = frame.shape
-                    x, y, w, h = int(bboxC.xmin * iw), int(bboxC.ymin * ih), int(bboxC.width * iw), int(bboxC.height * ih)
+        # Create a set of current faces for tracking
+        current_faces = set()
+
+        # 2. Process each detected face
+        for detection in results.detections:
+            bboxC = detection.location_data.relative_bounding_box
+            ih, iw, _ = frame.shape
+            x = int(bboxC.xmin * iw)
+            y = int(bboxC.ymin * ih)
+            w = int(bboxC.width * iw)
+            h = int(bboxC.height * ih)
+            
+            current_face_pos = (x, y, w, h)
+            current_faces.add(current_face_pos)
+            
+            # Find if this face position matches any tracked face
+            face_matched = False
+            matched_pos = None
+            
+            for tracked_pos in list(face_tracking.keys()):
+                tx, ty, tw, th = tracked_pos
+                # Calculate center points
+                current_center = (x + w//2, y + h//2)
+                tracked_center = (tx + tw//2, ty + th//2)
+                distance = ((current_center[0] - tracked_center[0]) ** 2 + 
+                          (current_center[1] - tracked_center[1]) ** 2) ** 0.5
+                
+                if distance < FACE_DETECTION_CONFIG['position_threshold']:
+                    face_matched = True
+                    matched_pos = tracked_pos
+                    tracked_data = face_tracking[tracked_pos]
                     
-                    # Find closest matching face from last_face_status
-                    closest_face = None
-                    min_distance = float('inf')
-                    
-                    for stored_box, status_data in last_face_status.items():
-                        stored_x, stored_y, stored_w, stored_h = stored_box
-                        distance = ((x - stored_x) ** 2 + (y - stored_y) ** 2) ** 0.5
+                    # Keep the original first_seen time
+                    if not tracked_data['recognized']:
+                        time_visible = current_time - tracked_data['first_seen']
                         
-                        if distance < min_distance and distance < 50:  # 50 pixel threshold
-                            min_distance = distance
-                            closest_face = status_data
-
-                    if closest_face:
-                        # Use the stored status for drawing
-                        if closest_face['status'] == 'recognized':
-                            frame = draw_modern_rectangle(frame, x, y, w, h, 
-                                                    (0, 255, 0), 
-                                                    closest_face['label'])
-                        elif closest_face['status'] == 'stored':
-                            frame = draw_modern_rectangle(frame, x, y, w, h,
-                                                    (255, 0, 0),
-                                                    "Already Recognized...")
-                        else:
-                            frame = draw_modern_rectangle(frame, x, y, w, h,
-                                                    (0, 0, 255),
-                                                    "Processing...")
-                    else:
-                        # New face, draw red box
-                        frame = draw_modern_rectangle(frame, x, y, w, h,
-                                                (0, 0, 255),
-                                                "Processing...")
-            return frame
-        
-        # Get face embedding from the current frame
-        current_embedding = extract_face_embedding(frame)
-        status = "Processing..."
-
-        # Prepare a dictionary to store the current frame's face bounding boxes
-        current_faces = {}
-        current_time = time.time()
-
-        if results.detections:
-            for detection in results.detections:
-                bboxC = detection.location_data.relative_bounding_box
-                ih, iw, _ = frame.shape
-                x, y, w, h = int(bboxC.xmin * iw), int(bboxC.ymin * ih), int(bboxC.width * iw), int(bboxC.height * ih)
-                
-                # Extract face region for Rekognition
-                face_img = frame[y:y+h, x:x+w]
-                face_id = str(uuid.uuid4())  # Default temporary ID
-                
-                # Check embeddings first if available
-                if current_embedding is not None:
-                    embedding_matched = False
-                    for stored_id, stored_embedding in stored_embeddings.items():
-                        if is_same_person(current_embedding, stored_embedding):
-                            face_id = stored_id  # Use the stored ID instead of generating new one
-                            embedding_matched = True
-                            status = "Face matched with stored embedding"
-                            print(f"Face matched with stored embedding for ID: {face_id}")
-                            break
+                        # Add countdown display
+                        remaining_time = FACE_DETECTION_CONFIG['hold_time'] - time_visible
+                        if remaining_time > 0:
+                            tracked_data['label'] = f"Hold still... {remaining_time:.1f}s"
+                            tracked_data['color'] = (255, 165, 0)  # Orange
+                        
+                        if time_visible >= FACE_DETECTION_CONFIG['hold_time'] and not tracked_data['processing']:
+                            tracked_data['processing'] = True
+                            face_img = frame[y:y+h, x:x+w]
+                            
+                            matches = call_rekognition(face_img)
+                            if matches:
+                                face_id = matches[0]['Face']['FaceId']
+                                update_detected_students(face_id)
+                                tracked_data['recognized'] = True
+                                tracked_data['label'] = "Recognized"
+                                tracked_data['color'] = (0, 255, 0)  # Green
+                            else:
+                                tracked_data['color'] = (0, 0, 255)  # Red
+                                tracked_data['label'] = "Not Recognized"
+                                tracked_data['processing'] = False
                     
-                    if not embedding_matched:
-                        # If no embedding match, try Rekognition
-                        status = "Checking with AWS Rekognition..."
-                        matches = call_rekognition(face_img)
-                        if matches:
-                            match = matches[0]
-                            face_id = match['Face']['FaceId']  # Use Rekognition FaceId
-                            update_detected_students(face_id)
-                            stored_embeddings[face_id] = current_embedding
-                            recognized_faces[face_id] = True  # Mark as recognized
-                            print(f"New face recognized with Rekognition ID: {face_id}")
-                            status = f"New student recognized!"
-                        else:
-                            status = "No matching student found"
-
-                current_faces[face_id] = {
-                    'box': (x, y, w, h), 
-                    'timestamp': current_time, 
-                    'recognized': face_id in recognized_faces,
-                    'in_cooldown': False,
-                    'rekognition_attempts': 0,
-                    'embedding': current_embedding
+                    # Update position while keeping the same tracking data
+                    if matched_pos != current_face_pos:
+                        face_tracking[current_face_pos] = face_tracking.pop(matched_pos)
+                    
+                    # Draw rectangle with current status
+                    frame = draw_modern_rectangle(
+                        frame, x, y, w, h,
+                        tracked_data['color'],
+                        tracked_data['label']
+                    )
+                    break
+            
+            # Add new face to tracking
+            if not face_matched:
+                face_tracking[current_face_pos] = {
+                    'first_seen': current_time,
+                    'recognized': False,
+                    'processing': False,
+                    'color': (255, 165, 0),  # Orange for new faces
+                    'label': "Hold still..."
                 }
+                frame = draw_modern_rectangle(
+                    frame, x, y, w, h,
+                    (255, 165, 0),
+                    "Hold still..."
+                )
 
-        # Update final status based on recognition results
-        if len(recognized_faces) > 0:
-            status = f"Found {len(recognized_faces)} student(s)"
-        elif len(stored_embeddings) > 0:
-            status = "Faces stored, waiting for recognition"
-        else:
-            status = "Ready to process new faces"
+        # Remove faces that are no longer detected
+        for tracked_pos in list(face_tracking.keys()):
+            if tracked_pos not in current_faces:
+                del face_tracking[tracked_pos]
 
-        # Draw rectangles and labels directly (remove tracking)
-        for face_id, face_data in current_faces.items():
-            (x, y, w, h) = face_data['box']
-            print(f"Drawing for FACE_ID: {face_id}")
-
-            if face_id in recognized_faces:
-                # Draw green rectangle for recognized faces
-                frame = draw_modern_rectangle(frame, x, y, w, h,
-                                        (0, 255, 0),
-                                        f"Recognized")
-            elif face_id in stored_embeddings:
-                # Draw blue rectangle for faces matched by embedding
-                frame = draw_modern_rectangle(frame, x, y, w, h,
-                                        (255, 0, 0),
-                                        "Already Recognized...")
-            else:
-                # Draw red rectangle for unrecognized faces
-                frame = draw_modern_rectangle(frame, x, y, w, h,
-                                        (0, 0, 255),
-                                        "Processing...")
-
-        new_face_status = {}
-        for face_id, face_data in current_faces.items():
-            (x, y, w, h) = face_data['box']
-            status_data = {
-                'status': 'recognized' if face_id in recognized_faces else 'stored' if face_id in stored_embeddings else 'processing',
-                'label': f"Recognized: {face_to_student_map.get(face_id, 'Student')}" if face_id in recognized_faces else "Processing..."
-            }
-            new_face_status[(x, y, w, h)] = status_data
-        
-        last_face_status = new_face_status
-    
     except Exception as e:
-        print(f"Unexpected error in processing")
-        status = "Processing error"
+        print(f"Error processing frame: {e}")
         return frame
 
     return frame

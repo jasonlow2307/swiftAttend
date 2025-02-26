@@ -17,4 +17,3 @@ Pillow==10.4.0
 WTForms==3.1.2
 email_validator
 python-dotenv
-scikit-learn
