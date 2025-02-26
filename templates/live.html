@@ -303,6 +303,10 @@
         img.src = "data:image/jpeg;base64," + data;
       });
 
+      // Replace the existing setInterval code with:
+      let lastFrameTime = 0;
+      const frameInterval = 1000 / 60; // Target 60fps
+
       function sendFrameToServer(frame) {
         const reader = new FileReader();
         reader.onloadend = function () {
@@ -312,13 +316,37 @@
         reader.readAsDataURL(frame);
       }
 
+      function captureAndSendFrame(imageCapture) {
+        const now = performance.now();
+        if (now - lastFrameTime < frameInterval) {
+          requestAnimationFrame(() => captureAndSendFrame(imageCapture));
+          return;
+        }
+
+        imageCapture
+          .grabFrame()
+          .then((frame) => frameToBlob(frame))
+          .then((blob) => {
+            if (active) {
+              sendFrameToServer(blob);
+            }
+            lastFrameTime = now;
+            requestAnimationFrame(() => captureAndSendFrame(imageCapture));
+          })
+          .catch((error) => {
+            console.error("Error grabbing frame:", error);
+            requestAnimationFrame(() => captureAndSendFrame(imageCapture));
+          });
+      }
+
       // Access the webcam
       const video = document.getElementById("video-stream");
       navigator.mediaDevices
         .getUserMedia({
           video: {
-            width: { ideal: 640 }, // Lower resolution, adjust as needed
+            width: { ideal: 640 },
             height: { ideal: 480 },
+            frameRate: { ideal: 60 }, // Request 60fps from camera
           },
         })
         .then((stream) => {
@@ -326,20 +354,8 @@
           const mediaStream = stream.getTracks()[0];
           const imageCapture = new ImageCapture(mediaStream);
 
-          // Capture a frame every 100ms and send it to the server
-          setInterval(() => {
-            imageCapture
-              .grabFrame()
-              .then((frame) => {
-                return frameToBlob(frame);
-              })
-              .then((blob) => {
-                if (active) {
-                  sendFrameToServer(blob);
-                }
-              })
-              .catch((error) => console.error("Error grabbing frame:", error));
-          }, 16);
+          // Start the frame capture loop
+          requestAnimationFrame(() => captureAndSendFrame(imageCapture));
         })
         .catch((error) => console.error("Error accessing webcam:", error));
 

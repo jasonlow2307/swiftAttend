@@ -307,6 +307,7 @@ def process_frame(frame):
                         if time_visible >= FACE_DETECTION_CONFIG['hold_time'] and not tracked_data['processing']:
                             tracked_data['processing'] = True
                             face_img = frame[y:y+h, x:x+w]
+                            tracked_data['label'] = "Processing face..."
                             status = FACE_STATUS['PROCESSING']
                             
                             matches = call_rekognition(face_img)
