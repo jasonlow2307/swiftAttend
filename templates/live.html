@@ -158,21 +158,13 @@
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
     <script>
-      // Global variables
       let videoElement;
-      let video;
       let fetchInterval;
-      let frameCapture;
       let statusElement;
       let showAttendanceButton;
       let active = false;
       let isPageVisible = true;
       let isPageActive = true;
-
-      // Event listeners for page state
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-      window.addEventListener("beforeunload", handlePageUnload);
-      window.addEventListener("pagehide", handlePageHide);
 
       // Initialize socket connection
       const socket = io.connect(`http://13.250.19.116:5000`);
@@ -186,230 +178,91 @@
         img.src = "data:image/jpeg;base64," + data;
       });
 
-      // Page state handlers
-      function handleVisibilityChange() {
-        if (document.hidden) {
-          isPageVisible = false;
-          cleanupResources();
-        } else {
-          isPageVisible = true;
-          if (isPageActive) {
-            setTimeout(initializeCamera, 1000);
-          }
-        }
-      }
-
-      function handlePageUnload(event) {
-        isPageActive = false;
-        cleanupResources();
-      }
-
-      function handlePageHide(event) {
-        isPageActive = false;
-        cleanupResources();
-      }
-
-      // Resource management
-      function cleanupResources() {
-        active = false;
-
-        if (frameCapture) {
-          clearInterval(frameCapture);
-          frameCapture = null;
-        }
-
-        if (fetchInterval) {
-          clearInterval(fetchInterval);
-          fetchInterval = null;
-        }
-
-        if (video && video.srcObject) {
-          video.srcObject.getTracks().forEach((track) => track.stop());
-          video.srcObject = null;
-        }
-
-        // Notify server about session end
-        fetch("/end_session", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ automatic: true }),
-        }).catch((err) => console.error("Error ending session:", err));
-      }
-
-      // Camera initialization and frame capture
-      function initializeCamera() {
-        if (!isPageVisible || !isPageActive) return;
-
-        cleanupResources();
-
-        video = document.getElementById("video-stream");
-        active = true;
-
-        navigator.mediaDevices
-          .getUserMedia({
-            video: {
-              width: { ideal: 640 },
-              height: { ideal: 480 },
-            },
-          })
-          .then((stream) => {
-            video.srcObject = stream;
-            return video.play();
-          })
-          .then(() => {
-            const canvas = document.createElement("canvas");
-            canvas.width = 640;
-            canvas.height = 480;
-            const ctx = canvas.getContext("2d");
-
-            frameCapture = setInterval(() => {
-              if (!active || !isPageVisible || !isPageActive) return;
-
-              try {
-                if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                  canvas.toBlob(
-                    (blob) => {
-                      if (active && blob && blob.size > 0) {
-                        sendFrameToServer(blob);
-                      }
-                    },
-                    "image/jpeg",
-                    0.8
-                  );
-                }
-              } catch (error) {
-                console.error("Frame capture error:", error);
-                cleanupResources();
-              }
-            }, 100);
-          })
-          .catch((error) => {
-            console.error("Camera initialization error:", error);
-            document.getElementById("status").innerText =
-              "Error: Could not access webcam. Please check permissions.";
-          });
-      }
-
-      // Frame processing and sending
-      function sendFrameToServer(frame) {
-        const reader = new FileReader();
-        reader.onloadend = function () {
-          const base64data = reader.result.split(",")[1];
-          socket.emit("frame", base64data);
-        };
-        reader.readAsDataURL(frame);
-      }
-
       // Student detection updates
       function fetchDetectedStudents() {
-        if (!isPageActive || !isPageVisible) {
-          console.log("Page not active or visible, skipping fetch");
-          return;
-        }
-
-        console.log("Fetching detected students");
         fetch("/detected_students")
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-          })
+          .then((response) => response.json())
           .then((data) => {
-            console.log("Received data:", data);
-            updateStudentTable(data);
-          })
-          .catch((error) => {
-            console.error("Error fetching students:", error);
+            let table = document.getElementById("studentsTable");
+            let tableContainer = document.getElementById(
+              "studentsTableContainer"
+            );
+            let statusElement = document.getElementById("status");
+
+            table.innerHTML = "<tr><th>Image</th><th>ID</th><th>Name</th></tr>";
+            statusElement.innerText = `Status: ${data.status}`;
+
+            if (Object.keys(data.detected_students).length === 0) {
+              tableContainer.style.display = "none";
+            } else {
+              tableContainer.style.display = "block";
+              for (let student_id in data.detected_students) {
+                let student = data.detected_students[student_id];
+                let row = table.insertRow();
+                let cell1 = row.insertCell(0);
+                let cell2 = row.insertCell(1);
+                let cell3 = row.insertCell(2);
+                cell1.innerHTML = `<img src="${student.image}" width="150">`;
+                cell2.innerHTML = student_id;
+                cell3.innerHTML = student.name;
+              }
+            }
           });
       }
 
-      function updateStudentTable(data) {
-        let table = document.getElementById("studentsTable");
-        let tableContainer = document.getElementById("studentsTableContainer");
-        let statusElement = document.getElementById("status");
-
-        if (!table || !tableContainer || !statusElement) {
-          console.error("Required elements not found");
-          return;
-        }
-
-        table.innerHTML = "<tr><th>Image</th><th>ID</th><th>Name</th></tr>";
-        statusElement.innerText = `Status: ${data.status}`;
-
-        if (Object.keys(data.detected_students).length === 0) {
-          tableContainer.style.display = "none";
-          console.log("No students detected");
-        } else {
-          tableContainer.style.display = "block";
-          console.log(
-            `Updating table with ${
-              Object.keys(data.detected_students).length
-            } students`
-          );
-          for (let student_id in data.detected_students) {
-            let student = data.detected_students[student_id];
-            let row = table.insertRow();
-            let cell1 = row.insertCell(0);
-            let cell2 = row.insertCell(1);
-            let cell3 = row.insertCell(2);
-            cell1.innerHTML = `<img src="${student.image}" width="150">`;
-            cell2.innerHTML = student_id;
-            cell3.innerHTML = student.name;
-          }
-        }
-      }
-
-      // Session management
       function endSession() {
         statusElement = document.getElementById("status");
         showAttendanceButton = document.getElementById("showAttendanceButton");
 
         showAttendanceButton.style.display = "block";
-        cleanupResources();
 
+        // Clear the fetch interval
+        if (fetchInterval) {
+          clearInterval(fetchInterval);
+        }
+
+        // Stop the video feed and the webcam stream
         const videoElement = document.getElementById("video-stream");
         if (videoElement.srcObject) {
+          // Stop all tracks in the video stream
           videoElement.srcObject.getTracks().forEach((track) => track.stop());
-          videoElement.srcObject = null;
+          videoElement.srcObject = null; // Remove the stream from the video element
         }
         videoElement.style.display = "none";
+
+        // Stop sending frames to the server
+        active = false;
 
         statusElement.innerText = "Session Ended";
         document.getElementById("endSessionButton").style.display = "none";
 
+        // Send the detected students data to the server
         fetch("/detected_students")
           .then((response) => response.json())
           .then((data) => {
             let students = Object.keys(data.detected_students);
-            return fetch("/end_session", {
+            fetch("/end_session", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({ students: students }),
-            });
-          })
-          .then((response) => response.json())
-          .then((result) => {
-            alert(result.message);
-          })
-          .catch((error) => {
-            console.error("Error ending session:", error);
-            alert("Error ending session. Please try again.");
+            })
+              .then((response) => response.json())
+              .then((result) => {
+                alert(result.message); // Display server response
+              });
           });
       }
 
-      // Attendance display
       function showAttendance() {
         fetch("/show_attendance")
           .then((response) => response.text())
           .then((data) => {
             document.getElementById("body").innerHTML = data;
+
             bindToggleCardFunctionality();
+
             styleAttendanceContainer();
           });
       }
@@ -424,6 +277,7 @@
       }
 
       function bindToggleCardFunctionality() {
+        // Add the toggle functionality for newly loaded HTML
         const studentCards = document.querySelectorAll(".student-card");
         studentCards.forEach((card) => {
           card.addEventListener("click", function () {
@@ -432,44 +286,94 @@
         });
       }
 
-      // Initialize on page load
       window.onload = function () {
-        console.log("Window loaded");
         videoElement = document.getElementById("processed-stream");
-        if (!videoElement) {
-          console.error("Could not find processed-stream element");
+        fetchInterval = setInterval(fetchDetectedStudents, 1000);
+        // Start sending frames to server
+        active = true;
+      };
+
+      socket.on("connect", () => {
+        console.log("Connected to server");
+      });
+
+      socket.on("processed_frame", (data) => {
+        const img = document.getElementById("processed-stream");
+        img.src = "data:image/jpeg;base64," + data;
+      });
+
+      // Replace the existing setInterval code with:
+      let lastFrameTime = 0;
+      const frameInterval = 1000 / 60; // Target 60fps
+
+      function sendFrameToServer(frame) {
+        const reader = new FileReader();
+        reader.onloadend = function () {
+          const base64data = reader.result.split(",")[1];
+          socket.emit("frame", base64data);
+        };
+        reader.readAsDataURL(frame);
+      }
+
+      function captureAndSendFrame(imageCapture) {
+        const now = performance.now();
+        if (now - lastFrameTime < frameInterval) {
+          requestAnimationFrame(() => captureAndSendFrame(imageCapture));
           return;
         }
 
-        // Clear any existing intervals first
-        if (fetchInterval) {
-          clearInterval(fetchInterval);
-        }
+        imageCapture
+          .grabFrame()
+          .then((frame) => frameToBlob(frame))
+          .then((blob) => {
+            if (active) {
+              sendFrameToServer(blob);
+            }
+            lastFrameTime = now;
+            requestAnimationFrame(() => captureAndSendFrame(imageCapture));
+          })
+          .catch((error) => {
+            console.error("Error grabbing frame:", error);
+            requestAnimationFrame(() => captureAndSendFrame(imageCapture));
+          });
+      }
 
-        // Start the fetch interval and store the ID
-        console.log("Starting fetch interval");
-        fetchInterval = setInterval(() => {
-          console.log("Fetching students...");
-          fetchDetectedStudents();
-        }, 1000); // Increased interval to 1 second to reduce load
+      // Access the webcam
+      const video = document.getElementById("video-stream");
+      navigator.mediaDevices
+        .getUserMedia({
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            frameRate: { ideal: 60 }, // Request 60fps from camera
+          },
+        })
+        .then((stream) => {
+          video.srcObject = stream;
+          const mediaStream = stream.getTracks()[0];
+          const imageCapture = new ImageCapture(mediaStream);
 
-        // Set initial states
-        isPageVisible = true;
-        isPageActive = true;
+          // Start the frame capture loop
+          requestAnimationFrame(() => captureAndSendFrame(imageCapture));
+        })
+        .catch((error) => console.error("Error accessing webcam:", error));
 
-        // Initialize camera
-        console.log("Initializing camera");
-        initializeCamera();
-
-        // Add interval check
-        setTimeout(() => {
-          if (!fetchInterval) {
-            console.error("Fetch interval was not properly set");
-            // Attempt to restart
-            fetchInterval = setInterval(fetchDetectedStudents, 1000);
-          }
-        }, 2000);
-      };
+      function frameToBlob(frame) {
+        return new Promise((resolve, reject) => {
+          const canvas = document.createElement("canvas");
+          canvas.width = frame.width;
+          canvas.height = frame.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(frame, 0, 0);
+          canvas.toBlob(
+            (blob) => {
+              resolve(blob);
+            },
+            "image/jpeg",
+            0.8
+          );
+        });
+      }
     </script>
   </body>
 </html>
