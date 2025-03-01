@@ -243,12 +243,29 @@ FACE_STATUS = {
     'ERROR': "Error processing face"
 }
 
+def create_error_frame(error_text):
+    """Create a frame with error message when processing fails"""
+    frame = np.zeros((480, 640, 3), dtype=np.uint8)
+    cv2.putText(frame, "Error processing frame", (50, 50), 
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    cv2.putText(frame, error_text[:40], (50, 100), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+    return frame
+
 def process_frame(frame):
     """Process frame with simplified face detection and recognition flow"""
     global face_tracking, status
     current_time = time.time()
     
     try:
+        # Additional validation
+        if frame is None or not isinstance(frame, np.ndarray) or frame.size == 0:
+            status = FACE_STATUS['ERROR'] + " (Invalid frame)"
+            return create_error_frame("Invalid frame received")
+        
+        if frame.dtype != np.uint8:
+            frame = frame.astype(np.uint8)
+
         if frame is None or frame.size == 0:
             status = FACE_STATUS['INITIALIZING']
             return frame
