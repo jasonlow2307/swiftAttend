@@ -154,6 +154,13 @@
       >
         Show Attendance
       </button>
+      <button
+        id="debugButton"
+        onclick="showDebugInfo()"
+        style="margin-top: 10px; background-color: #ff9800; color: white"
+      >
+        Show Debug Info
+      </button>
       <a href="/"><i class="fas fa-home" id="home"></i></a>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
@@ -166,17 +173,55 @@
       let isPageVisible = true;
       let isPageActive = true;
 
+      // Add these debug variables
+      let framesSent = 0;
+      let framesReceived = 0;
+      let lastSocketStatus = "Not connected";
+      let connectionErrors = [];
+
       // Initialize socket connection
-      const socket = io.connect(`http://13.250.19.116:5000`);
-      // const socket = io.connect(`http://localhost:5000`);
+      const socket = io.connect(`http://13.250.19.116:5000`, {
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        timeout: 10000,
+        transports: ["websocket", "polling"],
+      });
 
       socket.on("connect", () => {
-        console.log("Connected to server");
+        console.log("Connected to server:", socket.id);
+        lastSocketStatus = "Connected: " + socket.id;
+        document.getElementById("status").innerText += " | Socket: Connected";
+      });
+
+      socket.on("connect_error", (error) => {
+        console.error("Connection error:", error);
+        connectionErrors.push(error.message);
+        lastSocketStatus = "Error: " + error.message;
+        document.getElementById(
+          "status"
+        ).innerText = `Status: Connection error (${error.message})`;
+      });
+
+      socket.on("disconnect", (reason) => {
+        console.log("Disconnected:", reason);
+        lastSocketStatus = "Disconnected: " + reason;
+        document.getElementById("status").innerText +=
+          " | Socket: Disconnected";
       });
 
       socket.on("processed_frame", (data) => {
         const img = document.getElementById("processed-stream");
         img.src = "data:image/jpeg;base64," + data;
+        framesReceived++;
+
+        // Update status with frame counts
+        if (framesReceived % 30 === 0) {
+          // Update every 30 frames
+          document.getElementById(
+            "status"
+          ).innerText += ` | Received: ${framesReceived}`;
+        }
       });
 
       // Student detection updates
@@ -292,7 +337,37 @@
         fetchInterval = setInterval(fetchDetectedStudents, 1000);
         // Start sending frames to server
         active = true;
+
+        // Check network status every 5 seconds
+        setInterval(checkNetworkStatus, 5000);
+
+        // Show debug info
+        console.log("User agent:", navigator.userAgent);
+        console.log("Socket.io version:", io.version);
+        document.getElementById(
+          "status"
+        ).innerText = `Status: Initializing... | Browser: ${
+          navigator.userAgent.match(/Chrome|Firefox|Safari|Edge|IE/)[0]
+        }`;
       };
+
+      function showDebugInfo() {
+        const debugInfo = {
+          framesSent: framesSent,
+          framesReceived: framesReceived,
+          socketId: socket.id,
+          socketConnected: socket.connected,
+          lastSocketStatus: lastSocketStatus,
+          connectionErrors: connectionErrors,
+          userAgent: navigator.userAgent,
+          networkStatus: navigator.onLine ? "online" : "offline",
+          resolution: `${video.videoWidth}x${video.videoHeight}`,
+          socketUrl: socket.io.uri,
+        };
+
+        alert(JSON.stringify(debugInfo, null, 2));
+        console.table(debugInfo);
+      }
 
       socket.on("connect", () => {
         console.log("Connected to server");
@@ -308,12 +383,51 @@
       const frameInterval = 1000 / 60; // Target 60fps
 
       function sendFrameToServer(frame) {
+        if (!socket.connected) {
+          console.warn("Socket not connected, can't send frame");
+          document.getElementById(
+            "status"
+          ).innerText = `Status: Socket not connected | Last status: ${lastSocketStatus}`;
+          return;
+        }
+
         const reader = new FileReader();
         reader.onloadend = function () {
           const base64data = reader.result.split(",")[1];
           socket.emit("frame", base64data);
+          framesSent++;
+
+          // Log every 60 frames
+          if (framesSent % 60 === 0) {
+            console.log(
+              `Frames - Sent: ${framesSent}, Received: ${framesReceived}`
+            );
+            document.getElementById(
+              "status"
+            ).innerText = `Status: Active | Sent: ${framesSent} | Received: ${framesReceived}`;
+          }
         };
         reader.readAsDataURL(frame);
+      }
+
+      function checkNetworkStatus() {
+        const networkStatus = navigator.onLine ? "online" : "offline";
+        console.log("Network status:", networkStatus);
+        document.getElementById(
+          "status"
+        ).innerText += ` | Network: ${networkStatus}`;
+
+        // Test connection to server with a ping
+        fetch("/detected_students", { method: "HEAD" })
+          .then((response) =>
+            console.log("Server ping successful:", response.status)
+          )
+          .catch((error) => {
+            console.error("Server ping failed:", error);
+            document.getElementById(
+              "status"
+            ).innerText += ` | Server unreachable`;
+          });
       }
 
       function captureAndSendFrame(imageCapture) {
