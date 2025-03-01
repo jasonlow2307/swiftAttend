@@ -210,17 +210,39 @@
           " | Socket: Disconnected";
       });
 
+      // Update the socket processed_frame handler to handle different data formats
       socket.on("processed_frame", (data) => {
-        const img = document.getElementById("processed-stream");
-        img.src = "data:image/jpeg;base64," + data;
-        framesReceived++;
+        try {
+          const img = document.getElementById("processed-stream");
 
-        // Update status with frame counts
-        if (framesReceived % 30 === 0) {
-          // Update every 30 frames
-          document.getElementById(
-            "status"
-          ).innerText += ` | Received: ${framesReceived}`;
+          // Handle different data formats (base64 string vs hex)
+          if (typeof data === "string") {
+            // If data is a hex string, convert to base64
+            if (data.match(/^[0-9a-f]+$/i)) {
+              const bytes = new Uint8Array(
+                data.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
+              );
+              const base64 = btoa(String.fromCharCode.apply(null, bytes));
+              img.src = "data:image/jpeg;base64," + base64;
+            } else {
+              // Assume it's already base64
+              img.src = "data:image/jpeg;base64," + data;
+            }
+          } else {
+            console.error("Unexpected data format:", typeof data);
+          }
+
+          framesReceived++;
+
+          // Update status with frame counts
+          if (framesReceived % 10 === 0) {
+            // More frequent updates on mobile
+            document.getElementById(
+              "status"
+            ).innerText = `Status: Active | Sent: ${framesSent} | Received: ${framesReceived}`;
+          }
+        } catch (e) {
+          console.error("Error processing received frame:", e);
         }
       });
 
@@ -452,7 +474,7 @@
           video: {
             width: { ideal: 640 },
             height: { ideal: 480 },
-            frameRate: { ideal: 60 }, // Reduced from 60fps for better compatibility
+            frameRate: { ideal: 30 }, // Reduced from 60fps for better compatibility
           },
         })
         .then((stream) => {
@@ -460,18 +482,34 @@
           video.onloadedmetadata = () => {
             video.play();
 
-            // For mobile, use a different approach to capture frames
+            console.log("Device: " + (isMobileDevice() ? "Mobile" : "Desktop"));
+            document.getElementById("status").innerText +=
+              " | Device: " + (isMobileDevice() ? "Mobile" : "Desktop");
+
             if (isMobileDevice()) {
-              console.log(
-                "Mobile device detected, using alternative capture method"
-              );
+              // On mobile, use canvas-based capture
+              document.getElementById("status").innerText +=
+                " | Using mobile capture";
               setInterval(() => {
                 captureFrameFromVideo(video);
-              }, 100); // Capture at 10fps on mobile for stability
+              }, 200); // 5fps for mobile stability
             } else {
-              const mediaStream = stream.getTracks()[0];
-              const imageCapture = new ImageCapture(mediaStream);
-              requestAnimationFrame(() => captureAndSendFrame(imageCapture));
+              try {
+                // On desktop, use ImageCapture API
+                const mediaStream = stream.getTracks()[0];
+                const imageCapture = new ImageCapture(mediaStream);
+                requestAnimationFrame(() => captureAndSendFrame(imageCapture));
+              } catch (e) {
+                console.error(
+                  "ImageCapture API error, falling back to canvas:",
+                  e
+                );
+                document.getElementById("status").innerText +=
+                  " | Fallback to canvas";
+                setInterval(() => {
+                  captureFrameFromVideo(video);
+                }, 100);
+              }
             }
           };
         })
@@ -482,46 +520,80 @@
         });
 
       // Add this function for mobile devices
+      // Update the captureFrameFromVideo function
       function captureFrameFromVideo(videoElement) {
         if (!active) return;
 
-        const canvas = document.createElement("canvas");
-        canvas.width = videoElement.videoWidth;
-        canvas.height = videoElement.videoHeight;
-
-        const ctx = canvas.getContext("2d");
-
-        // Draw the current video frame to canvas
         try {
+          // Check if video has valid dimensions
+          if (!videoElement.videoWidth || !videoElement.videoHeight) {
+            console.warn("Video dimensions not ready yet");
+            return;
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = videoElement.videoWidth;
+          canvas.height = videoElement.videoHeight;
+          const ctx = canvas.getContext("2d");
+
           ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+          // Debug for mobile
+          if (framesSent % 20 === 0) {
+            console.log(`Canvas size: ${canvas.width}x${canvas.height}`);
+          }
+
           canvas.toBlob(
             (blob) => {
               if (blob && blob.size > 0) {
                 sendFrameToServer(blob);
+              } else {
+                console.warn("Empty blob created");
               }
             },
             "image/jpeg",
-            0.7
-          ); // Lower quality for better performance
+            0.5 // Lower quality for mobile
+          );
         } catch (e) {
           console.error("Error capturing frame from video:", e);
+          document.getElementById("status").innerText +=
+            " | Capture error: " + e.message;
         }
       }
 
+      // Replace the frameToBlob function with this more robust version
       function frameToBlob(frame) {
         return new Promise((resolve, reject) => {
-          const canvas = document.createElement("canvas");
-          canvas.width = frame.width;
-          canvas.height = frame.height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(frame, 0, 0);
-          canvas.toBlob(
-            (blob) => {
-              resolve(blob);
-            },
-            "image/jpeg",
-            0.8
-          );
+          try {
+            const canvas = document.createElement("canvas");
+            canvas.width = frame.width || 640;
+            canvas.height = frame.height || 480;
+            const ctx = canvas.getContext("2d");
+
+            // Check for valid frame
+            if (!frame || frame.width === 0 || frame.height === 0) {
+              console.warn("Invalid frame received");
+              reject(new Error("Invalid frame"));
+              return;
+            }
+
+            ctx.drawImage(frame, 0, 0);
+
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  reject(new Error("Failed to create blob"));
+                  return;
+                }
+                resolve(blob);
+              },
+              "image/jpeg",
+              0.7
+            );
+          } catch (e) {
+            console.error("Frame to blob error:", e);
+            reject(e);
+          }
         });
       }
 

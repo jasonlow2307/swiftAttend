@@ -44,18 +44,16 @@ def handle_frame(data):
         if frame is None or frame.size == 0:
             print("Warning: Invalid frame format")
             return
-            
-        # Normalize frame size for MediaPipe
-        frame = cv2.resize(frame, (640, 480))
         
         # Process frame
         processed_frame = process_frame(frame)
         
         # Encode processed frame
         _, buffer = cv2.imencode('.jpg', processed_frame)
+        img_str = base64.b64encode(buffer).decode('utf-8')
         
         # Send back to client
-        emit('processed_frame', buffer.tobytes().hex())
+        emit('processed_frame', img_str)
         
     except Exception as e:
         print(f"Error processing frame: {e}")
